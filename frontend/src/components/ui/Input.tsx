@@ -13,17 +13,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     (
-        {
-            label,
-            error,
-            hint,
-            icon,
-            iconPosition = 'left',
-            fullWidth = false,
-            className,
-            id,
-            ...props
-        },
+        { label, error, hint, icon, iconPosition = 'left', fullWidth = false, className, id, ...props },
         ref
     ) => {
         const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
@@ -32,10 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className={cn('flex flex-col gap-1.5', fullWidth && 'w-full')}>
                 {label && (
-                    <label
-                        htmlFor={inputId}
-                        className="text-body-sm font-medium text-[var(--color-text-primary)]"
-                    >
+                    <label htmlFor={inputId} className="text-body-sm font-medium text-[var(--color-text-primary)]">
                         {label}
                     </label>
                 )}
@@ -51,7 +38,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         className={cn(
-                            'h-9 w-full px-3 text-[14px] rounded-[var(--radius-md)]',
+                            // Touch-friendly: h-10 min (40px) on all devices
+                            'h-10 w-full px-3 text-[14px] rounded-[var(--radius-md)]',
                             'bg-[var(--color-surface)] text-[var(--color-text-primary)]',
                             'border border-[var(--color-border)] transition-all duration-150',
                             'placeholder:text-[var(--color-text-muted)]',
@@ -81,7 +69,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 </div>
 
                 {hasError && (
-                    <p id={`${inputId}-error`} className="text-caption text-red-600 flex items-center gap-1">
+                    <p id={`${inputId}-error`} className="text-caption text-red-600">
                         {error}
                     </p>
                 )}

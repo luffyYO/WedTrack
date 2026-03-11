@@ -32,15 +32,16 @@ Card.displayName = 'Card';
 interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     description?: string;
+    subtitle?: string; // Support for subtitle
     action?: React.ReactNode;
 }
 
-const CardHeader = ({ title, description, action, className, ...props }: CardHeaderProps) => (
+const CardHeader = ({ title, description, subtitle, action, className, ...props }: CardHeaderProps) => (
     <div className={cn('flex items-start justify-between mb-5', className)} {...props}>
         <div>
             <h3 className="text-heading-sm text-[var(--color-text-primary)]">{title}</h3>
-            {description && (
-                <p className="text-body-sm text-[var(--color-text-secondary)] mt-0.5">{description}</p>
+            {(description || subtitle) && (
+                <p className="text-body-sm text-[var(--color-text-secondary)] mt-0.5">{description || subtitle}</p>
             )}
         </div>
         {action && <div className="ml-4 shrink-0">{action}</div>}

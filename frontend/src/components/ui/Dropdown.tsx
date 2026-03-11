@@ -13,6 +13,7 @@ interface DropdownProps<T extends string = string> {
     disabled?: boolean;
     fullWidth?: boolean;
     id?: string;
+    icon?: React.ReactNode;
 }
 
 export default function Dropdown<T extends string = string>({
@@ -25,6 +26,7 @@ export default function Dropdown<T extends string = string>({
     disabled = false,
     fullWidth = false,
     id,
+    icon,
 }: DropdownProps<T>) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -78,9 +80,15 @@ export default function Dropdown<T extends string = string>({
                     error && 'border-red-500',
                     isOpen && 'ring-2 ring-primary-500 border-primary-500',
                     !selectedOption && 'text-[var(--color-text-muted)]',
-                    selectedOption && 'text-[var(--color-text-primary)]'
+                    selectedOption && 'text-[var(--color-text-primary)]',
+                    icon && 'pl-9'
                 )}
             >
+                {icon && (
+                    <span className="absolute left-3 top-[34px] text-[var(--color-text-muted)] pointer-events-none">
+                        {icon}
+                    </span>
+                )}
                 <span className="truncate">{selectedOption?.label ?? placeholder}</span>
                 <ChevronDown
                     size={15}

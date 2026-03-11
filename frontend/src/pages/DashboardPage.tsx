@@ -1,23 +1,235 @@
-import { LayoutDashboard } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Users, IndianRupee } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
+import Button from '@/components/ui/Button';
+import apiClient from '@/api/client';
+import { useAuthStore } from '@/store';
 
-/**
- * DashboardPage – scaffold placeholder.
- * Full UI will be implemented in the feature/dashboard branch.
- */
 export default function DashboardPage() {
+    const navigate = useNavigate();
+    const { user } = useAuthStore();
+    const [weddings, setWeddings] = useState<any[]>([]);
+    const [selectedWedding, setSelectedWedding] = useState<string>('');
+    const [guests, setGuests] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Admin's Weddings
+    useEffect(() => {
+        const fetchWeddings = async () => {
+            try {
+                const { data } = await apiClient.get('/weddings');
+                if (data.data) {
+                    setWeddings(data.data);
+                    if (data.data.length > 0) {
+                        setSelectedWedding(data.data[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load weddings:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchWeddings();
+    }, []);
+
+    // Fetch Guests when a Wedding is selected
+    useEffect(() => {
+        const fetchGuests = async () => {
+            if (!selectedWedding) return;
+            try {
+                const { data } = await apiClient.get(`/guests/wedding/${selectedWedding}`);
+                if (data.data) setGuests(data.data);
+            } catch (err) {
+                console.error("Failed to load guests:", err);
+            }
+        };
+        fetchGuests();
+    }, [selectedWedding]);
+
+    const confirmGuest = async (guestId: string) => {
+        try {
+            await apiClient.put(`/guests/${guestId}/confirm`);
+            setGuests(prev => prev.map(g => g.id === guestId ? { ...g, is_paid: true } : g));
+        } catch (err) {
+            console.error("Failed to confirm payment:", err);
+            alert("Failed to confirm payment.");
+        }
+    };
+
+    const deleteGuest = async (guestId: string) => {
+        if (!window.confirm("Are you sure you want to cancel and remove this guest entry? This cannot be undone.")) return;
+        try {
+            await apiClient.delete(`/guests/${guestId}`);
+            setGuests(prev => prev.filter(g => g.id !== guestId));
+        } catch (err) {
+            console.error("Failed to delete guest:", err);
+            alert("Failed to remove guest entry.");
+        }
+    };
+
+    // Calculate reliable totals by only summing VERIFIED paid amounts
+    const totalCollected = guests.filter(g => g.is_paid).reduce((sum, g) => sum + Number(g.amount), 0);
+    const totalVerifiedGifts = guests.filter(g => g.is_paid).length;
+    const pendingGifts = guests.filter(g => !g.is_paid).length;
+
     return (
-        <div>
+        <div className="w-full pb-10">
             <PageHeader
                 title="Dashboard"
-                description="Overview of wedding events, gift tracking, and recent activity."
+                description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}! View your recent wedding gift tracks here.`}
+                action={
+                    <div className="mt-4 sm:mt-0 w-full sm:w-auto">
+                        <Button
+                            size="sm"
+                            fullWidth
+                            icon={<Plus size={15} />}
+                            onClick={() => navigate('/wedding-track/new')}
+                        >
+                            Create Wedding Track
+                        </Button>
+                    </div>
+                }
             />
-            <div className="flex flex-col items-center justify-center min-h-[300px] gap-3 text-center border border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] bg-[var(--color-surface)]">
-                <LayoutDashboard size={28} className="text-neutral-300" />
-                <p className="text-body-sm text-[var(--color-text-muted)]">
-                    Dashboard UI — <code className="text-mono">feature/dashboard</code>
-                </p>
-            </div>
+
+            {loading ? (
+                <div className="w-full flex justify-center py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                </div>
+            ) : weddings.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center border border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-6">
+                    <Users size={28} className="text-neutral-300" />
+                    <p className="text-body-sm text-[var(--color-text-muted)]">
+                        No weddings tracked yet. Start tracking gifts by creating a new wedding.
+                    </p>
+                    <Button onClick={() => navigate('/wedding-track/new')}>Create New Wedding Track</Button>
+                </div>
+            ) : (
+                <div className="mt-6 space-y-6">
+                    {/* Wedding Selector */}
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <span className="text-sm font-semibold text-gray-700">Displaying data for:</span>
+                        <select 
+                            value={selectedWedding} 
+                            onChange={(e) => setSelectedWedding(e.target.value)}
+                            className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 outline-none"
+                        >
+                            {weddings.map(w => (
+                                <option key={w.id} value={w.id}>
+                                    {w.bride_name} & {w.groom_name} ({w.location})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-1">
+                            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Total Collected</span>
+                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-1">
+                                <IndianRupee size={20} className="text-primary-500"/>
+                                {totalCollected.toLocaleString('en-IN')}
+                            </h3>
+                            <span className="text-[10px] text-gray-400 mt-1">From Verified Payments</span>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-1">
+                            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Total Gifts</span>
+                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <Users size={20} className="text-purple-500"/>
+                                {totalVerifiedGifts}
+                            </h3>
+                            <span className="text-[10px] text-gray-400 mt-1">Verified Guests</span>
+                        </div>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100 flex flex-col items-start gap-1 lg:col-span-2">
+                            <span className="text-orange-500 text-xs font-semibold uppercase tracking-wide">Pending Verifications</span>
+                            <h3 className="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                                {pendingGifts}
+                            </h3>
+                            <span className="text-[10px] text-orange-400 mt-1">Guests waiting for Host Confirmation</span>
+                        </div>
+                    </div>
+
+                    {/* Responsive Data Table */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900">Recent Guest Entries</h3>
+                        </div>
+                        
+                        {guests.length === 0 ? (
+                            <div className="p-8 text-center text-gray-400">No guests have registered yet.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left text-gray-500">
+                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-4">Guest Name</th>
+                                            <th className="px-6 py-4">Father's Name</th>
+                                            <th className="px-6 py-4">Location</th>
+                                            <th className="px-6 py-4 text-right">Amount</th>
+                                            <th className="px-6 py-4">Date & Time</th>
+                                            <th className="px-6 py-4">Status / Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {guests.map((g, idx) => {
+                                            const entryDate = new Date(g.created_at);
+                                            return (
+                                                <tr key={idx} className="bg-white border-b hover:bg-gray-50">
+                                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                                        {g.first_name} {g.last_name || ''}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {g.father_first_name} {g.father_last_name || ''}
+                                                    </td>
+                                                    <td className="px-6 py-4 font-medium">
+                                                        {g.village || g.district || '—'}
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right font-bold text-gray-900">
+                                                        ₹{Number(g.amount).toLocaleString('en-IN')}
+                                                        <span className="block text-[10px] font-normal text-gray-400">Via {g.payment_type}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-xs">
+                                                        {entryDate.toLocaleDateString('en-IN')} <br/>
+                                                        <span className="text-gray-400">{entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute:'2-digit' })}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 min-w-[200px]">
+                                                        {g.is_paid ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    disabled
+                                                                    className="bg-green-500/60 cursor-not-allowed text-white font-medium px-3 py-1 rounded text-xs transition-colors"
+                                                                >
+                                                                    Paid
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={() => confirmGuest(g.id)}
+                                                                    className="bg-green-500 hover:bg-green-600 text-white font-medium px-3 py-1 rounded text-xs transition-colors"
+                                                                >
+                                                                    Paid
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => deleteGuest(g.id)}
+                                                                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded text-xs transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

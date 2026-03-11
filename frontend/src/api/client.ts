@@ -1,7 +1,8 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from '@/types';
+import { supabase } from '@/config/supabaseClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:5000/api` : 'http://localhost:5000/api');
 
 const client: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -13,11 +14,12 @@ const client: AxiosInstance = axios.create({
 });
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
-// Attaches the Bearer token from localStorage to every outgoing request.
+// Attaches the Bearer token from Supabase Session to every outgoing request.
 
 client.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('wedtrack_token');
+    async (config: InternalAxiosRequestConfig) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

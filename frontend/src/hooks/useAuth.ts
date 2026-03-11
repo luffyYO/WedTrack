@@ -1,61 +1,31 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
-import { authService } from '@/api/authService';
-import type { LoginCredentials, SignupData } from '@/types';
+import { supabase } from '@/config/supabaseClient';
 
 /**
  * Hook that wraps auth store actions with API calls.
- * Provides login, signup, logout, and current user state.
+ * Provides logout and current user state.
+ * Login/Signup are typically handled directly by the auth pages using supabase-js.
  */
 export function useAuth() {
     const navigate = useNavigate();
-    const { user, token, isAuthenticated, isLoading, login, logout, setLoading } = useAuthStore();
-
-    const handleLogin = useCallback(
-        async (credentials: LoginCredentials) => {
-            setLoading(true);
-            try {
-                const { data } = await authService.login(credentials);
-                login(data.data.user, data.data.token);
-                navigate('/dashboard');
-            } finally {
-                setLoading(false);
-            }
-        },
-        [login, navigate, setLoading]
-    );
-
-    const handleSignup = useCallback(
-        async (signupData: SignupData) => {
-            setLoading(true);
-            try {
-                const { data } = await authService.signup(signupData);
-                login(data.data.user, data.data.token);
-                navigate('/dashboard');
-            } finally {
-                setLoading(false);
-            }
-        },
-        [login, navigate, setLoading]
-    );
+    const { user, session, isAuthenticated, isLoading, logout: clearStore } = useAuthStore();
 
     const handleLogout = useCallback(async () => {
         try {
-            await authService.logout();
+            await supabase.auth.signOut();
         } finally {
-            logout();
+            clearStore();
             navigate('/login');
         }
-    }, [logout, navigate]);
+    }, [clearStore, navigate]);
 
     return {
         user,
-        token,
+        session,
         isAuthenticated,
         isLoading,
-        login: handleLogin,
-        signup: handleSignup,
         logout: handleLogout,
     };
 }

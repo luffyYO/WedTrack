@@ -14,7 +14,7 @@ export default function ProtectedRoute({ redirectTo = '/login' }: ProtectedRoute
     const { isAuthenticated, isLoading } = useAuthStore();
 
     if (isLoading) {
-        return <LoadingSpinner fullScreen label="Authenticating…" />;
+        return <LoadingSpinner fullScreen text="Verifying session..." />;
     }
 
     if (!isAuthenticated) {

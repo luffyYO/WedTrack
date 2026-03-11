@@ -1,10 +1,16 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/store';
 
 /**
  * Minimal centered layout for public pages (login, signup, etc.)
  * Does not include the sidebar or topbar.
  */
 export default function AuthLayout() {
+    const { isAuthenticated, isLoading } = useAuthStore();
+
+    if (isLoading) return null; // Or a simple spinner
+    if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+
     return (
         <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4">
             <div className="w-full max-w-md">

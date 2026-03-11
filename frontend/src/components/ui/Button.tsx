@@ -13,22 +13,18 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-    primary:
-        'bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 shadow-sm',
-    secondary:
-        'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 active:bg-neutral-300',
-    ghost:
-        'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200',
-    outline:
-        'border border-neutral-300 text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100',
-    danger:
-        'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm',
+    primary: 'bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 shadow-sm',
+    secondary: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 active:bg-neutral-300',
+    ghost: 'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200',
+    outline: 'border border-neutral-300 text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100',
+    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm',
 };
 
+// Touch-friendly: min h-10 (40px) on mobile, sizes scale with screen
 const sizeClasses: Record<ButtonSize, string> = {
-    sm: 'h-8   px-3   text-[13px] gap-1.5 rounded-[var(--radius-md)]',
-    md: 'h-9   px-4   text-[14px] gap-2   rounded-[var(--radius-md)]',
-    lg: 'h-11  px-5   text-[15px] gap-2   rounded-[var(--radius-lg)]',
+    sm: 'h-9 sm:h-9   px-3 text-[13px] gap-1.5 rounded-[var(--radius-md)]',
+    md: 'h-10 sm:h-10 px-4 text-[14px] gap-2   rounded-[var(--radius-md)]',
+    lg: 'h-11 sm:h-12 px-5 text-[15px] gap-2   rounded-[var(--radius-lg)]',
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

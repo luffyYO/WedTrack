@@ -103,9 +103,11 @@ export interface SelectOption<T = string> {
     disabled?: boolean;
 }
 
+import type { LucideIcon } from 'lucide-react';
+
 export interface NavItem {
     label: string;
     href: string;
-    icon?: React.ComponentType<{ size?: number; className?: string }>;
+    icon?: LucideIcon;
     badge?: number;
 }
