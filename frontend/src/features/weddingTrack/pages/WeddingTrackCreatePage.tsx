@@ -75,11 +75,8 @@ export default function WeddingTrackCreatePage() {
 
       // Navigate to QR page — backend is now the source of truth
       navigate(`/wedding-track/qr/${res.weddingId}`);
-    } catch (err: unknown) {
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: string }).message)
-          : 'Failed to create wedding track. Please try again.';
+    } catch (err: any) {
+      const message = err.response?.data?.error || 'Failed to create wedding track. Please enter valid details';
       setApiError(message);
       setFormState((prev) => ({ ...prev, isSubmitting: false }));
     }

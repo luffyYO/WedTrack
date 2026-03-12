@@ -1,4 +1,4 @@
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { getInitials } from '@/utils/formatters';
 import { useNavigate } from 'react-router-dom';
@@ -35,25 +35,9 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                 )}
             </div>
 
-            {/* ── Right: Search + Notifications + Avatar ── */}
+            {/* ── Right: Notifications + Avatar ── */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-                {/* Search — hidden on very small mobile */}
-                <button
-                    className="hidden sm:flex items-center gap-2 h-8 px-3 rounded-[var(--radius-md)] border border-[var(--color-border)] text-[var(--color-text-muted)] text-[13px] hover:border-[var(--color-border-strong)] transition-colors duration-150"
-                    aria-label="Open search"
-                >
-                    <Search size={13} />
-                    <span className="hidden md:block">Search…</span>
-                </button>
- 
-                {/* Search icon only on xs */}
-                <button
-                    className="sm:hidden flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"
-                    aria-label="Search"
-                >
-                    <Search size={17} />
-                </button>
- 
+
                 {/* Notifications */}
                 <button
                     className="relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"

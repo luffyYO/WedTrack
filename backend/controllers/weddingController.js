@@ -1,11 +1,31 @@
 import supabase from '../config/db.js';
 import { generateQrCode } from '../utils/qrGenerator.js';
 
-import supabase from '../config/db.js';
-import { generateQrCode } from '../utils/qrGenerator.js';
-
 export const createWedding = async (req, res) => {
-  const { brideName, groomName, venue, date, upiId, village, extraCell } = req.body;
+  let { brideName, groomName, venue, date, upiId, village, extraCell } = req.body;
+
+  // Trim and sanitize inputs
+  brideName = brideName?.trim() || '';
+  groomName = groomName?.trim() || '';
+  venue = venue?.trim() || '';
+  village = village?.trim() || '';
+  upiId = upiId?.trim() || '';
+  extraCell = extraCell?.trim() || '';
+
+  // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
+  const isValidName = (name) => {
+    if (!name) return false; 
+    if (name.length < 2 || name.length > 50) return false;
+    if (!/^[A-Za-z\s]+$/.test(name)) return false; 
+    if (/(.)\1{3,}/i.test(name)) return false; 
+    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(name)) return false; 
+    return true;
+  };
+
+  if (!isValidName(brideName) || !isValidName(groomName) || !isValidName(venue) || !isValidName(village) || !date) {
+    return res.status(400).json({ error: 'Please enter valid details' });
+  }
+
   const location = venue;
   const weddingDate = date;
 
@@ -68,7 +88,6 @@ export const getWeddingQR = async (req, res) => {
       .from('weddings')
       .select('id, bride_name, groom_name, location, wedding_date, village, qr_link')
       .eq('id', id)
-      .eq('user_id', req.user.id) // Enforce ownership
       .single();
 
     if (error || !wedding) {

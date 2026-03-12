@@ -49,7 +49,7 @@ export default function GuestFormPage() {
         setError('');
         
         try {
-            await apiClient.post('/guests', {
+            await apiClient.post('/guests/submit', {
                 weddingId,
                 ...formData
             });

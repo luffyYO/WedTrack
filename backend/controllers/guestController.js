@@ -1,7 +1,7 @@
 import supabase from '../config/db.js';
 
 export const submitGuestForm = async (req, res) => {
-  const { 
+  let { 
     weddingId, 
     firstName, 
     lastName, 
@@ -13,6 +13,53 @@ export const submitGuestForm = async (req, res) => {
     paymentType, 
     wishes 
   } = req.body;
+
+  // Trim and sanitize inputs
+  firstName = firstName?.trim() || '';
+  lastName = lastName?.trim() || '';
+  fatherFirstName = fatherFirstName?.trim() || '';
+  fatherLastName = fatherLastName?.trim() || '';
+  district = district?.trim() || '';
+  village = village?.trim() || '';
+  wishes = wishes?.trim() || '';
+
+  // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
+  const isValidName = (name) => {
+    if (!name) return true; // Optional fields are checked if provided
+    if (name.length < 2 || name.length > 50) return false;
+    if (!/^[A-Za-z\s]+$/.test(name)) return false; // Only alphabets and spaces
+    if (/(.)\1{3,}/i.test(name)) return false; // e.g. aaaaa
+    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(name)) return false; // e.g. agfkgjafkjg
+    return true;
+  };
+
+  // Required Field Checks
+  if (!firstName || !isValidName(firstName)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+
+  // Optional Field Checks
+  if (lastName && !isValidName(lastName)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+  if (fatherFirstName && !isValidName(fatherFirstName)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+  if (fatherLastName && !isValidName(fatherLastName)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+  if (district && !isValidName(district)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+  if (village && !isValidName(village)) {
+    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+  }
+
+  // Amount Validation
+  const numericAmount = parseFloat(amount);
+  if (isNaN(numericAmount) || numericAmount <= 0) {
+    return res.status(400).json({ error: 'Amount must be a valid number greater than 0.' });
+  }
 
   try {
     const { data, error } = await supabase
@@ -26,7 +73,7 @@ export const submitGuestForm = async (req, res) => {
           father_last_name: fatherLastName,
           district: district,
           village: village,
-          amount: parseFloat(amount) || 0,
+          amount: numericAmount,
           payment_type: paymentType,
           wishes: wishes,
           is_paid: false // Host must manually verify payment

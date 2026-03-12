@@ -1,0 +1,17 @@
+Fetching one wedding via Supabase...
+Data sample: [
+  {
+    "id": "12da6e28-3f10-4d66-804a-d3e1a60ebbbb",
+    "bride_name": "Priya",
+    "groom_name": "Rahul",
+    "location": "Hyderabad",
+    "wedding_date": "2026-05-10",
+    "qr_link": null,
+    "created_at": "2026-03-10T10:10:51.79678",
+    "village": null,
+    "extra_cell": null,
+    "upi_id": null,
+    "user_id": "333132bf-327f-449e-9951-9148473c1bba"
+  }
+]
+Columns present in Supabase response: id, bride_name, groom_name, location, wedding_date, qr_link, created_at, village, extra_cell, upi_id, user_id

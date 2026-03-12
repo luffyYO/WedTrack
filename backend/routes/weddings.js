@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.get('/', authenticate, getWeddings);
 router.post('/', authenticate, createWedding);
-router.get('/:id/qr', authenticate, getWeddingQR);
+router.get('/:id/qr', getWeddingQR); // Public route for guest form
 
 export default router;
