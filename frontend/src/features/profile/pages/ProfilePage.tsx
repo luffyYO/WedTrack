@@ -6,7 +6,6 @@ import { Save, AlertCircle } from 'lucide-react';
 
 import ProfileHeader from '../components/ProfileHeader';
 import ProfileBasicInfo from '../components/ProfileBasicInfo';
-import ProfileWeddingInfo from '../components/ProfileWeddingInfo';
 import ProfileOptionalDetails from '../components/ProfileOptionalDetails';
 
 import { useAuthStore } from '@/store/authStore';
@@ -151,7 +150,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-3xl mx-auto pb-12 animate-fade-in">
             <PageHeader
                 title="My Profile"
-                description="Manage your account details and wedding track information."
+                description="Manage your account details and personal preferences."
                 action={
                     isEditing && (
                         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3">
@@ -188,13 +187,6 @@ export default function ProfilePage() {
                 />
 
                 <ProfileBasicInfo
-                    data={formState.data}
-                    isEditing={isEditing}
-                    onChange={handleFieldChange}
-                    errors={formState.errors}
-                />
-
-                <ProfileWeddingInfo
                     data={formState.data}
                     isEditing={isEditing}
                     onChange={handleFieldChange}

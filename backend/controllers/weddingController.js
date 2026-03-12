@@ -1,6 +1,9 @@
 import supabase from '../config/db.js';
 import { generateQrCode } from '../utils/qrGenerator.js';
 
+import supabase from '../config/db.js';
+import { generateQrCode } from '../utils/qrGenerator.js';
+
 export const createWedding = async (req, res) => {
   const { brideName, groomName, venue, date, upiId, village, extraCell } = req.body;
   const location = venue;
@@ -18,7 +21,8 @@ export const createWedding = async (req, res) => {
           wedding_date: weddingDate,
           upi_id: upiId,
           village: village,
-          extra_cell: extraCell
+          extra_cell: extraCell,
+          user_id: req.user.id // Enforce ownership
         }
       ])
       .select('id')
@@ -38,7 +42,8 @@ export const createWedding = async (req, res) => {
     const { error: updateError } = await supabase
       .from('weddings')
       .update({ qr_link: qrLink })
-      .eq('id', weddingId);
+      .eq('id', weddingId)
+      .eq('user_id', req.user.id); // Security check
 
     if (updateError) throw new Error(updateError.message);
 
@@ -63,6 +68,7 @@ export const getWeddingQR = async (req, res) => {
       .from('weddings')
       .select('id, bride_name, groom_name, location, wedding_date, village, qr_link')
       .eq('id', id)
+      .eq('user_id', req.user.id) // Enforce ownership
       .single();
 
     if (error || !wedding) {
@@ -95,6 +101,7 @@ export const getWeddings = async (req, res) => {
     const { data: weddings, error } = await supabase
       .from('weddings')
       .select('*')
+      .eq('user_id', req.user.id) // Enforce ownership
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);

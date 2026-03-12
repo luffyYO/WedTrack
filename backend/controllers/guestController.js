@@ -51,6 +51,18 @@ export const getGuestsByWedding = async (req, res) => {
   const { weddingId } = req.params;
 
   try {
+    // Security check: Ensure the wedding belongs to the user
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('id', weddingId)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (weddingError || !wedding) {
+      return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
+    }
+
     const { data: guests, error } = await supabase
       .from('guests')
       .select('*')
@@ -70,6 +82,29 @@ export const confirmGuestPayment = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // First, find the guest to get the wedding_id
+    const { data: guestData, error: guestFetchError } = await supabase
+      .from('guests')
+      .select('wedding_id')
+      .eq('id', id)
+      .single();
+
+    if (guestFetchError || !guestData) {
+      return res.status(404).json({ error: 'Guest not found' });
+    }
+
+    // Security check: Ensure the wedding belongs to the user
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('id', guestData.wedding_id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (weddingError || !wedding) {
+      return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
+    }
+
     const { data, error } = await supabase
       .from('guests')
       .update({ is_paid: true })
@@ -90,6 +125,29 @@ export const deleteGuest = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // First, find the guest to get the wedding_id
+    const { data: guestData, error: guestFetchError } = await supabase
+      .from('guests')
+      .select('wedding_id')
+      .eq('id', id)
+      .single();
+
+    if (guestFetchError || !guestData) {
+      return res.status(404).json({ error: 'Guest not found' });
+    }
+
+    // Security check: Ensure the wedding belongs to the user
+    const { data: wedding, error: weddingError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('id', guestData.wedding_id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (weddingError || !wedding) {
+      return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
+    }
+
     const { error } = await supabase
       .from('guests')
       .delete()

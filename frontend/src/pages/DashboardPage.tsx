@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, IndianRupee } from 'lucide-react';
+import { Plus, Users, IndianRupee, Download } from 'lucide-react';
+import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import apiClient from '@/api/client';
 import { useAuthStore } from '@/store';
+import SearchBar from '@/components/SearchBar';
+import SearchFilters, { FilterType } from '@/components/SearchFilters';
+import SearchResults from '@/components/SearchResults';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -13,6 +17,13 @@ export default function DashboardPage() {
     const [selectedWedding, setSelectedWedding] = useState<string>('');
     const [guests, setGuests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Search & Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState<FilterType>('Name');
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedAmountRange, setSelectedAmountRange] = useState<number | null>(null);
+    const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
     // Fetch Admin's Weddings
     useEffect(() => {
@@ -40,13 +51,41 @@ export default function DashboardPage() {
             if (!selectedWedding) return;
             try {
                 const { data } = await apiClient.get(`/guests/wedding/${selectedWedding}`);
-                if (data.data) setGuests(data.data);
+                if (data.data) {
+                    setGuests(data.data);
+                    setFilteredGuests(data.data);
+                }
             } catch (err) {
                 console.error("Failed to load guests:", err);
             }
         };
         fetchGuests();
     }, [selectedWedding]);
+
+    // Filtering Logic
+    useEffect(() => {
+        let result = [...guests];
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            if (activeFilter === 'Name') {
+                result = result.filter(g => 
+                    `${g.first_name} ${g.last_name || ''}`.toLowerCase().includes(query)
+                );
+            } else if (activeFilter === 'Location') {
+                result = result.filter(g => 
+                    (g.village || '').toLowerCase().includes(query) || 
+                    (g.district || '').toLowerCase().includes(query)
+                );
+            }
+        }
+
+        if (activeFilter === 'Amount' && selectedAmountRange !== null) {
+            result = result.filter(g => Number(g.amount) < selectedAmountRange);
+        }
+
+        setFilteredGuests(result);
+    }, [searchQuery, activeFilter, selectedAmountRange, guests]);
 
     const confirmGuest = async (guestId: string) => {
         try {
@@ -67,6 +106,19 @@ export default function DashboardPage() {
             console.error("Failed to delete guest:", err);
             alert("Failed to remove guest entry.");
         }
+    };
+
+    const handleDownloadPDF = () => {
+        const wedding = weddings.find(w => w.id === selectedWedding);
+        if (!wedding) return;
+
+        const summary = {
+            weddingName: `${wedding.bride_name} & ${wedding.groom_name}`,
+            totalGifts: totalVerifiedGifts,
+            totalAmount: totalCollected
+        };
+
+        generateGuestListPDF(filteredGuests, summary);
     };
 
     // Calculate reliable totals by only summing VERIFIED paid amounts
@@ -123,6 +175,40 @@ export default function DashboardPage() {
                         </select>
                     </div>
 
+                    {/* Search & Filtering System */}
+                    <div className="space-y-4">
+                        <SearchBar 
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            onSearch={(q) => setSearchQuery(q)}
+                            onSearchClick={() => {
+                                // Search button now only performs search/closes filters if open (optional)
+                                // or just does nothing as searchQuery is already bound to input
+                                // Keeping it explicit for potential future API triggers
+                                console.log("Searching for:", searchQuery);
+                            }}
+                            onFilterToggle={() => setShowFilters(!showFilters)}
+                            isFilterOpen={showFilters}
+                            placeholder={
+                                activeFilter === 'Name' ? "Search guest name (e.g. Ravi)..." :
+                                activeFilter === 'Location' ? "Search village or district..." :
+                                "Filtering entries by amount..."
+                            }
+                        />
+                        
+                        {showFilters && (
+                            <SearchFilters 
+                                activeFilter={activeFilter}
+                                onFilterChange={(f) => {
+                                    setActiveFilter(f);
+                                    if (f !== 'Amount') setSelectedAmountRange(null);
+                                }}
+                                onAmountRangeChange={setSelectedAmountRange}
+                                selectedAmountRange={selectedAmountRange}
+                            />
+                        )}
+                    </div>
+
                     {/* Stats Overview */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-1">
@@ -150,82 +236,34 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Responsive Data Table */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-gray-900">Recent Guest Entries</h3>
+                    {/* Search Results / Full Table */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Search Results' : 'Recent Guest Entries'}
+                                <span className="ml-2 text-sm font-normal text-gray-400">({filteredGuests.length})</span>
+                            </h3>
+
+                            <button
+                                onClick={handleDownloadPDF}
+                                disabled={filteredGuests.length === 0}
+                                title="Download Guest List"
+                                className="p-2 rounded-lg border border-gray-100 bg-white text-gray-600 hover:text-primary-600 hover:border-primary-100 hover:shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                            >
+                                <Download size={18} className="group-hover:scale-110 transition-transform" />
+                            </button>
                         </div>
-                        
+
                         {guests.length === 0 ? (
-                            <div className="p-8 text-center text-gray-400">No guests have registered yet.</div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left text-gray-500">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                                        <tr>
-                                            <th className="px-6 py-4">Guest Name</th>
-                                            <th className="px-6 py-4">Father's Name</th>
-                                            <th className="px-6 py-4">Location</th>
-                                            <th className="px-6 py-4 text-right">Amount</th>
-                                            <th className="px-6 py-4">Date & Time</th>
-                                            <th className="px-6 py-4">Status / Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {guests.map((g, idx) => {
-                                            const entryDate = new Date(g.created_at);
-                                            return (
-                                                <tr key={idx} className="bg-white border-b hover:bg-gray-50">
-                                                    <td className="px-6 py-4 font-medium text-gray-900">
-                                                        {g.first_name} {g.last_name || ''}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {g.father_first_name} {g.father_last_name || ''}
-                                                    </td>
-                                                    <td className="px-6 py-4 font-medium">
-                                                        {g.village || g.district || '—'}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right font-bold text-gray-900">
-                                                        ₹{Number(g.amount).toLocaleString('en-IN')}
-                                                        <span className="block text-[10px] font-normal text-gray-400">Via {g.payment_type}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                                        {entryDate.toLocaleDateString('en-IN')} <br/>
-                                                        <span className="text-gray-400">{entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute:'2-digit' })}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 min-w-[200px]">
-                                                        {g.is_paid ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    disabled
-                                                                    className="bg-green-500/60 cursor-not-allowed text-white font-medium px-3 py-1 rounded text-xs transition-colors"
-                                                                >
-                                                                    Paid
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    onClick={() => confirmGuest(g.id)}
-                                                                    className="bg-green-500 hover:bg-green-600 text-white font-medium px-3 py-1 rounded text-xs transition-colors"
-                                                                >
-                                                                    Paid
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => deleteGuest(g.id)}
-                                                                    className="bg-red-500 hover:bg-red-600 text-white font-medium px-3 py-1 rounded text-xs transition-colors"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                            <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
+                                No guests have registered yet.
                             </div>
+                        ) : (
+                            <SearchResults 
+                                results={filteredGuests}
+                                onConfirm={confirmGuest}
+                                onDelete={deleteGuest}
+                            />
                         )}
                     </div>
                 </div>

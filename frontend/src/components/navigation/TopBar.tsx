@@ -1,6 +1,7 @@
 import { Bell, Search, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { getInitials } from '@/utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 interface TopBarProps {
     pageTitle?: string;
@@ -9,6 +10,7 @@ interface TopBarProps {
 
 export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
     const user = useAuthStore((s) => s.user);
+    const navigate = useNavigate();
 
     return (
         <header
@@ -25,7 +27,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                 >
                     <Menu size={20} />
                 </button>
-
+ 
                 {pageTitle && (
                     <h2 className="text-heading-sm text-[var(--color-text-primary)] truncate">
                         {pageTitle}
@@ -43,7 +45,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                     <Search size={13} />
                     <span className="hidden md:block">Search…</span>
                 </button>
-
+ 
                 {/* Search icon only on xs */}
                 <button
                     className="sm:hidden flex items-center justify-center w-9 h-9 rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"
@@ -51,7 +53,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                 >
                     <Search size={17} />
                 </button>
-
+ 
                 {/* Notifications */}
                 <button
                     className="relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"
@@ -60,10 +62,11 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                     <Bell size={17} />
                     <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary-600" />
                 </button>
-
+ 
                 {/* User Avatar */}
                 {user && (
                     <button
+                        onClick={() => navigate('/profile')}
                         className="w-8 h-8 rounded-full bg-primary-700 text-white flex items-center justify-center text-[12px] font-semibold hover:ring-2 hover:ring-primary-300 transition-all shrink-0"
                         aria-label={`User menu for ${user.user_metadata?.name || user.email || 'User'}`}
                     >

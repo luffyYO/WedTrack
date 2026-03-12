@@ -1,4 +1,4 @@
-import { LayoutDashboard, CheckSquare, User, Settings, Home, X } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Settings, Home, X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import NavItemComponent from './NavItem';
 import type { NavItem } from '@/types';
@@ -7,7 +7,6 @@ const NAV_ITEMS: NavItem[] = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { label: 'Profile', href: '/profile', icon: User },
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

@@ -1,10 +1,11 @@
 import express from 'express';
 import { createWedding, getWeddingQR, getWeddings } from '../controllers/weddingController.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getWeddings);
-router.post('/', createWedding);
-router.get('/:id/qr', getWeddingQR);
+router.get('/', authenticate, getWeddings);
+router.post('/', authenticate, createWedding);
+router.get('/:id/qr', authenticate, getWeddingQR);
 
 export default router;
