@@ -23,6 +23,7 @@ export default function DashboardPage() {
     const [activeFilter, setActiveFilter] = useState<FilterType>('Name');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedAmountRange, setSelectedAmountRange] = useState<number | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
     const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
     // Fetch Admin's Weddings
@@ -84,8 +85,21 @@ export default function DashboardPage() {
             result = result.filter(g => Number(g.amount) < selectedAmountRange);
         }
 
+        if (activeFilter === 'Payment Method') {
+            if (selectedPaymentMethod) {
+                result = result.filter(g => 
+                    (g.payment_type || '').toLowerCase() === selectedPaymentMethod.toLowerCase()
+                );
+            } else if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                result = result.filter(g => 
+                    (g.payment_type || '').toLowerCase().includes(query)
+                );
+            }
+        }
+
         setFilteredGuests(result);
-    }, [searchQuery, activeFilter, selectedAmountRange, guests]);
+    }, [searchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);
 
     const confirmGuest = async (guestId: string) => {
         try {
@@ -125,6 +139,12 @@ export default function DashboardPage() {
     const totalCollected = guests.filter(g => g.is_paid).reduce((sum, g) => sum + Number(g.amount), 0);
     const totalVerifiedGifts = guests.filter(g => g.is_paid).length;
     const pendingGifts = guests.filter(g => !g.is_paid).length;
+
+    // Filtered Summary Logic
+    const isFilterActive = searchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
+    const filteredVerifiedGuests = filteredGuests.filter(g => g.is_paid);
+    const filteredVerifiedGiftsCount = filteredVerifiedGuests.length;
+    const filteredVerifiedAmount = filteredVerifiedGuests.reduce((sum, g) => sum + Number(g.amount), 0);
 
     return (
         <div className="w-full pb-10">
@@ -192,6 +212,7 @@ export default function DashboardPage() {
                             placeholder={
                                 activeFilter === 'Name' ? "Search guest name (e.g. Ravi)..." :
                                 activeFilter === 'Location' ? "Search village or district..." :
+                                activeFilter === 'Payment Method' ? "Search payment method (e.g. PhonePe)..." :
                                 "Filtering entries by amount..."
                             }
                         />
@@ -202,9 +223,12 @@ export default function DashboardPage() {
                                 onFilterChange={(f) => {
                                     setActiveFilter(f);
                                     if (f !== 'Amount') setSelectedAmountRange(null);
+                                    if (f !== 'Payment Method') setSelectedPaymentMethod(null);
                                 }}
                                 onAmountRangeChange={setSelectedAmountRange}
                                 selectedAmountRange={selectedAmountRange}
+                                onPaymentMethodChange={setSelectedPaymentMethod}
+                                selectedPaymentMethod={selectedPaymentMethod}
                             />
                         )}
                     </div>
@@ -238,6 +262,25 @@ export default function DashboardPage() {
 
                     {/* Search Results / Full Table */}
                     <div className="space-y-6">
+                        {isFilterActive && (
+                            <div className="bg-primary-50 border border-primary-100 p-4 rounded-xl flex flex-wrap gap-6 items-center animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div>
+                                    <span className="text-primary-700 text-xs font-bold uppercase tracking-wider">Verified Gifts</span>
+                                    <div className="text-2xl font-black text-primary-900 leading-tight">
+                                        {filteredVerifiedGiftsCount}
+                                    </div>
+                                </div>
+                                <div className="hidden sm:block w-px h-10 bg-primary-200"></div>
+                                <div>
+                                    <span className="text-primary-700 text-xs font-bold uppercase tracking-wider">Total Verified Amount</span>
+                                    <div className="text-2xl font-black text-primary-900 leading-tight flex items-center gap-1">
+                                        <IndianRupee size={20} className="text-primary-600" />
+                                        {filteredVerifiedAmount.toLocaleString('en-IN')}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-bold text-gray-900">
                                 {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Search Results' : 'Recent Guest Entries'}

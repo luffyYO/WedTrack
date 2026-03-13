@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutDashboard, HeartHandshake, QrCode } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import apiClient from '@/api/client';
 import { useAuthStore } from '@/store';
 
@@ -105,7 +106,7 @@ export default function HomePage() {
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-900">{w.bride_name} & {w.groom_name}</h3>
                                     <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                                        {new Date(w.date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                                        {formatDate(w.date, { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                     </p>
                                     <p className="text-sm text-gray-500 mt-1">{w.venue}, {w.location}</p>
                                 </div>

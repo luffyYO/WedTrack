@@ -1,14 +1,70 @@
 /**
+ * Safely parse a date string in ISO, MM/DD/YYYY, or DD/MM/YYYY formats.
+ */
+export function parseSafeDate(dateStr: string): Date | null {
+    if (!dateStr) return null;
+    
+    // Try native parsing first (works for ISO and sometimes others depending on env)
+    let date = new Date(dateStr);
+    if (!isNaN(date.getTime())) return date;
+
+    // Manual parsing for MM/DD/YYYY or DD/MM/YYYY
+    const parts = dateStr.split(/[/\\-]/);
+    if (parts.length === 3) {
+        let day, month, year;
+
+        // Case: YYYY-MM-DD
+        if (parts[0].length === 4) {
+            year = parseInt(parts[0]);
+            month = parseInt(parts[1]) - 1;
+            day = parseInt(parts[2]);
+        } 
+        // Case: MM/DD/YYYY or DD/MM/YYYY
+        else if (parts[2].length === 4) {
+            year = parseInt(parts[2]);
+            const p1 = parseInt(parts[0]);
+            const p2 = parseInt(parts[1]);
+
+            if (p1 > 12) {
+                // Definitely DD/MM/YYYY
+                day = p1;
+                month = p2 - 1;
+            } else if (p2 > 12) {
+                // Definitely MM/DD/YYYY
+                month = p1 - 1;
+                day = p2;
+            } else {
+                // Ambiguous. Default to MM/DD/YYYY as it was the previous legacy standard.
+                month = p1 - 1;
+                day = p2;
+            }
+        }
+
+        if (year && month !== undefined && day) {
+            date = new Date(year, month, day);
+            if (!isNaN(date.getTime())) return date;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Format a date string to a human-readable format.
  */
 export function formatDate(dateStr: string, options?: Intl.DateTimeFormatOptions): string {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-IN', {
-        day: 'numeric',
-        month: 'short',
+    const date = parseSafeDate(dateStr);
+    
+    if (!date) {
+        return dateStr ? 'Invalid date' : '—';
+    }
+
+    const defaultOptions: Intl.DateTimeFormatOptions = {
+        day: '2-digit',
+        month: '2-digit',
         year: 'numeric',
-        ...options,
-    }).format(date);
+    };
+    return new Intl.DateTimeFormat('en-IN', options || defaultOptions).format(date);
 }
 
 /**
@@ -47,7 +103,11 @@ export function getInitials(name: string): string {
  */
 export function timeAgo(dateStr: string): string {
     const now = Date.now();
-    const date = new Date(dateStr).getTime();
+    const dateObj = parseSafeDate(dateStr);
+    
+    if (!dateObj) return formatDate(dateStr);
+    
+    const date = dateObj.getTime();
     const diff = Math.floor((now - date) / 1000);
 
     if (diff < 60) return 'just now';

@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatDate } from './formatters';
 
 interface GuestExportData {
   first_name: string;
@@ -23,7 +24,7 @@ interface ExportSummary {
 export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportSummary) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const today = new Date().toLocaleDateString('en-IN');
+  const today = formatDate(new Date().toISOString());
 
   // 1. Title & Branding (Centered)
   doc.setFontSize(22);
@@ -62,7 +63,6 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
   ];
   
   const tableRows = guests.map(guest => {
-    const entryDate = new Date(guest.created_at);
     // Using 'Rs.' instead of '₹' to avoid encoding/kerning issues in standard PDF fonts
     const formattedAmount = `${Number(guest.amount).toLocaleString('en-IN')}`;
     
@@ -71,7 +71,7 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
       `${guest.father_first_name || ''} ${guest.father_last_name || ''}`.trim() || '—',
       guest.village || guest.district || '—',
       `Rs. ${formattedAmount}`,
-      entryDate.toLocaleDateString('en-IN'),
+      formatDate(guest.created_at),
       guest.is_paid ? 'Verified' : 'Pending'
     ];
   });

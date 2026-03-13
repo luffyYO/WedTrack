@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 
 import Button from '@/components/ui/Button';
+import { formatDate } from '@/utils/formatters';
 import { qrService } from '../services/qrService';
 import QRDisplay from '../components/QRDisplay';
 import QRActionButtons from '../components/QRActionButtons';
@@ -92,7 +93,7 @@ export default function WeddingQRPage() {
                         </h1>
                         {qrData?.venue && (
                             <p className="text-body-sm text-[var(--color-text-secondary)] mt-1">
-                                {qrData.venue}{qrData?.date ? ` · ${new Date(qrData.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}
+                                {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
                             </p>
                         )}
                     </>

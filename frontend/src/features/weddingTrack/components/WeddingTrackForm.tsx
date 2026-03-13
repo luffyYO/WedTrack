@@ -43,6 +43,9 @@ export default function WeddingTrackForm({
             (e: ChangeEvent<HTMLInputElement>) =>
                 onChange(field, e.target.value);
 
+    // Calculate today's date for 'min' attribute
+    const today = new Date().toISOString().split('T')[0];
+
     return (
         <Card className="w-full">
             <div className="grid grid-cols-1 gap-5">
@@ -105,6 +108,8 @@ export default function WeddingTrackForm({
                         id="date"
                         label={FIELD_LABELS.date}
                         type="date"
+                        min={today}
+                        max="9999-12-31"
                         value={data.date}
                         onChange={handleChange('date')}
                         error={errors.date}

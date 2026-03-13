@@ -22,8 +22,29 @@ export const createWedding = async (req, res) => {
     return true;
   };
 
-  if (!isValidName(brideName) || !isValidName(groomName) || !isValidName(venue) || !isValidName(village) || !date) {
+  const isValidFutureDate = (dateString) => {
+    if (!dateString) return false;
+    // Require YYYY-MM-DD or similar format with 4 digit year
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString) && !/^\d{4}\//.test(dateString)) {
+       // fallback check
+       const yearMatch = dateString.match(/^\d{4}/);
+       if (!yearMatch) return false;
+    }
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return false;
+    
+    // Must not be in the past
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d >= today;
+  };
+
+  if (!isValidName(brideName) || !isValidName(groomName) || !isValidName(venue) || !isValidName(village)) {
     return res.status(400).json({ error: 'Please enter valid details' });
+  }
+
+  if (!isValidFutureDate(date)) {
+    return res.status(400).json({ error: 'Wedding or reception date cannot be in the past. Please select today or a future date.' });
   }
 
   const location = venue;

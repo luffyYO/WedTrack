@@ -1,5 +1,6 @@
 import React from 'react';
 import { SearchX, MapPin, User } from 'lucide-react';
+import { formatDate, parseSafeDate } from '@/utils/formatters';
 
 interface Guest {
     id: string;
@@ -52,7 +53,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {results.map((guest) => {
-                            const entryDate = new Date(guest.created_at);
+                            const entryDate = parseSafeDate(guest.created_at);
+                            const timeStr = entryDate && !isNaN(entryDate.getTime()) 
+                                ? entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                                : '';
+                                
                             return (
                                 <tr key={guest.id} className="hover:bg-primary-50/30 transition-colors group">
                                     <td className="px-6 py-4">
@@ -80,8 +85,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-900 font-medium">{entryDate.toLocaleDateString('en-IN')}</span>
-                                            <span className="text-[11px] text-gray-400">{entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute:'2-digit' })}</span>
+                                            <span className="text-gray-900 font-medium">{formatDate(guest.created_at)}</span>
+                                            <span className="text-[11px] text-gray-400">{timeStr}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">

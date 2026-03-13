@@ -31,7 +31,23 @@ function validate(data: WeddingTrackFormData): WeddingTrackFormErrors {
   if (!data.brideName.trim()) errors.brideName = "Bride's name is required";
   if (!data.groomName.trim()) errors.groomName = "Groom's name is required";
   if (!data.venue.trim()) errors.venue = 'Venue is required';
-  if (!data.date) errors.date = 'Wedding date is required';
+  if (!data.date) {
+    errors.date = 'Wedding date is required';
+  } else {
+    // Check if the date is in the past (using local time comparison)
+    const selectedDate = new Date(data.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Ignore time for comparison
+    
+    if (selectedDate < today) {
+      errors.date = 'Wedding or reception date cannot be in the past. Please select today or a future date.';
+    } else {
+      // Basic fallback to verify the year isn't absurdly long or short
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+        errors.date = 'Please enter a valid date with a 4-digit year.';
+      }
+    }
+  }
   if (!data.village.trim()) errors.village = 'Village / town is required';
   return errors;
 }
