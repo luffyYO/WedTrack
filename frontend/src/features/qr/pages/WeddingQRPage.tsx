@@ -30,6 +30,28 @@ export default function WeddingQRPage() {
     const { trackId } = useParams<{ trackId: string }>();
     const navigate = useNavigate();
     const [fetchState, setFetchState] = useState<QRFetchState>({ status: 'loading' });
+    const [timeLeft, setTimeLeft] = useState<string | null>(null);
+    const [isExpired, setIsExpired] = useState(false);
+    const [isExtending, setIsExtending] = useState(false);
+
+    const calculateTimeLeft = (expiry: string) => {
+        const now = new Date().getTime();
+        const expirationTime = new Date(expiry).getTime();
+        const difference = expirationTime - now;
+
+        if (difference <= 0) {
+            setIsExpired(true);
+            return 'QR Code Expired';
+        }
+
+        setIsExpired(false);
+        const hours = Math.floor(difference / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+        // TEST MODE: Show seconds for easier testing
+        return `[TEST MODE] QR expires in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
 
     const fetchQR = async () => {
         if (!trackId) {
@@ -41,6 +63,10 @@ export default function WeddingQRPage() {
             const { data: res } = await qrService.getByTrackId(trackId);
             const qrData = (res as any).data ?? res;
             setFetchState({ status: 'success', data: qrData as QRData });
+            
+            if (qrData.qrExpiresAt) {
+                setTimeLeft(calculateTimeLeft(qrData.qrExpiresAt));
+            }
         } catch (err: unknown) {
             const message =
                 err && typeof err === 'object' && 'message' in err
@@ -54,6 +80,30 @@ export default function WeddingQRPage() {
         fetchQR();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [trackId]);
+
+    useEffect(() => {
+        if (fetchState.status === 'success' && fetchState.data.qrExpiresAt) {
+            // TEST MODE: Update every second for a smooth countdown
+            const timer = setInterval(() => {
+                setTimeLeft(calculateTimeLeft(fetchState.data.qrExpiresAt!));
+            }, 1000); 
+
+            return () => clearInterval(timer);
+        }
+    }, [fetchState]);
+
+    const handleExtend = async () => {
+        if (!trackId) return;
+        setIsExtending(true);
+        try {
+            await qrService.extend(trackId);
+            await fetchQR(); // Refresh to get new expiry
+        } catch (err) {
+            console.error('Failed to extend QR:', err);
+        } finally {
+            setIsExtending(false);
+        }
+    };
 
     // ── Derived state ─────────────────────────────────────────────────────────
     const isSuccess = fetchState.status === 'success';
@@ -95,6 +145,17 @@ export default function WeddingQRPage() {
                             <p className="text-body-sm text-[var(--color-text-secondary)] mt-1">
                                 {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
                             </p>
+                        )}
+                        
+                        {/* ── Countdown Timer ── */}
+                        {timeLeft && (
+                            <div className={`mt-3 px-3 py-1 rounded-full text-caption font-bold inline-block animate-fade-in ${
+                                isExpired 
+                                    ? 'bg-red-50 text-red-600 border border-red-100' 
+                                    : 'bg-primary-50 text-primary-600 border border-primary-100'
+                            }`}>
+                                {timeLeft}
+                            </div>
                         )}
                     </>
                 ) : null}
@@ -139,12 +200,28 @@ export default function WeddingQRPage() {
                         </Button>
                     </div>
                 ) : (
-                    <QRActionButtons
-                        shareLink={qrData?.shareLink ?? ''}
-                        qrImageUrl={qrData?.qrImageUrl ?? ''}
-                        weddingTitle={weddingTitle}
-                        disabled={isLoading}
-                    />
+                    <div className="flex flex-col gap-4">
+                        <QRActionButtons
+                            shareLink={qrData?.shareLink ?? ''}
+                            qrImageUrl={qrData?.qrImageUrl ?? ''}
+                            weddingTitle={weddingTitle}
+                            disabled={isLoading}
+                        />
+
+                        {/* ── Extend Button (Only if Success and TrackId exists) ── */}
+                        {isSuccess && (
+                            <Button
+                                variant={isExpired ? "primary" : "outline"}
+                                size="md"
+                                fullWidth
+                                onClick={handleExtend}
+                                isLoading={isExtending}
+                                icon={<RefreshCw size={16} />}
+                            >
+                                {isExpired ? "Re-activate QR for 2 Minutes (TEST)" : "Extend QR for 2 Minutes (TEST)"}
+                            </Button>
+                        )}
+                    </div>
                 )}
             </div>
 

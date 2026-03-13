@@ -62,6 +62,24 @@ export const submitGuestForm = async (req, res) => {
   }
 
   try {
+    // 1. Check if QR is expired
+    const { data: wedding, error: fetchError } = await supabase
+      .from('weddings')
+      .select('qr_expires_at')
+      .eq('id', weddingId)
+      .single();
+
+    if (fetchError || !wedding) {
+      return res.status(404).json({ error: 'Wedding track not found' });
+    }
+
+    const now = new Date();
+    const expiry = new Date(wedding.qr_expires_at);
+
+    if (now >= expiry) {
+      return res.status(403).json({ error: 'QR Code Expired. This guest submission link is no longer active.' });
+    }
+
     const { data, error } = await supabase
       .from('guests')
       .insert([

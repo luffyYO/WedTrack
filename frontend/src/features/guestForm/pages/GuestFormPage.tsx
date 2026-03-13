@@ -10,6 +10,7 @@ export default function GuestFormPage() {
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+    const [isExpired, setIsExpired] = useState(false);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -28,7 +29,16 @@ export default function GuestFormPage() {
             if (!weddingId) return;
             try {
                 const response = await apiClient.get(`/weddings/${weddingId}/qr`);
-                setWedding(response.data.data);
+                const data = response.data.data;
+                setWedding(data);
+                
+                if (data.qrExpiresAt) {
+                    const now = new Date().getTime();
+                    const expiry = new Date(data.qrExpiresAt).getTime();
+                    if (now >= expiry) {
+                        setIsExpired(true);
+                    }
+                }
             } catch (err: any) {
                 setError(err.message || 'Failed to load wedding details.');
             } finally {
@@ -56,6 +66,10 @@ export default function GuestFormPage() {
             setSuccess(true);
         } catch (err: any) {
             setError(err.message || 'Failed to submit details. Please try again.');
+            // If backend says expired, update local state
+            if (err.response?.status === 403 && err.response?.data?.error?.includes('Expired')) {
+                setIsExpired(true);
+            }
         } finally {
             setSubmitting(false);
         }
@@ -65,6 +79,26 @@ export default function GuestFormPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+        );
+    }
+
+    if (isExpired) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+                <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 max-w-md w-full text-center">
+                    <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">QR Code Expired</h2>
+                    <p className="text-gray-600 mb-8 leading-relaxed">
+                        This guest submission link is no longer active. 
+                        Please contact the host if you need to submit your gift details.
+                    </p>
+                    <div className="text-xs text-gray-400 font-medium uppercase tracking-widest pt-6 border-t border-gray-100">
+                        WedTrack Security
+                    </div>
+                </div>
             </div>
         );
     }

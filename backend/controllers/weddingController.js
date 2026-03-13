@@ -18,7 +18,8 @@ export const createWedding = async (req, res) => {
     if (name.length < 2 || name.length > 50) return false;
     if (!/^[A-Za-z\s]+$/.test(name)) return false; 
     if (/(.)\1{3,}/i.test(name)) return false; 
-    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(name)) return false; 
+    // Relaxed to 6 consecutive consonants for safer validation of names like "Kshama" or locations
+    if (/[bcdfghjklmnpqrstvwxyz]{6,}/i.test(name)) return false; 
     return true;
   };
 
@@ -26,25 +27,24 @@ export const createWedding = async (req, res) => {
     if (!dateString) return false;
     // Require YYYY-MM-DD or similar format with 4 digit year
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString) && !/^\d{4}\//.test(dateString)) {
-       // fallback check
        const yearMatch = dateString.match(/^\d{4}/);
        if (!yearMatch) return false;
     }
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return false;
-    
-    // Must not be in the past
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return d >= today;
   };
 
-  if (!isValidName(brideName) || !isValidName(groomName) || !isValidName(venue) || !isValidName(village)) {
-    return res.status(400).json({ error: 'Please enter valid details' });
-  }
+  // Verbose Validation
+  if (!isValidName(brideName)) return res.status(400).json({ error: "Invalid Bride's Name. Use only letters." });
+  if (!isValidName(groomName)) return res.status(400).json({ error: "Invalid Groom's Name. Use only letters." });
+  if (!isValidName(venue)) return res.status(400).json({ error: "Invalid Venue name. Use only letters." });
+  if (!isValidName(village)) return res.status(400).json({ error: "Invalid Village/Town name. Use only letters." });
 
   if (!isValidFutureDate(date)) {
-    return res.status(400).json({ error: 'Wedding or reception date cannot be in the past. Please select today or a future date.' });
+    return res.status(400).json({ error: 'Wedding date cannot be in the past or invalid format.' });
   }
 
   const location = venue;
@@ -63,13 +63,24 @@ export const createWedding = async (req, res) => {
           upi_id: upiId,
           village: village,
           extra_cell: extraCell,
-          user_id: req.user.id // Enforce ownership
+          user_id: req.user.id, // Enforce ownership
+          // TEST MODE: Set to 2 minutes instead of 24 hours
+          // qr_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Default 24h expiry
+          qr_expires_at: new Date(Date.now() + 2 * 60 * 1000).toISOString() // Test Mode: 2 minutes
         }
       ])
       .select('id')
       .single();
 
-    if (insertError) throw new Error(insertError.message);
+    if (insertError) {
+      if (insertError.message.includes('column "qr_expires_at" does not exist')) {
+        return res.status(500).json({ 
+          error: 'Database schema mismatch', 
+          details: 'The qr_expires_at column is missing. Please run the migration or add the column to the weddings table.' 
+        });
+      }
+      throw new Error(insertError.message);
+    }
     const weddingId = insertData.id;
 
     // 2. Generate a guest form link using the created weddingId
@@ -107,7 +118,7 @@ export const getWeddingQR = async (req, res) => {
   try {
     const { data: wedding, error } = await supabase
       .from('weddings')
-      .select('id, bride_name, groom_name, location, wedding_date, village, qr_link')
+      .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_expires_at')
       .eq('id', id)
       .single();
 
@@ -127,7 +138,8 @@ export const getWeddingQR = async (req, res) => {
         date: wedding.wedding_date,
         village: wedding.village,
         shareLink: wedding.qr_link,
-        qrImageUrl: qrImage
+        qrImageUrl: qrImage,
+        qrExpiresAt: wedding.qr_expires_at
       }
     });
 
@@ -150,5 +162,44 @@ export const getWeddings = async (req, res) => {
   } catch (error) {
     console.error('Error fetching weddings:', error);
     res.status(500).json({ error: 'Failed to fetch weddings', details: error.message });
+  }
+};
+
+export const extendWeddingQR = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // 1. Check ownership and current status
+    const { data: wedding, error: fetchError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (fetchError || !wedding) {
+      return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
+    }
+
+    // 2. Extend expiration to now + 24 hours
+    // TEST MODE: Set to 2 minutes instead of 24 hours
+    // const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const newExpiry = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // Test Mode: 2 minutes
+
+    const { error: updateError } = await supabase
+      .from('weddings')
+      .update({ qr_expires_at: newExpiry })
+      .eq('id', id);
+
+    if (updateError) throw new Error(updateError.message);
+
+    res.status(200).json({
+      message: 'QR window extended for 2 minutes (TEST MODE)',
+      qrExpiresAt: newExpiry
+    });
+
+  } catch (error) {
+    console.error('Error extending QR:', error);
+    res.status(500).json({ error: 'Failed to extend QR window', details: error.message });
   }
 };

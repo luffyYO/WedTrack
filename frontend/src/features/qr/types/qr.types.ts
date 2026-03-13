@@ -10,6 +10,8 @@ export interface QRData {
     qrImageUrl: string;
     /** Public shareable link encoded in the QR */
     shareLink: string;
+    /** Timestamp when the QR expires */
+    qrExpiresAt?: string;
 }
 
 // ─── Fetch State (discriminated union) ───────────────────────────────────────

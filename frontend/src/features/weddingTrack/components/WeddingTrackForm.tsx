@@ -1,6 +1,7 @@
 import { type ChangeEvent } from 'react';
 import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import DatePicker from '@/components/ui/DatePicker';
 import type { WeddingTrackFormData, WeddingTrackFormErrors } from '../types/weddingTrack.types';
 
 interface WeddingTrackFormProps {
@@ -104,16 +105,14 @@ export default function WeddingTrackForm({
 
                 {/* Row 3: Date & Village side by side */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
+                    <DatePicker
                         id="date"
                         label={FIELD_LABELS.date}
-                        type="date"
-                        min={today}
-                        max="9999-12-31"
                         value={data.date}
-                        onChange={handleChange('date')}
+                        onChange={(val: string) => onChange('date', val)}
                         error={errors.date}
                         disabled={disabled}
+                        min={today}
                         fullWidth
                     />
                     <Input

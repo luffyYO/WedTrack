@@ -92,7 +92,10 @@ export default function WeddingTrackCreatePage() {
       // Navigate to QR page — backend is now the source of truth
       navigate(`/wedding-track/qr/${res.weddingId}`);
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to create wedding track. Please enter valid details';
+      const apiData = err.response?.data;
+      const message = apiData?.details 
+        ? `${apiData.error || 'Error'}: ${apiData.details}`
+        : (apiData?.error || 'Failed to create wedding track. Please enter valid details');
       setApiError(message);
       setFormState((prev) => ({ ...prev, isSubmitting: false }));
     }
