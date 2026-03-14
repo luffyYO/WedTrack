@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/config/supabaseClient";
+
 export default function LoginPage(){
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,13 +30,15 @@ export default function LoginPage(){
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-white to-pink-50">
-      <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl border border-rose-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--color-primary-50)] via-white to-[var(--color-primary-100)]">
+      <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
 
-        {/* Logo / Title */}
+        {/* Logo / Title (W logo) */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100 mb-4">
-            <span className="text-2xl">💍</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-700 mb-4">
+            <svg viewBox="0 0 14 14" fill="none" className="w-5 h-5">
+              <path d="M2 4L4.5 10L7 5.5L9.5 10L12 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-800">WedTrack</h1>
           <p className="text-gray-500 mt-1 text-sm">Sign in to your account</p>
@@ -53,7 +56,7 @@ export default function LoginPage(){
           <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
           <input
             type="email"
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-gray-800 transition"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
             placeholder="you@example.com"
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -64,7 +67,7 @@ export default function LoginPage(){
           <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <input
             type="password"
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-gray-800 transition"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
             placeholder="••••••••"
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -74,7 +77,7 @@ export default function LoginPage(){
         <button
           onClick={login}
           disabled={loading}
-          className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg transition disabled:opacity-60 mb-3"
+          className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-3"
         >
           {loading ? "Signing in..." : "Sign In"}
         </button>
@@ -103,7 +106,7 @@ export default function LoginPage(){
         {/* Sign Up Link */}
         <p className="text-center text-sm text-gray-500 mt-6">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-rose-500 font-semibold hover:text-rose-600 transition">
+          <Link to="/signup" className="text-[var(--color-primary-600)] font-semibold hover:opacity-90 transition">
             Sign up
           </Link>
         </p>
