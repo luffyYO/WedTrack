@@ -90,17 +90,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center justify-center gap-2">
+                                        <div className="flex items-center justify-center gap-2 min-w-[120px]">
                                             {guest.is_paid ? (
                                                 <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                                     Verified
                                                 </span>
                                             ) : (
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                     {onConfirm && (
                                                         <button
                                                             onClick={() => onConfirm(guest.id)}
-                                                            className="bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm"
+                                                            className="bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition-all shadow-sm active:scale-95"
                                                         >
                                                             Paid
                                                         </button>
@@ -108,7 +108,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                     {onDelete && (
                                                         <button
                                                             onClick={() => onDelete(guest.id)}
-                                                            className="bg-white border border-red-100 text-red-500 hover:bg-red-50 font-bold px-3 py-1.5 rounded-lg text-xs transition-all"
+                                                            className="bg-white border border-red-100 text-red-500 hover:bg-red-50 font-bold px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition-all active:scale-95"
                                                         >
                                                             Cancel
                                                         </button>
@@ -116,7 +116,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                 </div>
                                             )}
                                             {!guest.is_paid && (
-                                                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider group-hover:hidden">
+                                                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider hidden sm:block sm:group-hover:hidden">
                                                     Pending
                                                 </span>
                                             )}

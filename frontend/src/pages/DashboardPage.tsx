@@ -178,7 +178,7 @@ export default function DashboardPage() {
                     <Button onClick={() => navigate('/wedding-track/new')}>Create New Wedding Track</Button>
                 </div>
             ) : (
-                <div className="mt-6 space-y-6">
+                <div className="mt-6 space-y-8 max-w-[900px] mx-auto">
                     {/* Wedding Selector */}
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                         <span className="text-sm font-semibold text-gray-700">Displaying data for:</span>
@@ -193,6 +193,47 @@ export default function DashboardPage() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Stats Overview - Balanced 2x2 Grid */}
+                    <div className="grid grid-cols-2 gap-4 max-w-[700px] mx-auto">
+                        {/* Total Collected */}
+                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
+                            <span className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide">Total Collected</span>
+                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 flex items-center gap-0.5 sm:gap-1">
+                                <IndianRupee size={16} className="text-primary-500 sm:w-6 sm:h-6"/>
+                                {totalCollected.toLocaleString('en-IN')}
+                            </h3>
+                            <span className="text-[10px] sm:text-xs text-gray-400 font-medium">Verified Payments</span>
+                        </div>
+
+                        {/* Total Gifts */}
+                        <div className="bg-[linear-gradient(135deg,var(--color-primary-600),var(--color-primary-700))] p-4 sm:p-4.5 rounded-2xl shadow-md border-none flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px] text-white">
+                            <span className="text-white/80 text-sm sm:text-base font-bold uppercase tracking-wide">Verified Gifts</span>
+                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black flex items-center gap-1.5 sm:gap-2">
+                                <Users size={16} className="text-white/80 sm:w-6 sm:h-6"/>
+                                {totalVerifiedGifts}
+                            </h3>
+                            <span className="text-[10px] sm:text-xs text-white/60 font-medium">Verified Guests</span>
+                        </div>
+
+                        {/* Total Registered (New 4th Card for Balance) */}
+                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
+                            <span className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide">Total Registered</span>
+                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">
+                                {guests.length}
+                            </h3>
+                            <span className="text-[10px] sm:text-xs text-gray-400 font-medium">All Submissions</span>
+                        </div>
+
+                        {/* Pending Verifications */}
+                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-orange-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
+                            <span className="text-orange-500 text-sm sm:text-base font-bold uppercase tracking-wide">Pending</span>
+                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-orange-600">
+                                {pendingGifts}
+                            </h3>
+                            <span className="text-[10px] sm:text-xs text-orange-400 font-medium">Awaiting Confirmation</span>
+                        </div>
                     </div>
 
                     {/* Search & Filtering System */}
@@ -231,33 +272,6 @@ export default function DashboardPage() {
                                 selectedPaymentMethod={selectedPaymentMethod}
                             />
                         )}
-                    </div>
-
-                    {/* Stats Overview */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-1">
-                            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Total Collected</span>
-                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-1">
-                                <IndianRupee size={20} className="text-primary-500"/>
-                                {totalCollected.toLocaleString('en-IN')}
-                            </h3>
-                            <span className="text-[10px] text-gray-400 mt-1">From Verified Payments</span>
-                        </div>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-start gap-1">
-                            <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Total Gifts</span>
-                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <Users size={20} className="text-purple-500"/>
-                                {totalVerifiedGifts}
-                            </h3>
-                            <span className="text-[10px] text-gray-400 mt-1">Verified Guests</span>
-                        </div>
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100 flex flex-col items-start gap-1 lg:col-span-2">
-                            <span className="text-orange-500 text-xs font-semibold uppercase tracking-wide">Pending Verifications</span>
-                            <h3 className="text-2xl font-bold text-orange-600 flex items-center gap-2">
-                                {pendingGifts}
-                            </h3>
-                            <span className="text-[10px] text-orange-400 mt-1">Guests waiting for Host Confirmation</span>
-                        </div>
                     </div>
 
                     {/* Search Results / Full Table */}
