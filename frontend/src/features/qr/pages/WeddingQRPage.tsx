@@ -8,18 +8,16 @@ import { qrService } from '../services/qrService';
 import QRDisplay from '../components/QRDisplay';
 import QRActionButtons from '../components/QRActionButtons';
 import type { QRFetchState, QRData } from '../types/qr.types';
+import { WeddingNameDisplay } from '@/components/ui';
 
 // ─── Decorative ring divider (SVG, theme-neutral) ────────────────────────────
 
 function RingDivider() {
     return (
-        <div className="flex items-center justify-center gap-3 my-5 select-none" aria-hidden="true">
-            <span className="flex-1 max-w-[80px] h-px bg-[var(--color-border)]" />
-            <svg viewBox="0 0 48 20" fill="none" className="w-12 h-5 text-neutral-300">
-                <circle cx="14" cy="10" r="8" stroke="currentColor" strokeWidth="1.8" />
-                <circle cx="34" cy="10" r="8" stroke="currentColor" strokeWidth="1.8" />
-            </svg>
-            <span className="flex-1 max-w-[80px] h-px bg-[var(--color-border)]" />
+        <div className="flex items-center justify-center gap-3 my-6 select-none" aria-hidden="true">
+            <span className="flex-1 max-w-[120px] h-[1.5px] bg-gray-100" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-400 opacity-50" />
+            <span className="flex-1 max-w-[120px] h-[1.5px] bg-gray-100" />
         </div>
     );
 }
@@ -136,11 +134,14 @@ export default function WeddingQRPage() {
                         <div className="h-8 w-64 rounded-[var(--radius-md)] bg-neutral-100 animate-pulse mx-auto" />
                         <div className="h-4 w-40 rounded-[var(--radius-md)] bg-neutral-100 animate-pulse mx-auto" />
                     </div>
-                ) : isSuccess ? (
+                ) : isSuccess && qrData ? (
                     <>
-                        <h1 className="text-display-sm text-[var(--color-text-primary)] tracking-tight">
-                            {weddingTitle}
-                        </h1>
+                        <WeddingNameDisplay 
+                            brideName={qrData.brideName} 
+                            groomName={qrData.groomName} 
+                            size="xl" 
+                            className="mb-1"
+                        />
                         {qrData?.venue && (
                             <p className="text-body-sm text-[var(--color-text-secondary)] mt-1">
                                 {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}

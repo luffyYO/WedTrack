@@ -11,7 +11,8 @@ export const submitGuestForm = async (req, res) => {
     village, 
     amount, 
     paymentType, 
-    wishes 
+    wishes,
+    giftSide 
   } = req.body;
 
   // Trim and sanitize inputs
@@ -61,6 +62,11 @@ export const submitGuestForm = async (req, res) => {
     return res.status(400).json({ error: 'Amount must be a valid number greater than 0.' });
   }
 
+  // Gift Side Validation
+  if (!giftSide || (giftSide !== 'bride' && giftSide !== 'groom')) {
+    return res.status(400).json({ error: 'Please select Bride or Groom side.' });
+  }
+
   try {
     // 1. Check if QR is expired
     const { data: wedding, error: fetchError } = await supabase
@@ -94,6 +100,7 @@ export const submitGuestForm = async (req, res) => {
           amount: numericAmount,
           payment_type: paymentType,
           wishes: wishes,
+          gift_side: giftSide,
           is_paid: false // Host must manually verify payment
         }
       ])
@@ -114,6 +121,7 @@ export const submitGuestForm = async (req, res) => {
 
 export const getGuestsByWedding = async (req, res) => {
   const { weddingId } = req.params;
+  const { side } = req.query;
 
   try {
     // Security check: Ensure the wedding belongs to the user
@@ -128,11 +136,16 @@ export const getGuestsByWedding = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    const { data: guests, error } = await supabase
+    let query = supabase
       .from('guests')
       .select('*')
-      .eq('wedding_id', weddingId)
-      .order('created_at', { ascending: false });
+      .eq('wedding_id', weddingId);
+
+    if (side && (side === 'bride' || side === 'groom')) {
+      query = query.eq('gift_side', side.toLowerCase());
+    }
+
+    const { data: guests, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
 

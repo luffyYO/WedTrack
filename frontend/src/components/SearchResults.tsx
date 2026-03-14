@@ -13,6 +13,7 @@ interface Guest {
     amount: number;
     payment_type: string;
     is_paid: boolean;
+    gift_side?: string;
     created_at: string;
 }
 
@@ -41,14 +42,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-gray-500">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50/50 font-bold border-b border-gray-100">
+                    <thead className="text-[11px] text-gray-700 uppercase bg-gray-50/50 font-black border-b border-gray-100">
                         <tr>
-                            <th className="px-6 py-5">Guest Name</th>
-                            <th className="px-6 py-5">Father's Name</th>
-                            <th className="px-6 py-5">Location</th>
-                            <th className="px-6 py-5 text-right">Amount</th>
-                            <th className="px-6 py-5">Date & Time</th>
-                            <th className="px-6 py-5 text-center">Status / Action</th>
+                            <th className="px-4 py-3">Guest Name</th>
+                            <th className="px-4 py-3">Father's Name</th>
+                            <th className="px-4 py-3">Location</th>
+                            <th className="px-4 py-3 text-right">Amount</th>
+                            <th className="px-4 py-3">Date & Time</th>
+                            <th className="px-4 py-3 text-center">Status / Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -60,47 +61,47 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                 
                             return (
                                 <tr key={guest.id} className="hover:bg-primary-50/30 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-primary-100 text-primary-700 p-2 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-all">
-                                                <User size={14} />
+                                    <td className="px-4 py-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-primary-50 text-primary-600 p-1.5 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-all">
+                                                <User size={12} />
                                             </div>
-                                            <span className="font-bold text-gray-900">{guest.first_name} {guest.last_name || ''}</span>
+                                            <span className="font-bold text-gray-900 text-sm">{guest.first_name} {guest.last_name || ''}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-500">
+                                    <td className="px-4 py-2.5 text-gray-500 text-xs font-medium">
                                         {guest.father_first_name} {guest.father_last_name || ''}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-gray-600">
-                                            <MapPin size={14} className="text-primary-400" />
-                                            <span className="font-medium">{guest.village || guest.district || '—'}</span>
+                                    <td className="px-4 py-2.5">
+                                        <div className="flex items-center gap-1.5 text-gray-600">
+                                            <MapPin size={12} className="text-primary-400" />
+                                            <span className="font-medium text-xs">{guest.village || guest.district || '—'}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-4 py-2.5 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="font-bold text-gray-900 text-base">₹{Number(guest.amount).toLocaleString('en-IN')}</span>
-                                            <span className="text-[10px] font-bold text-primary-500 uppercase tracking-tight">{guest.payment_type}</span>
+                                            <span className="font-extrabold text-gray-900 text-sm">₹{Number(guest.amount).toLocaleString('en-IN')}</span>
+                                            <span className="text-[9px] font-bold text-primary-500 uppercase tracking-tight">{guest.payment_type}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-4 py-2.5 whitespace-nowrap">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-900 font-medium">{formatDate(guest.created_at)}</span>
-                                            <span className="text-[11px] text-gray-400">{timeStr}</span>
+                                            <span className="text-gray-900 font-bold text-[12px]">{formatDate(guest.created_at)}</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">{timeStr}</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-center gap-2 min-w-[120px]">
+                                    <td className="px-4 py-2.5">
+                                        <div className="flex items-center justify-center gap-1.5 min-w-[100px]">
                                             {guest.is_paid ? (
-                                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                                <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-100">
                                                     Verified
                                                 </span>
                                             ) : (
-                                                <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                     {onConfirm && (
                                                         <button
                                                             onClick={() => onConfirm(guest.id)}
-                                                            className="bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition-all shadow-sm active:scale-95"
+                                                            className="bg-green-600 hover:bg-green-700 text-white font-black px-2.5 py-1 rounded-lg text-[10px] transition-all shadow-sm active:scale-95"
                                                         >
                                                             Paid
                                                         </button>
@@ -108,7 +109,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                     {onDelete && (
                                                         <button
                                                             onClick={() => onDelete(guest.id)}
-                                                            className="bg-white border border-red-100 text-red-500 hover:bg-red-50 font-bold px-3 py-1.5 rounded-lg text-[10px] sm:text-xs transition-all active:scale-95"
+                                                            className="bg-white border border-red-100 text-red-500 hover:bg-red-50 font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all active:scale-95"
                                                         >
                                                             Cancel
                                                         </button>
@@ -116,7 +117,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                 </div>
                                             )}
                                             {!guest.is_paid && (
-                                                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider hidden sm:block sm:group-hover:hidden">
+                                                <span className="bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-orange-100 hidden sm:block sm:group-hover:hidden">
                                                     Pending
                                                 </span>
                                             )}

@@ -4,6 +4,7 @@ import { Plus, LayoutDashboard, HeartHandshake, QrCode } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
+import { WeddingNameDisplay } from '@/components/ui';
 import apiClient from '@/api/client';
 import { useAuthStore } from '@/store';
 
@@ -35,10 +36,19 @@ export default function HomePage() {
                 title="Home Overview"
                 description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}!`}
                 action={
-                    <div className="mt-4 sm:mt-0 w-full sm:w-auto">
+                    <div className="mt-4 sm:mt-0 w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-[36px] py-1.5 px-3.5 text-sm rounded-lg"
+                            icon={<LayoutDashboard size={15} />}
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Open Dashboard
+                        </Button>
                         <Button
                             size="sm"
-                            fullWidth
+                            className="h-[36px] py-1.5 px-3.5 text-sm rounded-lg"
                             icon={<Plus size={15} />}
                             onClick={() => navigate('/wedding-track/new')}
                         >
@@ -48,53 +58,32 @@ export default function HomePage() {
                 }
             />
 
-            <div className="mt-8 max-w-[900px] mx-auto space-y-10">
-                <div className="grid grid-cols-2 gap-4 max-w-[700px] mx-auto">
-                    {/* Primary Statistic Card */}
-                    <div className="bg-[linear-gradient(135deg,var(--color-primary-600),var(--color-primary-700))] rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden flex flex-col items-center justify-center text-center h-[105px] sm:h-[140px]">
-                        <div className="absolute -right-2 -top-4 opacity-10">
-                            <HeartHandshake size={50} className="sm:w-[90px] sm:h-[90px]" />
+            <div className="mt-6 max-w-[900px] mx-auto space-y-8">
+                <div className="flex justify-center">
+                    {/* Compact Primary Statistic Card */}
+                    <div className="bg-[linear-gradient(135deg,var(--color-primary-600),var(--color-primary-700))] rounded-2xl p-4 text-white shadow-md relative overflow-hidden flex flex-col items-center justify-center text-center h-[110px] w-full max-w-[340px]">
+                        <div className="absolute -right-1 -top-2 opacity-10">
+                            <HeartHandshake size={60} />
                         </div>
-                        <div className="relative z-10 space-y-0.5">
-                            <h3 className="text-primary-100 font-bold uppercase tracking-wider text-xs sm:text-sm">
+                        <div className="relative z-10">
+                            <h3 className="text-primary-100 font-bold uppercase tracking-wider text-xs sm:text-[13px] mb-0.5">
                                 Weddings Tracked
                             </h3>
                             {loading ? (
-                                <div className="animate-pulse h-8 w-12 sm:h-12 sm:w-20 bg-white/20 rounded mx-auto mt-2"></div>
+                                <div className="animate-pulse h-8 w-12 bg-white/20 rounded mx-auto mt-1"></div>
                             ) : (
-                                <div className="text-3xl sm:text-4xl lg:text-4xl font-black tracking-tight leading-none">
+                                <div className="text-3xl sm:text-[36px] font-black tracking-tight leading-none">
                                     {weddings.length}
                                 </div>
                             )}
-                            <div className="text-[9px] sm:text-[10px] text-white/60 font-medium uppercase tracking-tighter">Active Tracks</div>
+                            <div className="text-[11px] text-white/60 font-medium uppercase tracking-tighter mt-0.5">Active Tracks</div>
                         </div>
-                    </div>
-
-                    {/* Quick Actions Card */}
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col items-center justify-center text-center h-[105px] sm:h-[140px] gap-2">
-                        <div className="bg-primary-50 p-1.5 sm:p-2.5 rounded-full text-primary-600">
-                            <LayoutDashboard size={18} className="sm:w-6 sm:h-6" />
-                        </div>
-                        <div className="space-y-0.5">
-                            <h3 className="text-gray-900 font-black text-xs sm:text-base leading-tight">Data Dashboard</h3>
-                            <p className="text-gray-500 text-[10px] hidden sm:block max-w-[150px] leading-tight">
-                                Gift insights & stats
-                            </p>
-                        </div>
-                        <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="mt-1 sm:mt-0 text-[10px] sm:text-xs py-0.5 sm:py-1.5 h-auto px-2 sm:px-4"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Open Dashboard
-                        </Button>
                     </div>
                 </div>
 
                 {/* Weddings List */}
-                <div className="mt-2">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">Your Tracked Weddings</h2>
+                <div className="mt-0">
+                    <h2 className="text-xl font-bold text-gray-900 mb-5">Your Tracked Weddings</h2>
                 
                 {loading ? (
                     <div className="w-full flex justify-center py-10">
@@ -109,7 +98,12 @@ export default function HomePage() {
                         {weddings.map(w => (
                             <div key={w.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col justify-between">
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{w.bride_name} & {w.groom_name}</h3>
+                                    <WeddingNameDisplay 
+                                        brideName={w.bride_name} 
+                                        groomName={w.groom_name} 
+                                        size="md"
+                                        className="mb-1"
+                                    />
                                     <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                                         {formatDate(w.date, { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                     </p>

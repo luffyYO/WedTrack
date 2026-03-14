@@ -46,12 +46,17 @@ export default function DashboardPage() {
         fetchWeddings();
     }, []);
 
-    // Fetch Guests when a Wedding is selected
+    // Fetch Guests when a Wedding is selected or Side filter changes
     useEffect(() => {
         const fetchGuests = async () => {
             if (!selectedWedding) return;
             try {
-                const { data } = await apiClient.get(`/guests/wedding/${selectedWedding}`);
+                let url = `/guests/wedding/${selectedWedding}`;
+                if (activeFilter === 'Side' && selectedPaymentMethod) {
+                    url += `?side=${selectedPaymentMethod.toLowerCase()}`;
+                }
+                
+                const { data } = await apiClient.get(url);
                 if (data.data) {
                     setGuests(data.data);
                     setFilteredGuests(data.data);
@@ -61,7 +66,7 @@ export default function DashboardPage() {
             }
         };
         fetchGuests();
-    }, [selectedWedding]);
+    }, [selectedWedding, activeFilter, selectedPaymentMethod]);
 
     // Filtering Logic
     useEffect(() => {
@@ -97,6 +102,8 @@ export default function DashboardPage() {
                 );
             }
         }
+
+        // Local side filtering removed as it's now handled by the API
 
         setFilteredGuests(result);
     }, [searchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);

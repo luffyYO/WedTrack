@@ -48,8 +48,10 @@ export default function SignupPage() {
 
       {/* Logo / Title */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-rose-100 mb-4">
-          <span className="text-2xl">💍</span>
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-700 mb-4">
+          <svg viewBox="0 0 14 14" fill="none" className="w-5 h-5">
+            <path d="M2 4L4.5 10L7 5.5L9.5 10L12 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
         <h1 className="text-3xl font-bold text-gray-800">Create an Account</h1>
         <p className="text-gray-500 mt-1 text-sm">Join WedTrack today</p>
@@ -72,7 +74,7 @@ export default function SignupPage() {
         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input
           type="email"
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-gray-800 transition"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 text-gray-800 transition"
           placeholder="you@example.com"
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -83,7 +85,7 @@ export default function SignupPage() {
         <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
         <input
           type="password"
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-rose-400 text-gray-800 transition"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-400 text-gray-800 transition"
           placeholder="••••••••"
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -93,7 +95,7 @@ export default function SignupPage() {
       <button
         onClick={signUp}
         disabled={loading}
-        className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white font-semibold rounded-lg transition disabled:opacity-60 mb-3"
+        className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition disabled:opacity-60 mb-3"
       >
         {loading ? "Creating Account..." : "Sign Up"}
       </button>
@@ -122,7 +124,7 @@ export default function SignupPage() {
       {/* Login Link */}
       <p className="text-center text-sm text-gray-500 mt-6">
         Already have an account?{" "}
-        <Link to="/login" className="text-rose-500 font-semibold hover:text-rose-600 transition">
+        <Link to="/login" className="text-primary-600 font-semibold hover:text-primary-700 transition">
           Sign In
         </Link>
       </p>

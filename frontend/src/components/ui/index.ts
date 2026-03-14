@@ -6,3 +6,4 @@ export { default as Badge } from './Badge';
 export { default as Modal } from './Modal';
 export { default as Toggle } from './Toggle';
 export { default as Dropdown } from './Dropdown';
+export { default as WeddingNameDisplay } from './WeddingNameDisplay';

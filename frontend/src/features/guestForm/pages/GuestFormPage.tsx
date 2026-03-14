@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import apiClient from '@/api/client';
+import { WeddingNameDisplay } from '@/components/ui';
 
 export default function GuestFormPage() {
     const { weddingId } = useParams<{ weddingId: string }>();
@@ -21,7 +22,8 @@ export default function GuestFormPage() {
         village: '',
         amount: '',
         paymentType: 'Cash',
-        wishes: ''
+        wishes: '',
+        giftSide: ''
     });
 
     useEffect(() => {
@@ -135,9 +137,12 @@ export default function GuestFormPage() {
             <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 {/* Header Banner */}
                 <div className="h-40 bg-gradient-to-r from-primary-600 to-purple-600 flex flex-col items-center justify-center text-white p-6 text-center">
-                    <h1 className="text-2xl font-bold tracking-tight mb-1">
-                        {wedding.brideName} & {wedding.groomName}
-                    </h1>
+                    <WeddingNameDisplay 
+                        brideName={wedding.brideName} 
+                        groomName={wedding.groomName} 
+                        size="lg" 
+                        className="mb-1 text-white [&>span]:text-white [&>.text-primary-600]:text-white"
+                    />
                     <p className="opacity-90 text-sm font-medium tracking-wide uppercase">
                         Wedding Celebration
                     </p>
@@ -202,6 +207,36 @@ export default function GuestFormPage() {
                     </div>
 
                     <div>
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Gift For / Side <span className="text-red-500">*</span></label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${formData.giftSide === 'bride' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-100 bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>
+                                <input 
+                                    required 
+                                    type="radio" 
+                                    name="giftSide" 
+                                    value="bride" 
+                                    checked={formData.giftSide === 'bride'} 
+                                    onChange={handleChange} 
+                                    className="opacity-0 absolute"
+                                />
+                                <span className="font-bold">Bride Side</span>
+                            </label>
+                            <label className={`flex items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer ${formData.giftSide === 'groom' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-100 bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>
+                                <input 
+                                    required 
+                                    type="radio" 
+                                    name="giftSide" 
+                                    value="groom" 
+                                    checked={formData.giftSide === 'groom'} 
+                                    onChange={handleChange} 
+                                    className="opacity-0 absolute"
+                                />
+                                <span className="font-bold">Groom Side</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
                         <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Wishes for the Couple</label>
                         <textarea rows={3} name="wishes" value={formData.wishes} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none" placeholder="Write your blessings here..." />
                     </div>
@@ -213,7 +248,9 @@ export default function GuestFormPage() {
                     >
                         {submitting ? 'Submitting...' : 'Submit Details'}
                     </button>
-                    <p className="text-center text-xs text-gray-400 mt-4 px-4">All data is securely sent to {wedding.brideName} & {wedding.groomName}</p>
+                    <p className="text-center text-xs text-gray-400 mt-4 px-4">
+                        All data is securely sent to <span className="font-semibold text-gray-500">{wedding.brideName} & {wedding.groomName}</span>
+                    </p>
                 </form>
             </div>
         </div>

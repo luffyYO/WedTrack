@@ -33,19 +33,12 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get("/", async (req, res) => {
-  try {
-    // Ping Supabase over HTTPS to confirm connection
-    const { error } = await supabase.from('weddings').select('id').limit(1);
-    if (error) throw new Error(error.message);
-
-    res.json({
-      message: "Database connected successfully via Supabase REST API",
-      time: new Date().toISOString(),
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Database connection failed", details: error.message });
-  }
+app.get("/", (req, res) => {
+  res.json({
+    status: "Healthy",
+    message: "WedTrack Backend is running",
+    time: new Date().toISOString(),
+  });
 });
 
 
