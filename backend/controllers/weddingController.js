@@ -27,6 +27,9 @@ export const createWedding = async (req, res) => {
   const nameRegex = /^[A-Za-z\s]{2,50}$/;
   const isValidName = (name) => nameRegex.test(name);
 
+  // IST offset constant (UTC+05:30)
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
   const isValidFutureDate = (dateString) => {
     if (!dateString) return false;
     // Require YYYY-MM-DD format
@@ -34,9 +37,10 @@ export const createWedding = async (req, res) => {
 
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return d >= today;
+
+    // Compare against today in IST (not UTC) so that dates valid in IST are not rejected.
+    const todayIST = new Date(Date.now() + IST_OFFSET_MS).toISOString().slice(0, 10);
+    return dateString >= todayIST;
   };
 
   // Verbose Validation
@@ -73,23 +77,31 @@ export const createWedding = async (req, res) => {
     const location = venue;
     const frontendUrl = process.env.FRONTEND_URL || 'https://wedtrackss.vercel.app';
 
-    // Compute activation & expiry times based on whether the event is today or in the future.
-    // Dates are compared in UTC (YYYY-MM-DD) to match Supabase storage.
-    const todayUtc = new Date().toISOString().slice(0, 10);
-    const isToday = weddingDate === todayUtc;
+    // ── Timezone-aware activation & expiry ──────────────────────────────────
+    // The wedding date is entered by the user in IST (Asia/Kolkata, UTC+05:30).
+    // All timestamps must be anchored to IST midnight, NOT UTC midnight.
+    // UTC midnight on a date is 05:30 AM IST — 5.5 hours too late.
+    //
+    // Fix: use Date.now() + IST_OFFSET_MS to get the current IST calendar date,
+    // and `T00:00:00+05:30` to anchor timestamps to IST midnight.
+    // IST_OFFSET_MS is already declared above in the validation block.
+    const IST_24H_MS = 24 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const todayIST = nowIST.toISOString().slice(0, 10); // 'YYYY-MM-DD' in IST
+    const isToday = weddingDate === todayIST;
     const now = new Date();
 
     let qrActivationTime, qrExpiresAt;
     if (isToday) {
-      // Event is today → QR is active immediately, expires 24 h from now
+      // Event is today in IST → QR is active immediately, expires 24 h from right now.
       qrActivationTime = now.toISOString();
-      qrExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      qrExpiresAt = new Date(now.getTime() + IST_24H_MS).toISOString();
     } else {
-      // Event is in the future → QR activates at 00:00 UTC on the wedding date,
-      // expires exactly 24 h later (i.e., 00:00 UTC the following day)
-      qrActivationTime = new Date(`${weddingDate}T00:00:00.000Z`).toISOString();
-      qrExpiresAt = new Date(`${weddingDate}T00:00:00.000Z`).valueOf() + 24 * 60 * 60 * 1000;
-      qrExpiresAt = new Date(qrExpiresAt).toISOString();
+      // Event is a future date → QR activates at 00:00 IST on the wedding date.
+      // `T00:00:00+05:30` correctly expresses midnight in IST as a UTC timestamp.
+      // e.g., 2026-03-17T00:00:00+05:30 = 2026-03-16T18:30:00.000Z
+      qrActivationTime = new Date(`${weddingDate}T00:00:00+05:30`).toISOString();
+      qrExpiresAt     = new Date(new Date(`${weddingDate}T00:00:00+05:30`).getTime() + IST_24H_MS).toISOString();
     }
 
     // 1. Insert a new record into the weddings table via Supabase API

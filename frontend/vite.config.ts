@@ -13,9 +13,34 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Explicitly declare the output directory (Vite default is 'dist', but
+    // being explicit prevents any ambiguity during Vercel's build step).
+    outDir: 'dist',
+    // Raise warning threshold slightly — main app chunk may still be large.
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // Split heavy vendor libraries into separate cacheable chunks.
+        manualChunks: {
+          'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-pdf':      ['jspdf', 'jspdf-autotable'],
+          'vendor-ui':       ['lucide-react', 'clsx', 'tailwind-merge'],
+          'vendor-axios':    ['axios'],
+          'vendor-zustand':  ['zustand'],
+        },
+      },
+    },
+  },
+  // ── Local development only ────────────────────────────────────────────────
+  // This block is ignored entirely by `vite build` (production).
+  // host: '0.0.0.0' allows phone access on the same Wi-Fi for QR scanning.
   server: {
-    host: '0.0.0.0',  // Allow access from phones on the same network (for QR scanning)
+    host: '0.0.0.0',
     port: 3000,
-    open: true,
+    // NOTE: `open: true` removed — it breaks CI/build environments where
+    // there is no browser available. Run `npm run dev` locally to auto-open.
   },
 });
+
