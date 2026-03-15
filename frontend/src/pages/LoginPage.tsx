@@ -1,21 +1,73 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/config/supabaseClient";
 
-export default function LoginPage(){
+export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [step, setStep] = useState(1); // 1: Email, 2: OTP
   const navigate = useNavigate();
 
-  const login = async () => {
+  const sendOtp = async () => {
+    if (!email) {
+      setError("Please enter your email");
+      return;
+    }
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setMessage("");
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+
     setLoading(false);
-    if (error) setError(error.message);
-    else navigate("/dashboard");
+    if (error) {
+      setError(error.message);
+    } else {
+      setStep(2);
+      setMessage("Check your email for the code!");
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (!otp) {
+      setError("Please enter the OTP");
+      return;
+    }
+    setLoading(true);
+    setError("");
+
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: 'magiclink' // Note: 'magiclink' works for OTPs sent via signInWithOtp if configured correctly, or use 'email' depending on Supabase version
+    });
+
+    // Try 'email' type if 'magiclink' fails, or if you specifically enabled OTP in Supabase
+    if (error) {
+      const { error: error2 } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email'
+      });
+      
+      setLoading(false);
+      if (error2) {
+        setError(error2.message);
+      } else {
+        navigate("/home");
+      }
+    } else {
+      setLoading(false);
+      navigate("/home");
+    }
   };
 
   const googleLogin = async () => {
@@ -23,7 +75,7 @@ export default function LoginPage(){
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/home`,
       },
     });
     if (error) setError(error.message);
@@ -33,7 +85,7 @@ export default function LoginPage(){
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--color-primary-50)] via-white to-[var(--color-primary-100)]">
       <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
 
-        {/* Logo / Title (W logo) */}
+        {/* Logo / Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-700 mb-4">
             <svg viewBox="0 0 14 14" fill="none" className="w-5 h-5">
@@ -41,51 +93,79 @@ export default function LoginPage(){
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-800">WedTrack</h1>
-          <p className="text-gray-500 mt-1 text-sm">Sign in to your account</p>
+          <p className="text-gray-500 mt-1 text-sm">
+            {step === 1 ? "Sign in to your account" : "Enter the code sent to your email"}
+          </p>
         </div>
 
-        {/* Error */}
+        {/* Error/Success Messages */}
         {error && (
           <div className="mb-4 px-4 py-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
             {error}
           </div>
         )}
+        {message && (
+          <div className="mb-4 px-4 py-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">
+            {message}
+          </div>
+        )}
 
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
-            placeholder="you@example.com"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+        {step === 1 ? (
+          <>
+            {/* Email Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
+                placeholder="you@example.com"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        {/* Password */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            type="password"
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
-            placeholder="••••••••"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+            <button
+              onClick={sendOtp}
+              disabled={loading}
+              className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-6"
+            >
+              {loading ? "Sending..." : "Send Login Code"}
+            </button>
+          </>
+        ) : (
+          <>
+            {/* OTP Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Passcode</label>
+              <input
+                type="text"
+                value={otp}
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 tracking-widest text-center text-xl font-bold transition"
+                placeholder="000000"
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            </div>
 
-        {/* Login Button */}
-        <button
-          onClick={login}
-          disabled={loading}
-          className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-3"
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
+            <button
+              onClick={verifyOtp}
+              disabled={loading}
+              className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-4"
+            >
+              {loading ? "Verifying..." : "Verify & Sign In"}
+            </button>
+            <button 
+              onClick={() => setStep(1)}
+              className="w-full text-sm text-gray-500 hover:text-primary-600 font-medium transition"
+            >
+              Back to email
+            </button>
+          </>
+        )}
 
         {/* Divider */}
-        <div className="flex items-center my-4">
+        <div className="flex items-center my-6">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="mx-3 text-sm text-gray-400">or</span>
+          <span className="mx-3 text-sm text-gray-400 uppercase tracking-tighter">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
@@ -102,14 +182,6 @@ export default function LoginPage(){
           </svg>
           Continue with Google
         </button>
-
-        {/* Sign Up Link */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-[var(--color-primary-600)] font-semibold hover:opacity-90 transition">
-            Sign up
-          </Link>
-        </p>
       </div>
     </div>
   );

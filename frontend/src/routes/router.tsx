@@ -7,7 +7,6 @@ import ProtectedRoute from './ProtectedRoute';
 import HomePage from '@/pages/HomePage';
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
-import SignupPage from '@/pages/SignupPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import TasksPage from '@/pages/TasksPage';
@@ -25,7 +24,6 @@ const router = createBrowserRouter([
         element: <AuthLayout />,
         children: [
             { path: '/login', element: <LoginPage /> },
-            { path: '/signup', element: <SignupPage /> },
         ],
     },
     { path: '/', element: <LandingPage /> },

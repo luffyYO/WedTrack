@@ -83,7 +83,7 @@ export default function LandingPage() {
     }));
 
     return (
-        <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900 overflow-x-hidden relative" style={{ scrollPaddingTop: '80px' }}>
+        <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900 overflow-x-hidden relative">
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 shadow-sm">
                 <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
@@ -97,13 +97,6 @@ export default function LandingPage() {
                             className="text-neutral-600 hover:text-primary-600 font-bold"
                         >
                             Login
-                        </Button>
-                        <Button 
-                            size="sm"
-                            onClick={() => navigate('/signup')}
-                            className="bg-primary-600 hover:bg-primary-700 text-white shadow-md hover:shadow-lg transition-all rounded-full px-4 sm:px-6 py-2 font-bold whitespace-nowrap"
-                        >
-                            Signup
                         </Button>
                         <button 
                             className="p-2 text-neutral-600 hover:text-primary-600 transition-colors"
@@ -123,7 +116,7 @@ export default function LandingPage() {
             />
             
             {/* Wedding Background Decorations (Global) */}
-            <div className="wedding-bg">
+            <div className="wedding-bg fixed inset-0 z-0 overflow-hidden">
                 {[...Array(20)].map((_, i) => (
                     <div 
                         key={i} 
@@ -151,11 +144,11 @@ export default function LandingPage() {
                     />
                 ))}
 
-                <div className="floral-decor top-0 left-0 w-64 h-64 bg-[url('https://www.transparenttextures.com/patterns/floral-paper.png')] -rotate-45 opacity-10" />
-                <div className="floral-decor bottom-0 right-0 w-64 h-64 bg-[url('https://www.transparenttextures.com/patterns/floral-paper.png')] rotate-135 opacity-10" />
+                <div className="floral-decor absolute top-0 left-0 w-64 h-64 bg-[url('https://www.transparenttextures.com/patterns/floral-paper.png')] -rotate-45 opacity-10" />
+                <div className="floral-decor absolute bottom-0 right-0 w-64 h-64 bg-[url('https://www.transparenttextures.com/patterns/floral-paper.png')] rotate-135 opacity-10" />
             </div>
 
-            <main className="pt-2 sm:pt-4 relative z-10">
+            <main className="pt-16 sm:pt-20 relative z-10">
                 {/* Hero Section */}
                 <section className="relative py-4 sm:py-6 overflow-hidden px-4">
                     <div className="container mx-auto">
@@ -180,7 +173,7 @@ export default function LandingPage() {
                                 <div className="flex flex-col sm:flex-row items-center md:items-start gap-4 animate-fade-in-up delay-200">
                                     <Button 
                                         size="lg" 
-                                        onClick={() => navigate('/signup')} 
+                                        onClick={() => navigate('/login')} 
                                         className="w-full sm:w-auto px-10 py-4 bg-primary-600 hover:bg-primary-700 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all rounded-full text-lg font-bold"
                                     >
                                         Create Wedding QR

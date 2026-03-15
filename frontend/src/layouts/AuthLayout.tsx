@@ -9,7 +9,7 @@ export default function AuthLayout() {
     const { isAuthenticated, isLoading } = useAuthStore();
 
     if (isLoading) return null; // Or a simple spinner
-    if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+    if (isAuthenticated) return <Navigate to="/home" replace />;
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4">

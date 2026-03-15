@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
  * Guards routes that require authentication.
  * Redirects to /login if the user is not authenticated.
  */
-export default function ProtectedRoute({ redirectTo = '/' }: ProtectedRouteProps) {
+export default function ProtectedRoute({ redirectTo = '/login' }: ProtectedRouteProps) {
     const { isAuthenticated, isLoading } = useAuthStore();
 
     if (isLoading) {

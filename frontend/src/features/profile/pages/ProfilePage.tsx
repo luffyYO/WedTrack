@@ -126,7 +126,7 @@ export default function ProfilePage() {
         setIsLoading(true);
         await supabase.auth.signOut();
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     // ── Render States ───────────────────────────────────────────────────────────
