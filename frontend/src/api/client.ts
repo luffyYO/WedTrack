@@ -2,7 +2,7 @@ import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestCo
 import type { ApiError } from '@/types';
 import { supabase } from '@/config/supabaseClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:5000/api` : 'http://localhost:5000/api');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (typeof window !== 'undefined' ? `http://${window.location.hostname}:5005/api` : 'http://localhost:5005/api');
 
 const client: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -36,8 +36,12 @@ client.interceptors.response.use(
     (response) => response,
     (error: AxiosError<{ message?: string; code?: string }>) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('wedtrack_token');
-            window.location.href = '/login';
+            // Don't redirect on public pages (guest form, QR view)
+            const isPublicPage = window.location.pathname.startsWith('/guest-form');
+            if (!isPublicPage) {
+                localStorage.removeItem('wedtrack_token');
+                window.location.href = '/';
+            }
         }
 
         const apiError: ApiError = {

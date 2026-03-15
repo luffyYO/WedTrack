@@ -1,17 +1,18 @@
 Fetching one wedding via Supabase...
 Data sample: [
   {
-    "id": "12da6e28-3f10-4d66-804a-d3e1a60ebbbb",
-    "bride_name": "Priya",
-    "groom_name": "Rahul",
-    "location": "Hyderabad",
-    "wedding_date": "2026-05-10",
-    "qr_link": null,
-    "created_at": "2026-03-10T10:10:51.79678",
-    "village": null,
+    "id": "180610f1-8ec1-4081-b9d0-94ffba5dcb43",
+    "bride_name": "kamya",
+    "groom_name": "kishore",
+    "location": "royal mahal",
+    "wedding_date": "2028-02-22",
+    "qr_link": "http://172.18.0.171:3000/guest-form/180610f1-8ec1-4081-b9d0-94ffba5dcb43",
+    "created_at": "2026-03-12T04:40:06.104512",
+    "village": "delhi",
     "extra_cell": null,
     "upi_id": null,
-    "user_id": "333132bf-327f-449e-9951-9148473c1bba"
+    "user_id": "c4772da8-a98c-4b84-9f4c-1c2fb344d3f8",
+    "qr_expires_at": "2026-03-14T22:52:34.982263+00:00"
   }
 ]
-Columns present in Supabase response: id, bride_name, groom_name, location, wedding_date, qr_link, created_at, village, extra_cell, upi_id, user_id
+Columns present in Supabase response: id, bride_name, groom_name, location, wedding_date, qr_link, created_at, village, extra_cell, upi_id, user_id, qr_expires_at

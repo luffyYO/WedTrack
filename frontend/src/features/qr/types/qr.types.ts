@@ -12,6 +12,10 @@ export interface QRData {
     shareLink: string;
     /** Timestamp when the QR expires */
     qrExpiresAt?: string;
+    /** Timestamp when the QR activates */
+    qrActivationTime?: string;
+    /** Computed status from backend */
+    qrStatus?: 'inactive' | 'active' | 'expired';
 }
 
 // ─── Fetch State (discriminated union) ───────────────────────────────────────

@@ -4,7 +4,7 @@ import NavItemComponent from './NavItem';
 import type { NavItem } from '@/types';
 
 const NAV_ITEMS: NavItem[] = [
-    { label: 'Home', href: '/', icon: Home },
+    { label: 'Home', href: '/home', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Tasks', href: '/tasks', icon: CheckSquare },
     { label: 'Settings', href: '/settings', icon: Settings },

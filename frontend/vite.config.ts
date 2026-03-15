@@ -14,6 +14,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',  // Allow access from phones on the same network (for QR scanning)
     port: 3000,
     open: true,
   },

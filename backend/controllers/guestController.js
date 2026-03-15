@@ -27,39 +27,53 @@ export const submitGuestForm = async (req, res) => {
   // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
   const isValidName = (name) => {
     if (!name) return true; // Optional fields are checked if provided
-    if (name.length < 2 || name.length > 50) return false;
-    if (!/^[A-Za-z\s]+$/.test(name)) return false; // Only alphabets and spaces
-    if (/(.)\1{3,}/i.test(name)) return false; // e.g. aaaaa
-    if (/[bcdfghjklmnpqrstvwxyz]{5,}/i.test(name)) return false; // e.g. agfkgjafkjg
+    if (name.length < 2 || name.length > 100) return false;
+    // Allow more characters - sometimes names have hyphens or periods
+    if (!/^[A-Za-z\s\.\-]+$/.test(name)) return false; 
+    if (/(.)\1{4,}/i.test(name)) return false; // Relaxed repeated chars to 5
+    // Relaxed consonants to 10 - many Indian place names/names have long clusters
+    if (/[bcdfghjklmnpqrstvwxyz]{10,}/i.test(name)) return false; 
     return true;
   };
 
   // Required Field Checks
   if (!firstName || !isValidName(firstName)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.error('Validation failed: firstName invalid', { firstName });
+    return res.status(400).json({ message: 'First Name is required and must contain only letters.' });
   }
 
   // Optional Field Checks
   if (lastName && !isValidName(lastName)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.log('Validation failed: lastName', { lastName });
+    return res.status(400).json({ error: 'Invalid Last Name.' });
   }
   if (fatherFirstName && !isValidName(fatherFirstName)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.log('Validation failed: fatherFirstName', { fatherFirstName });
+    return res.status(400).json({ error: 'Invalid Father\'s First Name.' });
   }
   if (fatherLastName && !isValidName(fatherLastName)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.log('Validation failed: fatherLastName', { fatherLastName });
+    return res.status(400).json({ error: 'Invalid Father\'s Last Name.' });
   }
   if (district && !isValidName(district)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.log('Validation failed: district', { district });
+    return res.status(400).json({ error: 'Invalid District.' });
   }
   if (village && !isValidName(village)) {
-    return res.status(400).json({ error: 'Please enter meaningful information. Recheck the fields before submitting.' });
+    console.log('Validation failed: village', { village });
+    return res.status(400).json({ error: 'Invalid Village/City.' });
   }
 
   // Amount Validation
   const numericAmount = parseFloat(amount);
   if (isNaN(numericAmount) || numericAmount <= 0) {
-    return res.status(400).json({ error: 'Amount must be a valid number greater than 0.' });
+    console.error('Validation failed: amount is NaN or <= 0', { amount });
+    return res.status(400).json({ message: 'Amount must be a valid number greater than 0.' });
+  }
+
+  if (!weddingId) {
+    console.error('Validation failed: weddingId is missing');
+    return res.status(400).json({ message: 'Wedding ID is missing.' });
   }
 
   // Gift Side Validation
@@ -68,10 +82,10 @@ export const submitGuestForm = async (req, res) => {
   }
 
   try {
-    // 1. Check if QR is expired
+    // 1. Validate QR status using both activation_time and expiry
     const { data: wedding, error: fetchError } = await supabase
       .from('weddings')
-      .select('qr_expires_at')
+      .select('qr_activation_time, qr_expires_at')
       .eq('id', weddingId)
       .single();
 
@@ -80,8 +94,12 @@ export const submitGuestForm = async (req, res) => {
     }
 
     const now = new Date();
+    const activation = new Date(wedding.qr_activation_time);
     const expiry = new Date(wedding.qr_expires_at);
 
+    if (now < activation) {
+      return res.status(403).json({ error: 'QR Code Not Yet Active. This guest form will open on the event date.' });
+    }
     if (now >= expiry) {
       return res.status(403).json({ error: 'QR Code Expired. This guest submission link is no longer active.' });
     }

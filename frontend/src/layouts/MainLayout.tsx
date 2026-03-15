@@ -6,7 +6,7 @@ import TopBar from '@/components/navigation/TopBar';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 const PAGE_TITLES: Record<string, string> = {
-    '/': 'Home',
+    '/home': 'Home',
     '/dashboard': 'Dashboard',
     '/tasks': 'Tasks',
     '/profile': 'Profile',

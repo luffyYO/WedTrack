@@ -17,7 +17,7 @@ export function useAuth() {
             await supabase.auth.signOut();
         } finally {
             clearStore();
-            navigate('/login');
+            navigate('/');
         }
     }, [clearStore, navigate]);
 

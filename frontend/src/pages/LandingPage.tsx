@@ -83,9 +83,9 @@ export default function LandingPage() {
     }));
 
     return (
-        <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900 overflow-x-hidden relative">
+        <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900 overflow-x-hidden relative" style={{ scrollPaddingTop: '80px' }}>
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-100 shadow-sm">
                 <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
                     <Logo />
                     
@@ -124,16 +124,17 @@ export default function LandingPage() {
             
             {/* Wedding Background Decorations (Global) */}
             <div className="wedding-bg">
-                {[...Array(15)].map((_, i) => (
+                {[...Array(20)].map((_, i) => (
                     <div 
                         key={i} 
                         className="petal"
                         style={{
                             left: `${Math.random() * 100}vw`,
-                            width: `${15 + Math.random() * 20}px`,
-                            height: `${15 + Math.random() * 20}px`,
-                            animationDuration: `${10 + Math.random() * 10}s`,
-                            animationDelay: `${-Math.random() * 10}s`
+                            width: `${15 + Math.random() * 25}px`,
+                            height: `${15 + Math.random() * 25}px`,
+                            animationDuration: `${15 + Math.random() * 15}s, ${6 + Math.random() * 4}s`,
+                            animationDelay: `${-Math.random() * 20}s, 0s`,
+                            opacity: 0.6 + Math.random() * 0.4
                         }}
                     />
                 ))}
@@ -154,42 +155,58 @@ export default function LandingPage() {
                 <div className="floral-decor bottom-0 right-0 w-64 h-64 bg-[url('https://www.transparenttextures.com/patterns/floral-paper.png')] rotate-135 opacity-10" />
             </div>
 
-            <main className="pt-16 sm:pt-20 relative z-10">
+            <main className="pt-2 sm:pt-4 relative z-10">
                 {/* Hero Section */}
-                <section className="relative py-20 sm:py-32 overflow-hidden px-4">
-                    <div className="container mx-auto text-center">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 font-bold text-sm tracking-wide border border-primary-100 shadow-sm mb-8 animate-fade-in">
-                            <Sparkles size={16} />
-                            <span>Revolutionizing Wedding Planning</span>
-                        </div>
-                        
-                        <h1 className="text-4xl sm:text-7xl font-extrabold tracking-tight text-neutral-900 leading-[1.1] mb-8 animate-fade-in-up">
-                            The Future of <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">
-                                Wedding Management
-                            </span>
-                        </h1>
-                        
-                        <p className="text-lg sm:text-xl text-neutral-500 max-w-2xl mx-auto leading-relaxed mb-12 animate-fade-in-up delay-100">
-                            WedTrack simplifies every aspect of your special day. From guest entry to real-time payment tracking, we ensure your wedding is perfect.
-                        </p>
+                <section className="relative py-4 sm:py-6 overflow-hidden px-4">
+                    <div className="container mx-auto">
+                        <div className="grid md:grid-cols-2 gap-8 items-start">
+                            <div className="text-center md:text-left">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 font-bold text-sm tracking-wide border border-primary-100 shadow-sm mb-2 animate-fade-in">
+                                    <Sparkles size={16} />
+                                    <span>Revolutionizing Wedding Planning</span>
+                                </div>
+                                
+                                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.1] mb-3 animate-fade-in-up">
+                                    The Future of <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-primary-400">
+                                        Wedding Management
+                                    </span>
+                                </h1>
+                                
+                                <p className="text-lg sm:text-xl text-neutral-500 max-w-2xl leading-relaxed mb-4 animate-fade-in-up delay-100">
+                                    WedTrack simplifies every aspect of your special day. From guest entry to real-time payment tracking, we ensure your wedding is perfect.
+                                </p>
 
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200">
-                            <Button 
-                                size="lg" 
-                                onClick={() => navigate('/signup')} 
-                                className="w-full sm:w-auto px-10 py-4 bg-primary-600 hover:bg-primary-700 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all rounded-full text-lg font-bold"
-                            >
-                                Create Wedding QR
-                            </Button>
-                            <Button 
-                                size="lg" 
-                                variant="outline" 
-                                onClick={() => scrollToSection('about')} 
-                                className="w-full sm:w-auto px-10 py-4 border-2 border-neutral-200 hover:border-primary-600 text-neutral-700 hover:text-primary-600 transition-all rounded-full text-lg font-bold bg-white/50 backdrop-blur-sm"
-                            >
-                                Learn More
-                            </Button>
+                                <div className="flex flex-col sm:flex-row items-center md:items-start gap-4 animate-fade-in-up delay-200">
+                                    <Button 
+                                        size="lg" 
+                                        onClick={() => navigate('/signup')} 
+                                        className="w-full sm:w-auto px-10 py-4 bg-primary-600 hover:bg-primary-700 text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all rounded-full text-lg font-bold"
+                                    >
+                                        Create Wedding QR
+                                    </Button>
+                                    <Button 
+                                        size="lg" 
+                                        variant="outline" 
+                                        onClick={() => scrollToSection('about')} 
+                                        className="w-full sm:w-auto px-10 py-4 border-2 border-neutral-200 hover:border-primary-600 text-neutral-700 hover:text-primary-600 transition-all rounded-full text-lg font-bold bg-white/50 backdrop-blur-sm"
+                                    >
+                                        Learn More
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="hidden md:flex justify-end animate-fade-in delay-300 mt-0">
+                                <div className="relative w-full max-w-sm">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-primary-400/20 rounded-[2rem] blur-3xl" />
+                                    <img 
+                                        src="/Landingpage.png" 
+                                        alt="WedTrack Landing" 
+                                        className="relative w-full rounded-3xl shadow-2xl object-contain border-2 border-white/20 hover:scale-105 transition-transform duration-500"
+                                        style={{ aspectRatio: '4/5', minHeight: '350px' }}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -333,7 +350,7 @@ export default function LandingPage() {
 
                         <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                { name: 'Kishore & Aditi', msg: "WedTrack made our guest management so easy. The QR entry was a huge hit!", pic: "https://i.pravatar.cc/150?u=1" },
+                                { name: 'rajkumar & priya', msg: "WedTrack made our guest management so easy. The QR entry was a huge hit!", pic: "https://i.pravatar.cc/150?u=1" },
                                 { name: 'Rahul & Priya', msg: "Tracking payments was my biggest worry, but the dashboard kept us on budget.", pic: "https://i.pravatar.cc/150?u=2" },
                                 { name: 'Sneha & Rohan', msg: "Super professional and sleek UI. Highly recommended for modern weddings.", pic: "https://i.pravatar.cc/150?u=3" }
                             ].map((review, i) => (

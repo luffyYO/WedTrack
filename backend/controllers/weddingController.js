@@ -1,6 +1,17 @@
 import supabase from '../config/db.js';
 import { generateQrCode } from '../utils/qrGenerator.js';
 
+/**
+ * Derives the QR status from the two stored timestamps.
+ * @returns {'inactive'|'active'|'expired'}
+ */
+const computeQrStatus = (activationTime, expiryTime) => {
+  const now = new Date();
+  if (now < new Date(activationTime)) return 'inactive';
+  if (now < new Date(expiryTime)) return 'active';
+  return 'expired';
+};
+
 export const createWedding = async (req, res) => {
   let { brideName, groomName, venue, date, upiId, village, extraCell } = req.body;
 
@@ -47,11 +58,32 @@ export const createWedding = async (req, res) => {
     return res.status(400).json({ error: 'Wedding date cannot be in the past or invalid format.' });
   }
 
-  const location = venue;
   const weddingDate = date;
 
   try {
-    // 1. Insert a new record into the weddings table via Supabase API (Port 443)
+    const location = venue;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    // Compute activation & expiry times based on whether the event is today or in the future.
+    // Dates are compared in UTC (YYYY-MM-DD) to match Supabase storage.
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    const isToday = weddingDate === todayUtc;
+    const now = new Date();
+
+    let qrActivationTime, qrExpiresAt;
+    if (isToday) {
+      // Event is today → QR is active immediately, expires 24 h from now
+      qrActivationTime = now.toISOString();
+      qrExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    } else {
+      // Event is in the future → QR activates at 00:00 UTC on the wedding date,
+      // expires exactly 24 h later (i.e., 00:00 UTC the following day)
+      qrActivationTime = new Date(`${weddingDate}T00:00:00.000Z`).toISOString();
+      qrExpiresAt      = new Date(`${weddingDate}T00:00:00.000Z`).valueOf() + 24 * 60 * 60 * 1000;
+      qrExpiresAt      = new Date(qrExpiresAt).toISOString();
+    }
+
+    // 1. Insert a new record into the weddings table via Supabase API
     const { data: insertData, error: insertError } = await supabase
       .from('weddings')
       .insert([
@@ -63,10 +95,9 @@ export const createWedding = async (req, res) => {
           upi_id: upiId,
           village: village,
           extra_cell: extraCell,
-          user_id: req.user.id, // Enforce ownership
-          // TEST MODE: Set to 2 minutes instead of 24 hours
-          // qr_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Default 24h expiry
-          qr_expires_at: new Date(Date.now() + 2 * 60 * 1000).toISOString() // Test Mode: 2 minutes
+          user_id: req.user.id,
+          qr_activation_time: qrActivationTime,
+          qr_expires_at: qrExpiresAt
         }
       ])
       .select('id')
@@ -84,13 +115,9 @@ export const createWedding = async (req, res) => {
     const weddingId = insertData.id;
 
     // 2. Generate a guest form link using the created weddingId
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const qrLink = `${frontendUrl}/guest-form/${weddingId}`;
 
-    // 3. Generate a QR code image for that link
-    const qrImage = await generateQrCode(qrLink);
-
-    // 4. Store the generated qrLink inside the weddings table
+    // 3. Store the generated qrLink inside the weddings table
     const { error: updateError } = await supabase
       .from('weddings')
       .update({ qr_link: qrLink })
@@ -99,11 +126,10 @@ export const createWedding = async (req, res) => {
 
     if (updateError) throw new Error(updateError.message);
 
-    // 5. Return a JSON response with wedding details and QR information
+    // 4. Return a JSON response with wedding details. (Frontend generates the QR image to save server CPU)
     res.status(201).json({
       weddingId,
       qrLink,
-      qrImage,
       message: 'Wedding created successfully',
     });
   } catch (error) {
@@ -118,14 +144,14 @@ export const getWeddingQR = async (req, res) => {
   try {
     const { data: wedding, error } = await supabase
       .from('weddings')
-      .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_expires_at')
+      .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_activation_time, qr_expires_at')
       .eq('id', id)
       .single();
 
     if (error || !wedding) {
       return res.status(404).json({ error: 'Wedding track not found', details: error?.message });
     }
-    
+
     // Generate the QR Image Base64 on the fly since we only stored the link
     const qrImage = await generateQrCode(wedding.qr_link);
 
@@ -139,7 +165,9 @@ export const getWeddingQR = async (req, res) => {
         village: wedding.village,
         shareLink: wedding.qr_link,
         qrImageUrl: qrImage,
-        qrExpiresAt: wedding.qr_expires_at
+        qrActivationTime: wedding.qr_activation_time,
+        qrExpiresAt: wedding.qr_expires_at,
+        qrStatus: computeQrStatus(wedding.qr_activation_time, wedding.qr_expires_at)
       }
     });
 
@@ -182,9 +210,7 @@ export const extendWeddingQR = async (req, res) => {
     }
 
     // 2. Extend expiration to now + 24 hours
-    // TEST MODE: Set to 2 minutes instead of 24 hours
-    // const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const newExpiry = new Date(Date.now() + 2 * 60 * 1000).toISOString(); // Test Mode: 2 minutes
+    const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
     const { error: updateError } = await supabase
       .from('weddings')
@@ -194,7 +220,7 @@ export const extendWeddingQR = async (req, res) => {
     if (updateError) throw new Error(updateError.message);
 
     res.status(200).json({
-      message: 'QR window extended for 2 minutes (TEST MODE)',
+      message: 'QR window extended by 24 hours',
       qrExpiresAt: newExpiry
     });
 

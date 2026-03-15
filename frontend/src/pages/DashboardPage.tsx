@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, IndianRupee, Download } from 'lucide-react';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -68,12 +69,15 @@ export default function DashboardPage() {
         fetchGuests();
     }, [selectedWedding, activeFilter, selectedPaymentMethod]);
 
+    // Debounce search query to prevent excessive filtering
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
     // Filtering Logic
     useEffect(() => {
         let result = [...guests];
 
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+        if (debouncedSearchQuery) {
+            const query = debouncedSearchQuery.toLowerCase();
             if (activeFilter === 'Name') {
                 result = result.filter(g => 
                     `${g.first_name} ${g.last_name || ''}`.toLowerCase().includes(query)
@@ -95,8 +99,8 @@ export default function DashboardPage() {
                 result = result.filter(g => 
                     (g.payment_type || '').toLowerCase() === selectedPaymentMethod.toLowerCase()
                 );
-            } else if (searchQuery) {
-                const query = searchQuery.toLowerCase();
+            } else if (debouncedSearchQuery) {
+                const query = debouncedSearchQuery.toLowerCase();
                 result = result.filter(g => 
                     (g.payment_type || '').toLowerCase().includes(query)
                 );
@@ -106,7 +110,7 @@ export default function DashboardPage() {
         // Local side filtering removed as it's now handled by the API
 
         setFilteredGuests(result);
-    }, [searchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);
+    }, [debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);
 
     const confirmGuest = async (guestId: string) => {
         try {
@@ -143,15 +147,37 @@ export default function DashboardPage() {
     };
 
     // Calculate reliable totals by only summing VERIFIED paid amounts
-    const totalCollected = guests.filter(g => g.is_paid).reduce((sum, g) => sum + Number(g.amount), 0);
-    const totalVerifiedGifts = guests.filter(g => g.is_paid).length;
-    const pendingGifts = guests.filter(g => !g.is_paid).length;
+    const { totalCollected, totalVerifiedGifts, pendingGifts } = useMemo(() => {
+        return guests.reduce(
+            (acc, g) => {
+                if (g.is_paid) {
+                    acc.totalCollected += Number(g.amount);
+                    acc.totalVerifiedGifts += 1;
+                } else {
+                    acc.pendingGifts += 1;
+                }
+                return acc;
+            },
+            { totalCollected: 0, totalVerifiedGifts: 0, pendingGifts: 0 }
+        );
+    }, [guests]);
 
     // Filtered Summary Logic
-    const isFilterActive = searchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
-    const filteredVerifiedGuests = filteredGuests.filter(g => g.is_paid);
-    const filteredVerifiedGiftsCount = filteredVerifiedGuests.length;
-    const filteredVerifiedAmount = filteredVerifiedGuests.reduce((sum, g) => sum + Number(g.amount), 0);
+    const isFilterActive = debouncedSearchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
+    
+    const { filteredVerifiedGiftsCount, filteredVerifiedAmount } = useMemo(() => {
+        if (!isFilterActive) return { filteredVerifiedGiftsCount: 0, filteredVerifiedAmount: 0 };
+        return filteredGuests.reduce(
+            (acc, g) => {
+                if (g.is_paid) {
+                    acc.filteredVerifiedAmount += Number(g.amount);
+                    acc.filteredVerifiedGiftsCount += 1;
+                }
+                return acc;
+            },
+            { filteredVerifiedGiftsCount: 0, filteredVerifiedAmount: 0 }
+        );
+    }, [filteredGuests, isFilterActive]);
 
     return (
         <div className="w-full pb-10">

@@ -12,6 +12,7 @@ export default function GuestFormPage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
     const [isExpired, setIsExpired] = useState(false);
+    const [isInactive, setIsInactive] = useState(false);
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -34,15 +35,28 @@ export default function GuestFormPage() {
                 const data = response.data.data;
                 setWedding(data);
                 
-                if (data.qrExpiresAt) {
-                    const now = new Date().getTime();
-                    const expiry = new Date(data.qrExpiresAt).getTime();
-                    if (now >= expiry) {
+                const now = new Date();
+                
+                // Use the explicit status from backend if available, otherwise fallback to local calculation
+                if (data.qrStatus === 'inactive') {
+                    setIsInactive(true);
+                } else if (data.qrStatus === 'expired') {
+                    setIsExpired(true);
+                } else {
+                    // Fallback to local time comparison if qrStatus isn't provided (backwards compatibility)
+                    if (data.qrActivationTime && now < new Date(data.qrActivationTime)) {
+                        setIsInactive(true);
+                    } else if (data.qrExpiresAt && now >= new Date(data.qrExpiresAt)) {
                         setIsExpired(true);
                     }
                 }
             } catch (err: any) {
-                setError(err.message || 'Failed to load wedding details.');
+                console.error('Fetch wedding failed:', err);
+                const isNetworkError = err.message?.toLowerCase().includes('network error') || !err.response;
+                setError(isNetworkError 
+                    ? 'Network Error: Cannot reach the server. Please ensure the backend is running and your firewall allows port 5005.'
+                    : (err.response?.data?.message || err.message || 'Failed to load wedding details.')
+                );
             } finally {
                 setLoading(false);
             }
@@ -60,16 +74,23 @@ export default function GuestFormPage() {
         setSubmitting(true);
         setError('');
         
+        const payload = {
+            weddingId,
+            ...formData
+        };
+        console.log('Submitting guest details:', payload);
+        
         try {
-            await apiClient.post('/guests/submit', {
-                weddingId,
-                ...formData
-            });
+            await apiClient.post('/guests/submit', payload);
             setSuccess(true);
         } catch (err: any) {
-            setError(err.message || 'Failed to submit details. Please try again.');
+            console.error('Guest submission failed:', err);
+            // Extract specific error from backend if available
+            const errorMsg = err.response?.data?.message || err.message || 'Failed to submit details. Please try again.';
+            setError(errorMsg);
+            
             // If backend says expired, update local state
-            if (err.response?.status === 403 && err.response?.data?.error?.includes('Expired')) {
+            if (err.response?.status === 403 && (errorMsg.includes('Expired') || err.response?.data?.error?.includes('Expired'))) {
                 setIsExpired(true);
             }
         } finally {
@@ -85,20 +106,44 @@ export default function GuestFormPage() {
         );
     }
 
+    if (isInactive) {
+        const displayDate = wedding?.date 
+            ? new Date(wedding.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+            : 'the event date';
+
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 font-sans">
+                <div className="bg-white p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 max-w-md w-full text-center">
+                    <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle2 className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Form Not Yet Active</h2>
+                    <p className="text-gray-600 mb-8 leading-relaxed">
+                        This guest submission link will become active on the date of the wedding celebration. 
+                        Please check back on <strong>{displayDate}</strong>.
+                    </p>
+                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-[0.2em] pt-6 border-t border-gray-50">
+                        WedTrack Security Guard
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (isExpired) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-                <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 max-w-md w-full text-center">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 font-sans">
+                <div className="bg-white p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 max-w-md w-full text-center">
                     <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertCircle className="w-10 h-10 text-red-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3">QR Code Expired</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">QR Code Expired</h2>
                     <p className="text-gray-600 mb-8 leading-relaxed">
                         This guest submission link is no longer active. 
                         Please contact the host if you need to submit your gift details.
                     </p>
-                    <div className="text-xs text-gray-400 font-medium uppercase tracking-widest pt-6 border-t border-gray-100">
-                        WedTrack Security
+                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-[0.2em] pt-6 border-t border-gray-50">
+                        WedTrack Security Guard
                     </div>
                 </div>
             </div>
@@ -107,11 +152,23 @@ export default function GuestFormPage() {
 
     if (error && !wedding) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Oops!</h2>
-                    <p className="text-gray-500">{error || 'Wedding not found.'}</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 font-sans">
+                <div className="bg-white p-8 rounded-3xl shadow-xl border border-red-50 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Connection Issue</h2>
+                    <p className="text-gray-500 text-sm leading-relaxed mb-6">
+                        {error.includes('Network Error') 
+                            ? "Mobile cannot reach the laptop server. Check if the laptop firewall allows port 5005 and that both are on the same WiFi."
+                            : error}
+                    </p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="w-full py-3 bg-gray-900 text-white rounded-xl font-semibold active:scale-95 transition-transform"
+                    >
+                        Try Again
+                    </button>
                 </div>
             </div>
         );
@@ -192,8 +249,8 @@ export default function GuestFormPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Gift Amount (₹)</label>
-                            <input type="number" min="0" name="amount" value={formData.amount} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="0" />
+                            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Gift Amount (₹) <span className="text-red-500">*</span></label>
+                            <input required type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="0" />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Payment Method</label>

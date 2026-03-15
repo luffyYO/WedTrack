@@ -30,11 +30,21 @@ export default function WeddingQRPage() {
     const [fetchState, setFetchState] = useState<QRFetchState>({ status: 'loading' });
     const [timeLeft, setTimeLeft] = useState<string | null>(null);
     const [isExpired, setIsExpired] = useState(false);
+    const [isInactive, setIsInactive] = useState(false);
     const [isExtending, setIsExtending] = useState(false);
 
-    const calculateTimeLeft = (expiry: string) => {
+    const calculateTimeLeft = (expiry: string, activation?: string) => {
         const now = new Date().getTime();
+        const activationTime = activation ? new Date(activation).getTime() : 0;
         const expirationTime = new Date(expiry).getTime();
+
+        if (activationTime > now) {
+            setIsInactive(true);
+            setIsExpired(false);
+            return 'QR Code Not Yet Active';
+        }
+
+        setIsInactive(false);
         const difference = expirationTime - now;
 
         if (difference <= 0) {
@@ -47,8 +57,7 @@ export default function WeddingQRPage() {
         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-        // TEST MODE: Show seconds for easier testing
-        return `[TEST MODE] QR expires in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        return `QR expires in: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
     const fetchQR = async () => {
@@ -63,7 +72,7 @@ export default function WeddingQRPage() {
             setFetchState({ status: 'success', data: qrData as QRData });
             
             if (qrData.qrExpiresAt) {
-                setTimeLeft(calculateTimeLeft(qrData.qrExpiresAt));
+                setTimeLeft(calculateTimeLeft(qrData.qrExpiresAt, qrData.qrActivationTime));
             }
         } catch (err: unknown) {
             const message =
@@ -81,9 +90,8 @@ export default function WeddingQRPage() {
 
     useEffect(() => {
         if (fetchState.status === 'success' && fetchState.data.qrExpiresAt) {
-            // TEST MODE: Update every second for a smooth countdown
             const timer = setInterval(() => {
-                setTimeLeft(calculateTimeLeft(fetchState.data.qrExpiresAt!));
+                setTimeLeft(calculateTimeLeft(fetchState.data.qrExpiresAt!, fetchState.data.qrActivationTime));
             }, 1000); 
 
             return () => clearInterval(timer);
@@ -148,12 +156,14 @@ export default function WeddingQRPage() {
                             </p>
                         )}
                         
-                        {/* ── Countdown Timer ── */}
+                        {/* ── Status Badge ── */}
                         {timeLeft && (
                             <div className={`mt-3 px-3 py-1 rounded-full text-caption font-bold inline-block animate-fade-in ${
                                 isExpired 
                                     ? 'bg-red-50 text-red-600 border border-red-100' 
-                                    : 'bg-primary-50 text-primary-600 border border-primary-100'
+                                    : isInactive
+                                        ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                                        : 'bg-primary-50 text-primary-600 border border-primary-100'
                             }`}>
                                 {timeLeft}
                             </div>
@@ -219,7 +229,7 @@ export default function WeddingQRPage() {
                                 isLoading={isExtending}
                                 icon={<RefreshCw size={16} />}
                             >
-                                {isExpired ? "Re-activate QR for 2 Minutes (TEST)" : "Extend QR for 2 Minutes (TEST)"}
+                                {isExpired ? "Re-activate QR for 24 Hours" : "Extend QR for 24 Hours"}
                             </Button>
                         )}
                     </div>

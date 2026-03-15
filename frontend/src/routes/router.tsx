@@ -5,6 +5,7 @@ import ProtectedRoute from './ProtectedRoute';
 
 // Page imports
 import HomePage from '@/pages/HomePage';
+import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
 import DashboardPage from '@/pages/DashboardPage';
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
             { path: '/signup', element: <SignupPage /> },
         ],
     },
+    { path: '/', element: <LandingPage /> },
 
     // ── Public / Guest routes (Scanned from QR) ────────────────────────────────
     { path: '/guest-form/:weddingId', element: <GuestFormPage /> },
@@ -38,7 +40,7 @@ const router = createBrowserRouter([
             {
                 element: <MainLayout />,
                 children: [
-                    { path: '/', element: <HomePage /> },
+                    { path: '/home', element: <HomePage /> },
                     { path: '/dashboard', element: <DashboardPage /> },
                     { path: '/tasks', element: <TasksPage /> },
                     { path: '/profile', element: <ProfilePage /> },
