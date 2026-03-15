@@ -31,7 +31,7 @@ export const createWedding = async (req, res) => {
     if (!dateString) return false;
     // Require YYYY-MM-DD format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
-    
+
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return false;
     const today = new Date();
@@ -71,7 +71,7 @@ export const createWedding = async (req, res) => {
 
   try {
     const location = venue;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtrackss.vercel.app';
 
     // Compute activation & expiry times based on whether the event is today or in the future.
     // Dates are compared in UTC (YYYY-MM-DD) to match Supabase storage.
@@ -88,8 +88,8 @@ export const createWedding = async (req, res) => {
       // Event is in the future → QR activates at 00:00 UTC on the wedding date,
       // expires exactly 24 h later (i.e., 00:00 UTC the following day)
       qrActivationTime = new Date(`${weddingDate}T00:00:00.000Z`).toISOString();
-      qrExpiresAt      = new Date(`${weddingDate}T00:00:00.000Z`).valueOf() + 24 * 60 * 60 * 1000;
-      qrExpiresAt      = new Date(qrExpiresAt).toISOString();
+      qrExpiresAt = new Date(`${weddingDate}T00:00:00.000Z`).valueOf() + 24 * 60 * 60 * 1000;
+      qrExpiresAt = new Date(qrExpiresAt).toISOString();
     }
 
     // 1. Insert a new record into the weddings table via Supabase API
@@ -114,9 +114,9 @@ export const createWedding = async (req, res) => {
 
     if (insertError) {
       if (insertError.message.includes('column "qr_expires_at" does not exist')) {
-        return res.status(500).json({ 
-          error: 'Database schema mismatch', 
-          details: 'The qr_expires_at column is missing. Please run the migration or add the column to the weddings table.' 
+        return res.status(500).json({
+          error: 'Database schema mismatch',
+          details: 'The qr_expires_at column is missing. Please run the migration or add the column to the weddings table.'
         });
       }
       throw new Error(insertError.message);
