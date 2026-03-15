@@ -86,16 +86,24 @@ export default function WeddingTrackCreatePage() {
     setFormState((prev) => ({ ...prev, isSubmitting: true }));
     setApiError(null);
 
+    // Trim all fields before sending
+    const trimmedData = {
+      ...formState.data,
+      brideName: formState.data.brideName.trim(),
+      groomName: formState.data.groomName.trim(),
+      venue: formState.data.venue.trim(),
+      village: formState.data.village.trim(),
+    };
+
     try {
-      const { data: res } = await weddingTrackService.create(formState.data);
+      const { data: res } = await weddingTrackService.create(trimmedData);
 
       // Navigate to QR page — backend is now the source of truth
       navigate(`/wedding-track/qr/${res.weddingId}`);
     } catch (err: any) {
       const apiData = err.response?.data;
-      const message = apiData?.details 
-        ? `${apiData.error || 'Error'}: ${apiData.details}`
-        : (apiData?.error || 'Failed to create wedding track. Please enter valid details');
+      // prioritize .message from backend, fallback to .error or details
+      const message = apiData?.message || apiData?.error || apiData?.details || 'Failed to create wedding track. Please enter valid details';
       setApiError(message);
       setFormState((prev) => ({ ...prev, isSubmitting: false }));
     }

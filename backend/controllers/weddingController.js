@@ -23,14 +23,13 @@ export const createWedding = async (req, res) => {
   upiId = upiId?.trim() || '';
   extraCell = extraCell?.trim() || '';
 
-  // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
+  // Validation function: 2-100 chars, allows common symbols for venues/locations
   const isValidName = (name) => {
     if (!name) return false; 
-    if (name.length < 2 || name.length > 50) return false;
-    if (!/^[A-Za-z\s]+$/.test(name)) return false; 
-    if (/(.)\1{3,}/i.test(name)) return false; 
-    // Relaxed to 6 consecutive consonants for safer validation of names like "Kshama" or locations
-    if (/[bcdfghjklmnpqrstvwxyz]{6,}/i.test(name)) return false; 
+    if (name.length < 2 || name.length > 100) return false;
+    // Allow letters, numbers, spaces, and common symbols like . , ' ( ) -
+    if (!/^[A-Za-z0-9\s.,'()\-]+$/.test(name)) return false; 
+    if (/(.)\1{4,}/i.test(name)) return false; // Prevent excessive repetition (aaaaa)
     return true;
   };
 
@@ -49,13 +48,13 @@ export const createWedding = async (req, res) => {
   };
 
   // Verbose Validation
-  if (!isValidName(brideName)) return res.status(400).json({ error: "Invalid Bride's Name. Use only letters." });
-  if (!isValidName(groomName)) return res.status(400).json({ error: "Invalid Groom's Name. Use only letters." });
-  if (!isValidName(venue)) return res.status(400).json({ error: "Invalid Venue name. Use only letters." });
-  if (!isValidName(village)) return res.status(400).json({ error: "Invalid Village/Town name. Use only letters." });
+  if (!isValidName(brideName)) return res.status(400).json({ message: "Invalid Bride's Name. Please use a valid name (2-100 characters)." });
+  if (!isValidName(groomName)) return res.status(400).json({ message: "Invalid Groom's Name. Please use a valid name (2-100 characters)." });
+  if (!isValidName(venue)) return res.status(400).json({ message: "Invalid Venue name. Please use a valid name (2-100 characters)." });
+  if (!isValidName(village)) return res.status(400).json({ message: "Invalid Village/Town name. Please use a valid name (2-100 characters)." });
 
   if (!isValidFutureDate(date)) {
-    return res.status(400).json({ error: 'Wedding date cannot be in the past or invalid format.' });
+    return res.status(400).json({ message: 'Wedding date cannot be in the past or invalid format.' });
   }
 
   const weddingDate = date;
