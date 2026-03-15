@@ -19,7 +19,28 @@ const io = new Server(httpServer, {
 }); 
 
 app.use(cors({
-  origin: ["http://localhost:3000", "https://wedtracks.vercel.app"],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      // Local dev
+      /^http:\/\/localhost:\d+$/,
+      // Local network IPs (same WiFi) — covers 192.168.x.x, 172.x.x.x, 10.x.x.x
+      /^http:\/\/(192\.168|172\.\d{1,3}|10)\.\d{1,3}\.\d{1,3}:\d+$/,
+      // Vercel deployment
+      /^https:\/\/wedtracks\.vercel\.app$/,
+      /^https:\/\/wedtrack.*\.vercel\.app$/,
+    ];
+
+    const isAllowed = allowedOrigins.some((pattern) => pattern.test(origin));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error(`CORS policy blocked: ${origin}`));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
