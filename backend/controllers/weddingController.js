@@ -71,7 +71,7 @@ export const createWedding = async (req, res) => {
 
   try {
     const location = venue;
-    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtrackss.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtracks.vercel.app';
 
     // Compute activation & expiry times based on whether the event is today or in the future.
     // Dates are compared in UTC (YYYY-MM-DD) to match Supabase storage.
