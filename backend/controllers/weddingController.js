@@ -23,23 +23,15 @@ export const createWedding = async (req, res) => {
   upiId = upiId?.trim() || '';
   extraCell = extraCell?.trim() || '';
 
-  // Validation function: 2-100 chars, allows common symbols for venues/locations
-  const isValidName = (name) => {
-    if (!name) return false; 
-    if (name.length < 2 || name.length > 100) return false;
-    // Allow letters, numbers, spaces, and common symbols like . , ' ( ) -
-    if (!/^[A-Za-z0-9\s.,'()\-]+$/.test(name)) return false; 
-    if (/(.)\1{4,}/i.test(name)) return false; // Prevent excessive repetition (aaaaa)
-    return true;
-  };
+  // Strict Name Validation: Alphabets and spaces only, 2-50 characters
+  const nameRegex = /^[A-Za-z\s]{2,50}$/;
+  const isValidName = (name) => nameRegex.test(name);
 
   const isValidFutureDate = (dateString) => {
     if (!dateString) return false;
-    // Require YYYY-MM-DD or similar format with 4 digit year
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString) && !/^\d{4}\//.test(dateString)) {
-       const yearMatch = dateString.match(/^\d{4}/);
-       if (!yearMatch) return false;
-    }
+    // Require YYYY-MM-DD format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return false;
+    
     const d = new Date(dateString);
     if (isNaN(d.getTime())) return false;
     const today = new Date();
@@ -48,13 +40,31 @@ export const createWedding = async (req, res) => {
   };
 
   // Verbose Validation
-  if (!isValidName(brideName)) return res.status(400).json({ message: "Invalid Bride's Name. Please use a valid name (2-100 characters)." });
-  if (!isValidName(groomName)) return res.status(400).json({ message: "Invalid Groom's Name. Please use a valid name (2-100 characters)." });
-  if (!isValidName(venue)) return res.status(400).json({ message: "Invalid Venue name. Please use a valid name (2-100 characters)." });
-  if (!isValidName(village)) return res.status(400).json({ message: "Invalid Village/Town name. Please use a valid name (2-100 characters)." });
+  if (!isValidName(brideName)) {
+    return res.status(400).json({
+      error: "Bride name must contain only alphabets and spaces (2–50 characters)."
+    });
+  }
+  if (!isValidName(groomName)) {
+    return res.status(400).json({
+      error: "Groom name must contain only alphabets and spaces (2–50 characters)."
+    });
+  }
+  // Venue and Village allow numbers/common punctuation for addresses
+  const locationRegex = /^[A-Za-z0-9\s.,'()\-]{2,100}$/;
+  if (!locationRegex.test(venue)) {
+    return res.status(400).json({
+      error: "Venue name must be between 2-100 characters and can include common symbols."
+    });
+  }
+  if (!locationRegex.test(village)) {
+    return res.status(400).json({
+      error: "Village/Town name must be between 2-100 characters and can include common symbols."
+    });
+  }
 
   if (!isValidFutureDate(date)) {
-    return res.status(400).json({ message: 'Wedding date cannot be in the past or invalid format.' });
+    return res.status(400).json({ error: 'Wedding date cannot be in the past or invalid format (YYYY-MM-DD).' });
   }
 
   const weddingDate = date;

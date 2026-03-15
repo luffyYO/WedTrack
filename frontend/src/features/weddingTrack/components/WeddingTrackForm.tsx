@@ -58,9 +58,10 @@ export default function WeddingTrackForm({
                         label={FIELD_LABELS.brideName}
                         placeholder={FIELD_PLACEHOLDERS.brideName}
                         value={data.brideName}
-                        onChange={handleChange('brideName')}
+                        onChange={(e) => onChange('brideName', e.target.value.replace(/[^A-Za-z\s]/g, ""))}
                         error={errors.brideName}
                         disabled={disabled}
+                        maxLength={50}
                         fullWidth
                         autoComplete="off"
                     />
@@ -69,9 +70,10 @@ export default function WeddingTrackForm({
                         label={FIELD_LABELS.groomName}
                         placeholder={FIELD_PLACEHOLDERS.groomName}
                         value={data.groomName}
-                        onChange={handleChange('groomName')}
+                        onChange={(e) => onChange('groomName', e.target.value.replace(/[^A-Za-z\s]/g, ""))}
                         error={errors.groomName}
                         disabled={disabled}
+                        maxLength={50}
                         fullWidth
                         autoComplete="off"
                     />
@@ -87,6 +89,7 @@ export default function WeddingTrackForm({
                         onChange={handleChange('venue')}
                         error={errors.venue}
                         disabled={disabled}
+                        maxLength={100}
                         fullWidth
                         autoComplete="off"
                     />
@@ -98,6 +101,7 @@ export default function WeddingTrackForm({
                         onChange={handleChange('extraCell')}
                         error={errors.extraCell}
                         disabled={disabled}
+                        maxLength={200}
                         fullWidth
                         autoComplete="off"
                     />
@@ -123,6 +127,7 @@ export default function WeddingTrackForm({
                         onChange={handleChange('village')}
                         error={errors.village}
                         disabled={disabled}
+                        maxLength={100}
                         fullWidth
                         autoComplete="off"
                     />

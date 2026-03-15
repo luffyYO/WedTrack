@@ -120,21 +120,15 @@ const DatePicker: React.FC<DatePickerProps> = ({
         placeholder="DD/MM/YYYY"
         value={displayValue}
         onChange={handleTextChange}
+        onClick={triggerNativePicker}
+        readOnly
         error={error}
         disabled={disabled}
         fullWidth={fullWidth}
-        icon={
-          <button 
-            type="button" 
-            onClick={triggerNativePicker}
-            className="p-1 hover:bg-neutral-100 rounded-full transition-colors text-primary-500"
-            title="Open Calendar"
-          >
-            <Calendar size={18} />
-          </button>
-        }
-        iconPosition="right"
+        icon={<Calendar size={18} />}
+        iconPosition="left"
         maxLength={10}
+        className="pl-9"
       />
       {/* Hidden native picker to leverage browser's hassle-free UI */}
       <input

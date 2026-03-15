@@ -78,6 +78,16 @@ export default function WeddingTrackCreatePage() {
   // ── Submit ──────────────────────────────────────────────────────────────────
   const handleGenerateQR = async () => {
     const errors = validate(formState.data);
+    
+    // Additional strict name validation
+    const nameRegex = /^[A-Za-z\s]{2,50}$/;
+    if (formState.data.brideName && !nameRegex.test(formState.data.brideName)) {
+      errors.brideName = "Name must contain only alphabets and spaces (2–50 characters)";
+    }
+    if (formState.data.groomName && !nameRegex.test(formState.data.groomName)) {
+      errors.groomName = "Name must contain only alphabets and spaces (2–50 characters)";
+    }
+
     if (Object.keys(errors).length > 0) {
       setFormState((prev) => ({ ...prev, errors }));
       return;
@@ -102,8 +112,8 @@ export default function WeddingTrackCreatePage() {
       navigate(`/wedding-track/qr/${res.weddingId}`);
     } catch (err: any) {
       const apiData = err.response?.data;
-      // prioritize .message from backend, fallback to .error or details
-      const message = apiData?.message || apiData?.error || apiData?.details || 'Failed to create wedding track. Please enter valid details';
+      // prioritize .error from backend as requested by user
+      const message = apiData?.error || apiData?.message || apiData?.details || 'Failed to create wedding track. Please enter valid details';
       setApiError(message);
       setFormState((prev) => ({ ...prev, isSubmitting: false }));
     }
