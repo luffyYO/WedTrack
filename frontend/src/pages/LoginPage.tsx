@@ -41,32 +41,30 @@ export default function LoginPage() {
       setError("Please enter the OTP");
       return;
     }
-    setLoading(true);
-    setError("");
 
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: 'magiclink' // Note: 'magiclink' works for OTPs sent via signInWithOtp if configured correctly, or use 'email' depending on Supabase version
-    });
+    try {
+      setLoading(true);
+      setError("");
 
-    // Try 'email' type if 'magiclink' fails, or if you specifically enabled OTP in Supabase
-    if (error) {
-      const { error: error2 } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'email'
+        type: "email",
       });
-      
-      setLoading(false);
-      if (error2) {
-        setError(error2.message);
-      } else {
-        navigate("/home");
+
+      if (error) {
+        console.error("Verification error:", error.message);
+        setError(error.message);
+        return;
       }
-    } else {
-      setLoading(false);
+
+      console.log("User logged in:", data.user?.email);
       navigate("/home");
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,17 +84,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
 
         {/* Logo / Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary-700 mb-4">
-            <svg viewBox="0 0 14 14" fill="none" className="w-5 h-5">
-              <path d="M2 4L4.5 10L7 5.5L9.5 10L12 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800">WedTrack</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            {step === 1 ? "Sign in to your account" : "Enter the code sent to your email"}
-          </p>
-        </div>
+      
 
         {/* Error/Success Messages */}
         {error && (
