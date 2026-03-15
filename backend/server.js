@@ -31,7 +31,8 @@ app.use(cors({
       // Vercel deployment
       /^https:\/\/wedtracks\.vercel\.app$/,
       /^https:\/\/wedtrack.*\.vercel\.app$/,
-    ];
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
 
     const isAllowed = allowedOrigins.some((pattern) => pattern.test(origin));
     if (isAllowed) {
