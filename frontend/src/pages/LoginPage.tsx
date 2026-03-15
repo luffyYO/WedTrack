@@ -80,8 +80,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--color-primary-50)] via-white to-[var(--color-primary-100)]">
-      <div className="w-full max-w-md px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
+    <div className="w-full px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
 
         {/* Logo / Title */}
       
@@ -170,7 +169,6 @@ export default function LoginPage() {
           </svg>
           Continue with Google
         </button>
-      </div>
     </div>
   );
 }
