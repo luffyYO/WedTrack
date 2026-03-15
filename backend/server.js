@@ -18,7 +18,10 @@ const io = new Server(httpServer, {
   },
 }); 
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "https://wedtracks.vercel.app"],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
