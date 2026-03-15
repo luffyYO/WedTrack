@@ -75,7 +75,7 @@ export const createWedding = async (req, res) => {
 
   try {
     const location = venue;
-    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtrackss.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtracks.vercel.app';
 
     // ── Timezone-aware activation & expiry ──────────────────────────────────
     // The wedding date is entered by the user in IST (Asia/Kolkata, UTC+05:30).
