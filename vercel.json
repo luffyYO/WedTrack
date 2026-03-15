@@ -1,11 +1,9 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
+  "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/((?!api/|assets/|static/|favicon.ico|robots.txt).*).*",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "framework": "vite"
 }
