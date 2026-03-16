@@ -1,6 +1,5 @@
 import supabase from '../config/db.js';
-
-export const submitGuestForm = async (req, res) => {
+import { sendPaymentVerifiedEmail } from '../utils/email.js';export const submitGuestForm = async (req, res) => {
   let { 
     weddingId, 
     firstName, 
@@ -12,7 +11,8 @@ export const submitGuestForm = async (req, res) => {
     amount, 
     paymentType, 
     wishes,
-    giftSide 
+    giftSide,
+    email 
   } = req.body;
 
   // Trim and sanitize inputs
@@ -23,6 +23,7 @@ export const submitGuestForm = async (req, res) => {
   district = district?.trim() || '';
   village = village?.trim() || '';
   wishes = wishes?.trim() || '';
+  email = email?.trim() || null;
 
   // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
   const isValidName = (name) => {
@@ -119,6 +120,7 @@ export const submitGuestForm = async (req, res) => {
           payment_type: paymentType,
           wishes: wishes,
           gift_side: giftSide,
+          email: email,
           is_paid: false // Host must manually verify payment
         }
       ])
@@ -178,10 +180,10 @@ export const confirmGuestPayment = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // First, find the guest to get the wedding_id
+    // First, find the guest to get the wedding_id and other details for email
     const { data: guestData, error: guestFetchError } = await supabase
       .from('guests')
-      .select('wedding_id')
+      .select('wedding_id, email, first_name, amount')
       .eq('id', id)
       .single();
 
@@ -189,10 +191,10 @@ export const confirmGuestPayment = async (req, res) => {
       return res.status(404).json({ error: 'Guest not found' });
     }
 
-    // Security check: Ensure the wedding belongs to the user
+    // Security check: Ensure the wedding belongs to the user and get names for email
     const { data: wedding, error: weddingError } = await supabase
       .from('weddings')
-      .select('id')
+      .select('id, bride_name, groom_name')
       .eq('id', guestData.wedding_id)
       .eq('user_id', req.user.id)
       .single();
@@ -209,6 +211,16 @@ export const confirmGuestPayment = async (req, res) => {
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Send the payment verified email asynchronously (wrapped in try/catch to ensure failure doesn't rollback the is_paid status)
+    if (guestData.email) {
+      try {
+        const weddingName = `${wedding.bride_name} & ${wedding.groom_name}`;
+        await sendPaymentVerifiedEmail(guestData.email, guestData.first_name, guestData.amount, weddingName);
+      } catch (err) {
+        console.error(`Failed to send email to ${guestData.email} for payment verification:`, err);
+      }
+    }
 
     res.status(200).json({ message: 'Payment confirmed safely', data });
   } catch (error) {

@@ -24,7 +24,8 @@ export default function GuestFormPage() {
         amount: '',
         paymentType: 'Cash',
         wishes: '',
-        giftSide: ''
+        giftSide: '',
+        email: ''
     });
 
     useEffect(() => {
@@ -223,6 +224,13 @@ export default function GuestFormPage() {
                             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Last Name</label>
                             <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1 flex justify-between">
+                            <span>Email</span> <span className="text-gray-400 font-normal lowercase">(Optional)</span>
+                        </label>
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Receive a payment verification email" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder:text-gray-300" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
