@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
+import { WeddingNameDisplay } from '@/components/ui';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export default function DashboardPage() {
@@ -213,19 +214,60 @@ export default function DashboardPage() {
             ) : (
                 <div className="mt-6 space-y-8 max-w-[900px] mx-auto">
                     {/* Wedding Selector */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                        <span className="text-sm font-semibold text-gray-700">Displaying data for:</span>
-                        <select 
-                            value={selectedWedding} 
-                            onChange={(e) => setSelectedWedding(e.target.value)}
-                            className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 outline-none"
-                        >
-                            {weddings.map(w => (
-                                <option key={w.id} value={w.id}>
-                                    {w.bride_name} & {w.groom_name} ({w.location})
-                                </option>
-                            ))}
-                        </select>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative z-30">
+                        <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">Displaying data for:</span>
+                        
+                        {/* Custom Dropdown to support rich typography */}
+                        <div className="relative w-full sm:min-w-[320px]">
+                            {(() => {
+                                const selectedW = weddings.find(w => w.id === selectedWedding);
+                                return (
+                                    <div 
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                                        onClick={(e) => {
+                                            const dropdown = e.currentTarget.nextElementSibling;
+                                            if (dropdown) dropdown.classList.toggle('hidden');
+                                        }}
+                                    >
+                                        <div className="overflow-hidden">
+                                            {selectedW ? (
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <WeddingNameDisplay 
+                                                        brideName={selectedW.bride_name} 
+                                                        groomName={selectedW.groom_name} 
+                                                        size="sm"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-gray-500">Select a wedding</span>
+                                            )}
+                                        </div>
+                                        <svg className="w-4 h-4 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                );
+                            })()}
+                            
+                            {/* Dropdown Options */}
+                            <div className="hidden absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50 py-1">
+                                {weddings.map(w => (
+                                    <div 
+                                        key={w.id} 
+                                        className={`p-3 cursor-pointer hover:bg-primary-50 transition-colors border-b border-gray-50 last:border-0 ${selectedWedding === w.id ? 'bg-primary-50/50' : ''}`}
+                                        onClick={(e) => {
+                                            setSelectedWedding(w.id);
+                                            e.currentTarget.parentElement?.classList.add('hidden');
+                                        }}
+                                    >
+                                        <WeddingNameDisplay 
+                                            brideName={w.bride_name} 
+                                            groomName={w.groom_name} 
+                                            size="sm"
+                                        />
+                                        <div className="text-xs text-gray-400 mt-1">{w.location}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Stats Overview - Balanced 2x2 Grid */}

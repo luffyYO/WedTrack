@@ -23,17 +23,23 @@ const WeddingNameDisplay: React.FC<WeddingNameDisplayProps> = ({
 
     return (
         <div className={cn(
-            "inline-flex items-center whitespace-nowrap overflow-hidden max-w-full",
+            "inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-full leading-tight",
             sizeClasses[size],
             className
         )}>
-            <span className="font-bold text-gray-900 tracking-tight truncate">
+            <span className="font-bold text-gray-900 tracking-tight truncate max-w-[40%]">
                 {brideName}
             </span>
-            <span className="mx-2 sm:mx-3 text-primary-600 font-medium select-none flex-shrink-0">
-                &
-            </span>
-            <span className="font-bold text-gray-900 tracking-tight truncate">
+            
+            <div className="flex items-center gap-1.5 sm:gap-2 select-none flex-shrink-0 mx-1">
+                <span className="text-red-500 text-[0.9em]">❤️</span>
+                <span className="font-serif italic text-primary-600 font-medium text-[0.9em] lowercase">
+                    weds
+                </span>
+                <span className="text-red-500 text-[0.9em]">❤️</span>
+            </div>
+
+            <span className="font-bold text-gray-900 tracking-tight truncate max-w-[40%]">
                 {groomName}
             </span>
         </div>

@@ -305,9 +305,15 @@ export default function GuestFormPage() {
                     >
                         {submitting ? 'Submitting...' : 'Submit Details'}
                     </button>
-                    <p className="text-center text-xs text-gray-400 mt-4 px-4">
-                        All data is securely sent to <span className="font-semibold text-gray-500">{wedding.brideName} & {wedding.groomName}</span>
-                    </p>
+                    <div className="text-center text-xs text-gray-400 mt-4 px-4 flex flex-col items-center gap-1.5">
+                        <p>All data is securely sent to</p>
+                        <WeddingNameDisplay 
+                            brideName={wedding.brideName} 
+                            groomName={wedding.groomName} 
+                            size="sm" 
+                            className="opacity-80"
+                        />
+                    </div>
                 </form>
             </div>
         </div>

@@ -117,7 +117,7 @@ export default function WeddingQRPage() {
     const qrData = isSuccess ? fetchState.data : null;
 
     const weddingTitle = qrData
-        ? `${qrData.brideName} & ${qrData.groomName}`
+        ? `${qrData.brideName} ❤️ weds ❤️ ${qrData.groomName}`
         : 'Wedding Track';
 
     return (

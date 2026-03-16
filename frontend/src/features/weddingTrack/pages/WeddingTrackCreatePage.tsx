@@ -122,7 +122,7 @@ export default function WeddingTrackCreatePage() {
   // ── Dynamic title ──────────────────────────────────────────────────────────
   const { brideName, groomName } = formState.data;
   const dynamicTitle =
-    brideName && groomName ? `${brideName} & ${groomName}` : 'Create Wedding Track';
+    brideName && groomName ? `${brideName} ❤️ weds ❤️ ${groomName}` : 'Create Wedding Track';
 
   return (
     <div className="max-w-2xl mx-auto">
