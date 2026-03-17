@@ -20,7 +20,7 @@ const io = new Server(httpServer, {
     ],
     methods: ["GET", "POST"]
   }
-}); 
+});
 
 app.use(cors({
   origin: [
@@ -33,7 +33,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("/*", cors());
+app.options("*", cors());
 
 app.use(express.json());
 
