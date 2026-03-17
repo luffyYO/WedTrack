@@ -25,7 +25,6 @@ export default defineConfig({
         manualChunks: {
           'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
           'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-pdf':      ['jspdf', 'jspdf-autotable'],
           'vendor-ui':       ['lucide-react', 'clsx', 'tailwind-merge'],
           'vendor-axios':    ['axios'],
           'vendor-zustand':  ['zustand'],

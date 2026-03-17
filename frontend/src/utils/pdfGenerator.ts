@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { formatDate } from './formatters';
 
 interface GuestExportData {
@@ -21,7 +19,14 @@ interface ExportSummary {
   totalAmount: number;
 }
 
-export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportSummary) => {
+// jsPDF and autoTable are dynamically imported so they stay out of the initial
+// bundle (~422KB saved). They only download the first time a user clicks Download.
+export const generateGuestListPDF = async (guests: GuestExportData[], summary: ExportSummary) => {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const today = formatDate(new Date().toISOString());
@@ -63,7 +68,6 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
   ];
   
   const tableRows = guests.map(guest => {
-    // Using 'Rs.' instead of '₹' to avoid encoding/kerning issues in standard PDF fonts
     const formattedAmount = `${Number(guest.amount).toLocaleString('en-IN')}`;
     
     return [
@@ -90,9 +94,9 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
       halign: 'left'
     },
     columnStyles: {
-      3: { halign: 'center', fontStyle: 'bold' }, // Amount column
-      4: { halign: 'center' }, // Date column
-      5: { halign: 'center' }  // Status column
+      3: { halign: 'center', fontStyle: 'bold' },
+      4: { halign: 'center' },
+      5: { halign: 'center' }
     },
     bodyStyles: {
       fontSize: 9,
@@ -103,8 +107,7 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
       fillColor: [250, 250, 252]
     },
     margin: { top: 25, bottom: 25 },
-    didDrawPage: (data) => {
-      // Header on every page (except the first summary page if preferred, but usually useful)
+    didDrawPage: (data: { pageNumber: number }) => {
       if (data.pageNumber > 1) {
         doc.setFontSize(9);
         doc.setTextColor(150, 150, 150);
@@ -113,7 +116,6 @@ export const generateGuestListPDF = (guests: GuestExportData[], summary: ExportS
         doc.line(14, 18, pageWidth - 14, 18);
       }
       
-      // Footer on every page
       const totalPages = doc.internal.pages.length - 1;
       doc.setFontSize(8);
       doc.setTextColor(170, 170, 170);

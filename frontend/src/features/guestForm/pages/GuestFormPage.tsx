@@ -66,7 +66,16 @@ export default function GuestFormPage() {
     }, [weddingId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => {
+            const updated = { ...prev, [name]: value };
+            // Auto-fill Father's Last Name when Guest's Last Name is typed,
+            // but only if the user hasn't manually overridden it.
+            if (name === 'lastName' && (prev.fatherLastName === '' || prev.fatherLastName === prev.lastName)) {
+                updated.fatherLastName = value;
+            }
+            return updated;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

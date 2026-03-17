@@ -52,6 +52,7 @@ export default function QRDisplay({ status, qrImageUrl, weddingTitle, errorMessa
                     alt={`QR code — ${weddingTitle}`}
                     className="w-full max-w-[260px] aspect-square rounded-[var(--radius-md)] object-contain"
                     draggable={false}
+                    loading="lazy"
                 />
             )}
 

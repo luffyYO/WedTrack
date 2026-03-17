@@ -52,7 +52,7 @@ export default function HomePage() {
                             icon={<Plus size={15} />}
                             onClick={() => navigate('/wedding-track/new')}
                         >
-                            Create Wedding Track
+                            Create Wedding QR
                         </Button>
                     </div>
                 }
@@ -83,7 +83,7 @@ export default function HomePage() {
 
                 {/* Weddings List */}
                 <div className="mt-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-5">Your Tracked Weddings</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-5">Your Tracked Weddings QR</h2>
                 
                 {loading ? (
                     <div className="w-full flex justify-center py-10">
@@ -91,7 +91,7 @@ export default function HomePage() {
                     </div>
                 ) : weddings.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
-                        <p className="text-gray-500">No weddings created yet.</p>
+                        <p className="text-gray-500">No weddings QR created yet.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

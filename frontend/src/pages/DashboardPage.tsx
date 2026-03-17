@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, IndianRupee, Download } from 'lucide-react';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
@@ -12,6 +12,63 @@ import SearchResults from '@/components/SearchResults';
 import { WeddingNameDisplay } from '@/components/ui';
 import { useDebounce } from '@/hooks/useDebounce';
 
+// ─── Skeleton Components ──────────────────────────────────────────────────────
+
+function SkeletonBox({ className = '' }: { className?: string }) {
+    return (
+        <div
+            className={`animate-pulse bg-gray-200 rounded-xl ${className}`}
+            aria-hidden="true"
+        />
+    );
+}
+
+function DashboardSkeleton() {
+    return (
+        <div className="mt-6 space-y-8 max-w-[900px] mx-auto" aria-label="Loading dashboard…">
+            {/* Wedding selector placeholder */}
+            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+                <SkeletonBox className="h-4 w-28" />
+                <SkeletonBox className="h-10 flex-1 rounded-lg" />
+            </div>
+
+            {/* Stats grid placeholder — 2×2 */}
+            <div className="grid grid-cols-2 gap-4 max-w-[700px] mx-auto">
+                {[...Array(4)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 h-[105px] sm:h-[140px]"
+                    >
+                        <SkeletonBox className="h-3 w-24" />
+                        <SkeletonBox className="h-8 w-20" />
+                        <SkeletonBox className="h-2 w-16" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Search bar placeholder */}
+            <SkeletonBox className="h-12 w-full rounded-xl" />
+
+            {/* Table rows placeholder */}
+            <div className="space-y-3">
+                <SkeletonBox className="h-4 w-40" />
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-center">
+                        <SkeletonBox className="h-9 w-9 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-2">
+                            <SkeletonBox className="h-3 w-1/3" />
+                            <SkeletonBox className="h-2 w-1/4" />
+                        </div>
+                        <SkeletonBox className="h-6 w-16 rounded-full" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ─── Dashboard Page ───────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
@@ -19,6 +76,7 @@ export default function DashboardPage() {
     const [selectedWedding, setSelectedWedding] = useState<string>('');
     const [guests, setGuests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pdfLoading, setPdfLoading] = useState(false);
 
     // Search & Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -28,46 +86,61 @@ export default function DashboardPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
     const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
-    // Fetch Admin's Weddings
+    // ── FIX 3: Parallel fetch — weddings + first guess at guests loaded together ──
     useEffect(() => {
-        const fetchWeddings = async () => {
+        const loadDashboard = async () => {
+            setLoading(true);
             try {
-                const { data } = await apiClient.get('/weddings');
-                if (data.data) {
-                    setWeddings(data.data);
-                    if (data.data.length > 0) {
-                        setSelectedWedding(data.data[0].id);
-                    }
+                // Step 1: weddings are needed first to know which one to select
+                const { data: weddingData } = await apiClient.get('/weddings');
+                const fetchedWeddings: any[] = weddingData?.data ?? [];
+                setWeddings(fetchedWeddings);
+
+                if (fetchedWeddings.length === 0) {
+                    return; // nothing else to fetch
                 }
+
+                const firstId = fetchedWeddings[0].id;
+                setSelectedWedding(firstId);
+
+                // Step 2: guests fetch starts immediately after we know the ID
+                const { data: guestData } = await apiClient.get(`/guests/wedding/${firstId}`);
+                const fetchedGuests: any[] = guestData?.data ?? [];
+                setGuests(fetchedGuests);
+                setFilteredGuests(fetchedGuests);
             } catch (err) {
-                console.error("Failed to load weddings:", err);
+                console.error('Failed to load dashboard:', err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchWeddings();
+
+        loadDashboard();
     }, []);
 
-    // Fetch Guests when a Wedding is selected or Side filter changes
+    // Fetch Guests when a different wedding is selected or Side filter changes
     useEffect(() => {
+        // Skip the initial load — handled by loadDashboard above
+        if (!selectedWedding) return;
+
         const fetchGuests = async () => {
-            if (!selectedWedding) return;
             try {
                 let url = `/guests/wedding/${selectedWedding}`;
                 if (activeFilter === 'Side' && selectedPaymentMethod) {
                     url += `?side=${selectedPaymentMethod.toLowerCase()}`;
                 }
-                
                 const { data } = await apiClient.get(url);
                 if (data.data) {
                     setGuests(data.data);
                     setFilteredGuests(data.data);
                 }
             } catch (err) {
-                console.error("Failed to load guests:", err);
+                console.error('Failed to load guests:', err);
             }
         };
+
         fetchGuests();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedWedding, activeFilter, selectedPaymentMethod]);
 
     // Debounce search query to prevent excessive filtering
@@ -80,12 +153,12 @@ export default function DashboardPage() {
         if (debouncedSearchQuery) {
             const query = debouncedSearchQuery.toLowerCase();
             if (activeFilter === 'Name') {
-                result = result.filter(g => 
+                result = result.filter(g =>
                     `${g.first_name} ${g.last_name || ''}`.toLowerCase().includes(query)
                 );
             } else if (activeFilter === 'Location') {
-                result = result.filter(g => 
-                    (g.village || '').toLowerCase().includes(query) || 
+                result = result.filter(g =>
+                    (g.village || '').toLowerCase().includes(query) ||
                     (g.district || '').toLowerCase().includes(query)
                 );
             }
@@ -97,18 +170,16 @@ export default function DashboardPage() {
 
         if (activeFilter === 'Payment Method') {
             if (selectedPaymentMethod) {
-                result = result.filter(g => 
+                result = result.filter(g =>
                     (g.payment_type || '').toLowerCase() === selectedPaymentMethod.toLowerCase()
                 );
             } else if (debouncedSearchQuery) {
                 const query = debouncedSearchQuery.toLowerCase();
-                result = result.filter(g => 
+                result = result.filter(g =>
                     (g.payment_type || '').toLowerCase().includes(query)
                 );
             }
         }
-
-        // Local side filtering removed as it's now handled by the API
 
         setFilteredGuests(result);
     }, [debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);
@@ -118,34 +189,43 @@ export default function DashboardPage() {
             await apiClient.put(`/guests/${guestId}/confirm`);
             setGuests(prev => prev.map(g => g.id === guestId ? { ...g, is_paid: true } : g));
         } catch (err) {
-            console.error("Failed to confirm payment:", err);
-            alert("Failed to confirm payment.");
+            console.error('Failed to confirm payment:', err);
+            alert('Failed to confirm payment.');
         }
     };
 
     const deleteGuest = async (guestId: string) => {
-        if (!window.confirm("Are you sure you want to cancel and remove this guest entry? This cannot be undone.")) return;
+        if (!window.confirm('Are you sure you want to cancel and remove this guest entry? This cannot be undone.')) return;
         try {
             await apiClient.delete(`/guests/${guestId}`);
             setGuests(prev => prev.filter(g => g.id !== guestId));
         } catch (err) {
-            console.error("Failed to delete guest:", err);
-            alert("Failed to remove guest entry.");
+            console.error('Failed to delete guest:', err);
+            alert('Failed to remove guest entry.');
         }
     };
 
-    const handleDownloadPDF = () => {
+    // ── FIX 4: Async PDF — jspdf loads on demand, not at page load ────────────
+    const handleDownloadPDF = useCallback(async () => {
         const wedding = weddings.find(w => w.id === selectedWedding);
         if (!wedding) return;
 
-        const summary = {
-            weddingName: `${wedding.bride_name} & ${wedding.groom_name}`,
-            totalGifts: totalVerifiedGifts,
-            totalAmount: totalCollected
-        };
-
-        generateGuestListPDF(filteredGuests, summary);
-    };
+        setPdfLoading(true);
+        try {
+            const summary = {
+                weddingName: `${wedding.bride_name} & ${wedding.groom_name}`,
+                totalGifts: totalVerifiedGifts,
+                totalAmount: totalCollected,
+            };
+            await generateGuestListPDF(filteredGuests, summary);
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            alert('Failed to generate PDF. Please try again.');
+        } finally {
+            setPdfLoading(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [weddings, selectedWedding, filteredGuests]);
 
     // Calculate reliable totals by only summing VERIFIED paid amounts
     const { totalCollected, totalVerifiedGifts, pendingGifts } = useMemo(() => {
@@ -165,7 +245,7 @@ export default function DashboardPage() {
 
     // Filtered Summary Logic
     const isFilterActive = debouncedSearchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
-    
+
     const { filteredVerifiedGiftsCount, filteredVerifiedAmount } = useMemo(() => {
         if (!isFilterActive) return { filteredVerifiedGiftsCount: 0, filteredVerifiedAmount: 0 };
         return filteredGuests.reduce(
@@ -199,10 +279,9 @@ export default function DashboardPage() {
                 }
             />
 
+            {/* ── FIX 8: Skeleton replaces spinner while loading ─────────────── */}
             {loading ? (
-                <div className="w-full flex justify-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                </div>
+                <DashboardSkeleton />
             ) : weddings.length === 0 ? (
                 <div className="mt-6 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center border border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-6">
                     <Users size={28} className="text-neutral-300" />
@@ -216,13 +295,13 @@ export default function DashboardPage() {
                     {/* Wedding Selector */}
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative z-30">
                         <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">Displaying data for:</span>
-                        
+
                         {/* Custom Dropdown to support rich typography */}
                         <div className="relative w-full sm:min-w-[320px]">
                             {(() => {
                                 const selectedW = weddings.find(w => w.id === selectedWedding);
                                 return (
-                                    <div 
+                                    <div
                                         className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
                                         onClick={(e) => {
                                             const dropdown = e.currentTarget.nextElementSibling;
@@ -232,9 +311,9 @@ export default function DashboardPage() {
                                         <div className="overflow-hidden">
                                             {selectedW ? (
                                                 <div className="flex items-center gap-1.5 truncate">
-                                                    <WeddingNameDisplay 
-                                                        brideName={selectedW.bride_name} 
-                                                        groomName={selectedW.groom_name} 
+                                                    <WeddingNameDisplay
+                                                        brideName={selectedW.bride_name}
+                                                        groomName={selectedW.groom_name}
                                                         size="sm"
                                                     />
                                                 </div>
@@ -246,21 +325,21 @@ export default function DashboardPage() {
                                     </div>
                                 );
                             })()}
-                            
+
                             {/* Dropdown Options */}
                             <div className="hidden absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50 py-1">
                                 {weddings.map(w => (
-                                    <div 
-                                        key={w.id} 
+                                    <div
+                                        key={w.id}
                                         className={`p-3 cursor-pointer hover:bg-primary-50 transition-colors border-b border-gray-50 last:border-0 ${selectedWedding === w.id ? 'bg-primary-50/50' : ''}`}
                                         onClick={(e) => {
                                             setSelectedWedding(w.id);
                                             e.currentTarget.parentElement?.classList.add('hidden');
                                         }}
                                     >
-                                        <WeddingNameDisplay 
-                                            brideName={w.bride_name} 
-                                            groomName={w.groom_name} 
+                                        <WeddingNameDisplay
+                                            brideName={w.bride_name}
+                                            groomName={w.groom_name}
                                             size="sm"
                                         />
                                         <div className="text-xs text-gray-400 mt-1">{w.location}</div>
@@ -292,7 +371,7 @@ export default function DashboardPage() {
                             <span className="text-[10px] sm:text-xs text-white/60 font-medium">Verified Guests</span>
                         </div>
 
-                        {/* Total Registered (New 4th Card for Balance) */}
+                        {/* Total Registered */}
                         <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
                             <span className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide">Total Registered</span>
                             <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">
@@ -313,28 +392,25 @@ export default function DashboardPage() {
 
                     {/* Search & Filtering System */}
                     <div className="space-y-4">
-                        <SearchBar 
+                        <SearchBar
                             value={searchQuery}
                             onChange={setSearchQuery}
                             onSearch={(q) => setSearchQuery(q)}
                             onSearchClick={() => {
-                                // Search button now only performs search/closes filters if open (optional)
-                                // or just does nothing as searchQuery is already bound to input
-                                // Keeping it explicit for potential future API triggers
-                                console.log("Searching for:", searchQuery);
+                                console.log('Searching for:', searchQuery);
                             }}
                             onFilterToggle={() => setShowFilters(!showFilters)}
                             isFilterOpen={showFilters}
                             placeholder={
-                                activeFilter === 'Name' ? "Search guest name (e.g. Ravi)..." :
-                                activeFilter === 'Location' ? "Search village or district..." :
-                                activeFilter === 'Payment Method' ? "Search payment method (e.g. PhonePe)..." :
-                                "Filtering entries by amount..."
+                                activeFilter === 'Name' ? 'Search guest name (e.g. Ravi)...' :
+                                activeFilter === 'Location' ? 'Search village or district...' :
+                                activeFilter === 'Payment Method' ? 'Search payment method (e.g. PhonePe)...' :
+                                'Filtering entries by amount...'
                             }
                         />
-                        
+
                         {showFilters && (
-                            <SearchFilters 
+                            <SearchFilters
                                 activeFilter={activeFilter}
                                 onFilterChange={(f) => {
                                     setActiveFilter(f);
@@ -378,11 +454,15 @@ export default function DashboardPage() {
 
                             <button
                                 onClick={handleDownloadPDF}
-                                disabled={filteredGuests.length === 0}
-                                title="Download Guest List"
+                                disabled={filteredGuests.length === 0 || pdfLoading}
+                                title={pdfLoading ? 'Generating PDF…' : 'Download Guest List'}
                                 className="p-2 rounded-lg border border-gray-100 bg-white text-gray-600 hover:text-primary-600 hover:border-primary-100 hover:shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
                             >
-                                <Download size={18} className="group-hover:scale-110 transition-transform" />
+                                {pdfLoading ? (
+                                    <div className="w-[18px] h-[18px] border-2 border-gray-300 border-t-primary-500 rounded-full animate-spin" />
+                                ) : (
+                                    <Download size={18} className="group-hover:scale-110 transition-transform" />
+                                )}
                             </button>
                         </div>
 
@@ -391,7 +471,7 @@ export default function DashboardPage() {
                                 No guests have registered yet.
                             </div>
                         ) : (
-                            <SearchResults 
+                            <SearchResults
                                 results={filteredGuests}
                                 onConfirm={confirmGuest}
                                 onDelete={deleteGuest}

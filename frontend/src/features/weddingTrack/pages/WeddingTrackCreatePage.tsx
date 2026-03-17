@@ -4,6 +4,7 @@ import { QrCode, ArrowLeft, AlertCircle } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
+import { WeddingNameDisplay } from '@/components/ui';
 
 import WeddingBanner from '../components/WeddingBanner';
 import WeddingTrackForm from '../components/WeddingTrackForm';
@@ -119,10 +120,11 @@ export default function WeddingTrackCreatePage() {
     }
   };
 
-  // ── Dynamic title ──────────────────────────────────────────────────────────
+  // Dynamic title — render WeddingNameDisplay when both names are entered
   const { brideName, groomName } = formState.data;
-  const dynamicTitle =
-    brideName && groomName ? `${brideName} ❤️ weds ❤️ ${groomName}` : 'Create Wedding Track';
+  const dynamicTitle = brideName && groomName
+    ? <WeddingNameDisplay brideName={brideName} groomName={groomName} size="md" />
+    : 'Create Wedding Track';
 
   return (
     <div className="max-w-2xl mx-auto">
