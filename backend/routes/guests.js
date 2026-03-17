@@ -1,6 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { submitGuestForm, getGuestsByWedding, confirmGuestPayment, deleteGuest } from '../controllers/guestController.js';
+import { submitGuestForm, getGuestsByWedding, confirmGuestPayment, deleteGuest, getWishes, markWishesRead } from '../controllers/guestController.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,6 +14,8 @@ const guestSubmissionLimiter = rateLimit({
 });
 
 router.post('/submit', guestSubmissionLimiter, submitGuestForm);
+router.get('/wishes', authenticate, getWishes);
+router.put('/wishes/mark-read', authenticate, markWishesRead);
 router.get('/wedding/:weddingId', authenticate, getGuestsByWedding);
 router.put('/:id/confirm', authenticate, confirmGuestPayment);
 router.delete('/:id', authenticate, deleteGuest);

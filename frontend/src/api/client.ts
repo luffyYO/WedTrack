@@ -2,9 +2,7 @@ import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestCo
 import type { ApiError } from '@/types';
 import { supabase } from '@/config/supabaseClient';
 
-import API_BASE_URL_CONFIG from '@/config/api';
-
-const API_BASE_URL = `${API_BASE_URL_CONFIG}/api`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const client: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,

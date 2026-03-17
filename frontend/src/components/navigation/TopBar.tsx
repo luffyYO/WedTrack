@@ -1,7 +1,11 @@
+import { useEffect, useCallback } from 'react';
 import { Bell, Menu } from 'lucide-react';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useWishStore } from '@/store';
 import { getInitials } from '@/utils/formatters';
 import { useNavigate } from 'react-router-dom';
+import { io as socketIO } from 'socket.io-client';
+import type { Wish } from '@/api/wishService';
+import API_BASE_URL from '@/config/api';
 
 interface TopBarProps {
     pageTitle?: string;
@@ -11,6 +15,33 @@ interface TopBarProps {
 export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
     const user = useAuthStore((s) => s.user);
     const navigate = useNavigate();
+
+    const { unreadCount, fetchWishes, addWish } = useWishStore();
+
+    // ── Fetch wishes on mount ─────────────────────────────────────────────────
+    useEffect(() => {
+        fetchWishes();
+    }, [fetchWishes]);
+
+    // ── Socket.io real-time connection ────────────────────────────────────────
+    useEffect(() => {
+        if (!user) return;
+
+        const socket = socketIO(API_BASE_URL, { transports: ['websocket', 'polling'] });
+
+        socket.on('new_wish', (wish: Wish) => {
+            addWish(wish);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user, addWish]);
+
+    // ── Navigate to wishes page ───────────────────────────────────────────────
+    const handleBellClick = useCallback(() => {
+        navigate('/wishes');
+    }, [navigate]);
 
     return (
         <header
@@ -27,7 +58,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                 >
                     <Menu size={20} />
                 </button>
- 
+
                 {pageTitle && (
                     <h2 className="text-heading-sm text-[var(--color-text-primary)] truncate">
                         {pageTitle}
@@ -38,15 +69,29 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
             {/* ── Right: Notifications + Avatar ── */}
             <div className="flex items-center gap-1.5 sm:gap-2">
 
-                {/* Notifications */}
-                <button
-                    className="relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"
-                    aria-label="Notifications"
-                >
-                    <Bell size={17} />
-                    <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary-600" />
-                </button>
- 
+                {/* Notifications bell — relative wrapper for panel */}
+                <div className="relative">
+                    <button
+                        id="notification-bell"
+                        onClick={handleBellClick}
+                        className="relative w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-neutral-100 transition-colors"
+                        aria-label={unreadCount > 0 ? `${unreadCount} unread wishes` : 'Notifications'}
+                    >
+                        <Bell size={17} />
+                        {/* Red dot — only shown when there are unread wishes */}
+                        {unreadCount > 0 && (
+                            <span
+                                className="absolute top-1.5 right-1.5 flex items-center justify-center"
+                                aria-hidden="true"
+                            >
+                                {/* Pulse ring */}
+                                <span className="absolute w-3 h-3 rounded-full bg-red-400 opacity-60 animate-ping" />
+                                <span className="relative w-2 h-2 rounded-full bg-red-500" />
+                            </span>
+                        )}
+                    </button>
+                </div>
+
                 {/* User Avatar */}
                 {user && (
                     <button

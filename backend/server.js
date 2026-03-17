@@ -20,12 +20,14 @@ const io = new Server(httpServer, {
 
 // ─── Allowed origins ─────────────────────────────────────────────────────────
 const CORS_ALLOWED_REGEX = [
+  // Explicitly allowed origins
+  "http://localhost:5173",
+  "https://wedtrackss.in",
+  "https://www.wedtrackss.in",
   // Any localhost port (local dev)
   /^http:\/\/localhost:\d+$/,
   // Local network IPs on the same WiFi — 192.168.x.x, 172.x.x.x, 10.x.x.x
   /^http:\/\/(192\.168|172\.\d{1,3}|10)\.\d{1,3}\.\d{1,3}:\d+$/,
-  // Production custom domain (with and without www)
-  /^https:\/\/(www\.)?wedtrackss\.in$/,
   // Any Vercel preview deployments for this project
   /^https:\/\/wedtrack.*\.vercel\.app$/,
 ];

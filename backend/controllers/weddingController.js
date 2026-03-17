@@ -75,7 +75,11 @@ export const createWedding = async (req, res) => {
 
   try {
     const location = venue;
-    const frontendUrl = process.env.FRONTEND_URL || 'https://wedtrackss.in';
+    const frontendUrl = process.env.FRONTEND_URL;
+    
+    if (!frontendUrl) {
+      throw new Error("FRONTEND_URL environment variable is not defined.");
+    }
 
     // ── Timezone-aware activation & expiry ──────────────────────────────────
     // The wedding date is entered by the user in IST (Asia/Kolkata, UTC+05:30).

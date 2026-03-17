@@ -3,10 +3,13 @@ import { cn } from '@/utils/cn';
 import NavItemComponent from './NavItem';
 import type { NavItem } from '@/types';
 
+import { MessageSquareHeart } from 'lucide-react';
+
 const NAV_ITEMS: NavItem[] = [
     { label: 'Home', href: '/home', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { label: 'Wishes', href: '/wishes', icon: MessageSquareHeart },
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 

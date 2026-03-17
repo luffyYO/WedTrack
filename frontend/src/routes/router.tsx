@@ -11,6 +11,7 @@ import DashboardPage from '@/pages/DashboardPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import TasksPage from '@/pages/TasksPage';
 import SettingsPage from '@/pages/SettingsPage';
+import WishesPage from '@/pages/WishesPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
 // Feature pages
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
                     { path: '/home', element: <HomePage /> },
                     { path: '/dashboard', element: <DashboardPage /> },
                     { path: '/tasks', element: <TasksPage /> },
+                    { path: '/wishes', element: <WishesPage /> },
                     { path: '/profile', element: <ProfilePage /> },
                     { path: '/settings', element: <SettingsPage /> },
                     { path: '/wedding-track/new', element: <WeddingTrackCreatePage /> },

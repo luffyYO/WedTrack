@@ -1,4 +1,5 @@
 import supabase from '../config/db.js';
+import { io } from '../server.js';
 
 export const submitGuestForm = async (req, res) => {
   let { 
@@ -126,6 +127,23 @@ export const submitGuestForm = async (req, res) => {
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Emit real-time socket event if the guest included a wish
+    if (wishes && wishes.trim()) {
+      try {
+        io.emit('new_wish', {
+          id: data.id,
+          wedding_id: weddingId,
+          first_name: firstName,
+          last_name: lastName,
+          wishes: wishes.trim(),
+          is_read: false,
+          created_at: new Date().toISOString(),
+        });
+      } catch (socketErr) {
+        console.warn('Socket emit failed (non-critical):', socketErr.message);
+      }
+    }
 
     res.status(201).json({
       message: 'Guest details submitted successfully',
@@ -255,5 +273,72 @@ export const deleteGuest = async (req, res) => {
   } catch (error) {
     console.error('Error deleting guest:', error);
     res.status(500).json({ error: 'Failed to delete guest', details: error.message });
+  }
+};
+
+// ── Wishes / Notifications ────────────────────────────────────────────────────
+
+export const getWishes = async (req, res) => {
+  try {
+    // Fetch all weddings owned by this user
+    const { data: weddings, error: wError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('user_id', req.user.id);
+
+    if (wError) throw new Error(wError.message);
+    if (!weddings || weddings.length === 0) {
+      return res.status(200).json({ data: [] });
+    }
+
+    const weddingIds = weddings.map((w) => w.id);
+
+    // Fetch guests who left a wish
+    const { data: wishes, error } = await supabase
+      .from('guests')
+      .select('id, first_name, last_name, wishes, is_read, created_at, wedding_id')
+      .in('wedding_id', weddingIds)
+      .not('wishes', 'is', null)
+      .neq('wishes', '')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    res.status(200).json({ data: wishes });
+  } catch (error) {
+    console.error('Error fetching wishes:', error);
+    res.status(500).json({ error: 'Failed to fetch wishes', details: error.message });
+  }
+};
+
+export const markWishesRead = async (req, res) => {
+  try {
+    // Fetch all weddings owned by this user
+    const { data: weddings, error: wError } = await supabase
+      .from('weddings')
+      .select('id')
+      .eq('user_id', req.user.id);
+
+    if (wError) throw new Error(wError.message);
+    if (!weddings || weddings.length === 0) {
+      return res.status(200).json({ message: 'No weddings found' });
+    }
+
+    const weddingIds = weddings.map((w) => w.id);
+
+    const { error } = await supabase
+      .from('guests')
+      .update({ is_read: true })
+      .in('wedding_id', weddingIds)
+      .not('wishes', 'is', null)
+      .neq('wishes', '')
+      .eq('is_read', false);
+
+    if (error) throw new Error(error.message);
+
+    res.status(200).json({ message: 'All wishes marked as read' });
+  } catch (error) {
+    console.error('Error marking wishes as read:', error);
+    res.status(500).json({ error: 'Failed to mark wishes as read', details: error.message });
   }
 };
