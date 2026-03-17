@@ -33,7 +33,8 @@ app.use(cors({
   credentials: true
 }));
 
-
+// Parse incoming JSON requests
+app.use(express.json());
 
 // Routes
 app.use("/api", authRoutes);

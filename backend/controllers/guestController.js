@@ -2,6 +2,11 @@ import supabase from '../config/db.js';
 import { io } from '../server.js';
 
 export const submitGuestForm = async (req, res) => {
+  // Guard: Prevent crashes from empty request bodies
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({ error: "Empty request body" });
+  }
+
   let { 
     weddingId, 
     firstName, 
