@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://wedtrackss.in/sitemap.xml
