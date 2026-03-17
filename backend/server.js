@@ -14,55 +14,34 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
-  },
+    origin: [
+      "http://localhost:5173",
+      "https://wedtrackss.in"
+    ],
+    methods: ["GET", "POST"]
+  }
 }); 
 
-// ─── Allowed origins ─────────────────────────────────────────────────────────
-const CORS_ALLOWED_REGEX = [
-  // Explicitly allowed origins
-  "http://localhost:5173",
-  "https://wedtrackss.in",
-  "https://www.wedtrackss.in",
-  // Any localhost port (local dev)
-  /^http:\/\/localhost:\d+$/,
-  // Local network IPs on the same WiFi — 192.168.x.x, 172.x.x.x, 10.x.x.x
-  /^http:\/\/(192\.168|172\.\d{1,3}|10)\.\d{1,3}\.\d{1,3}:\d+$/,
-  // Any Vercel preview deployments for this project
-  /^https:\/\/wedtrack.*\.vercel\.app$/,
-];
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://wedtrackss.in",
+    "https://www.wedtrackss.in"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, curl, mobile apps, server-to-server)
-    if (!origin) return callback(null, true);
+app.options("*", cors());
 
-    const isAllowed =
-      CORS_ALLOWED_REGEX.some((pattern) => pattern.test(origin)) ||
-      // Also allow whatever FRONTEND_URL is set to in the env (string comparison)
-      (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL);
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked origin: ${origin}`);
-      callback(new Error(`CORS policy blocked: ${origin}`));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-
-// Preflight OPTIONS requests are handled automatically by the app.use(cors()) above
 app.use(express.json());
 
 // Routes
 app.use("/api", authRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/guests", guestRoutes);
+
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
@@ -87,4 +66,3 @@ httpServer.listen(PORT, () => {
 });
 
 export { io };
-
