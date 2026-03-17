@@ -10,6 +10,16 @@ import { Server } from "socket.io";
 
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = ['FRONTEND_URL'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  console.error('Please set these in your .env file before starting the server');
+  process.exit(1);
+}
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {

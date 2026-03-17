@@ -78,7 +78,10 @@ export const createWedding = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL;
     
     if (!frontendUrl) {
-      throw new Error("FRONTEND_URL environment variable is not defined.");
+      return res.status(500).json({
+        error: "Server configuration error",
+        details: "Frontend URL is not configured. Contact support."
+      });
     }
 
     // ── Timezone-aware activation & expiry ──────────────────────────────────
@@ -177,8 +180,25 @@ export const getWeddingQR = async (req, res) => {
       return res.status(404).json({ error: 'Wedding track not found', details: error?.message });
     }
 
+    // Validate qr_link exists before generating QR
+    if (!wedding.qr_link) {
+      return res.status(500).json({ 
+        error: 'QR link not found for this wedding',
+        details: 'The wedding record exists but the QR link is missing. Please recreate the wedding.'
+      });
+    }
+
     // Generate the QR Image Base64 on the fly since we only stored the link
-    const qrImage = await generateQrCode(wedding.qr_link);
+    let qrImage;
+    try {
+      qrImage = await generateQrCode(wedding.qr_link);
+    } catch (qrError) {
+      console.error('QR generation error:', qrError);
+      return res.status(500).json({ 
+        error: 'Failed to generate QR code',
+        details: qrError.message || 'Unable to generate QR image from the stored link'
+      });
+    }
 
     res.status(200).json({
       data: {
