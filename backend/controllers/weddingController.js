@@ -77,7 +77,8 @@ export const createWedding = async (req, res) => {
 
   try {
     const location = venue;
-    const frontendUrl = process.env.FRONTEND_URL;
+    // Dynamically get the frontend URL from the request origin so localhost correctly points to localhost
+    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL;
 
     if (!frontendUrl) {
       return res.status(500).json({
@@ -207,7 +208,8 @@ export const getWeddingQR = async (req, res) => {
       return res.status(404).json({ error: 'Wedding track not found', details: 'No wedding matched the provided ID' });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Dynamically resolve URL using request origin for correct local/prod routing
+    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:3000';
     let qrUrl = wedding.qr_link;
     // ensure even existing old raw UUID links get updated to encrypted if accessed
     const actualEncryptedId = encryptId(wedding.id);
@@ -267,7 +269,8 @@ export const getWeddings = async (req, res) => {
 
     if (error) throw new Error(error.message);
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Dynamically resolve URL
+    const frontendUrl = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:3000';
     // Obfuscate the IDs before returning to frontend
     const secureWeddings = weddings.map(w => {
       const encryptedId = encryptId(w.id);

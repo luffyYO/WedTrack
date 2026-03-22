@@ -1,7 +1,12 @@
 export default function AutoScrollGallery({ images }: { images: string[] }) {
     if (!images || images.length === 0) return null;
 
-    const displayImages = [...images, ...images]; // Duplicate for seamless infinite loop
+    // Repeat enough times to fill the viewport and allow for seamless scrolling
+    // Even if there's only 1 image (260px), 8 copies will comfortably overflow the 460px container
+    const displayImages = [...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images];
+    
+    // Calculate the precise total width of the original, unique set of images
+    const shiftPixels = images.length * 260; // since each image is strictly 260px wide
 
     return (
         <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-gradient-to-b from-slate-50 to-[#fdfbfb] border-b border-white/60">
@@ -9,10 +14,23 @@ export default function AutoScrollGallery({ images }: { images: string[] }) {
             <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#fdfbfb] to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#fdfbfb] to-transparent z-10 pointer-events-none" />
 
-            <div 
-                className="flex items-center h-full animate-[scroll-infinite_20s_linear_infinite] hover:[animation-play-state:paused] group"
-                style={{ width: 'max-content' }}
-            >
+            <style>
+                {`
+                @keyframes scroll-precise {
+                    0% { transform: translateX(0px); }
+                    100% { transform: translateX(-${shiftPixels}px); }
+                }
+                .gallery-scroll-track {
+                    animation: scroll-precise ${images.length * 10}s linear infinite;
+                    width: max-content;
+                }
+                .gallery-scroll-track:hover {
+                    animation-play-state: paused;
+                }
+                `}
+            </style>
+
+            <div className="flex items-center h-full gallery-scroll-track group">
                 {displayImages.map((src, idx) => (
                     <div 
                         key={idx} 

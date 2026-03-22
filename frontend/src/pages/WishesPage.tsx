@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Sparkles } from 'lucide-react';
-import { useWishStore } from '@/store';
+import { useWishStore, useAppStore } from '@/store';
 import PageHeader from '@/components/layout/PageHeader';
 import apiClient from '@/api/client';
 import { WeddingNameDisplay } from '@/components/ui';
@@ -22,31 +22,17 @@ function timeAgo(dateStr: string): string {
 
 export default function WishesPage() {
     const { wishes, isLoading } = useWishStore();
-    const [weddings, setWeddings] = useState<any[]>([]);
-    const [selectedWeddingId, setSelectedWeddingId] = useState<string>('');
+    const { activeWedding } = useAppStore();
     const [filteredWishes, setFilteredWishes] = useState<any[]>([]);
     const [wishesLoading, setWishesLoading] = useState(false);
 
-    // Load wedding list once for the selector
-    useEffect(() => {
-        const fetchWeddings = async () => {
-            try {
-                const { data } = await apiClient.get('/weddings');
-                if (data?.data) setWeddings(data.data);
-            } catch (err) {
-                console.error('Failed to load weddings for selector:', err);
-            }
-        };
-        fetchWeddings();
-    }, []);
-
-    // Re-fetch wishes whenever selectedWeddingId changes
+    // Re-fetch wishes whenever activeWedding changes
     const fetchWishes = useCallback(async (weddingId: string) => {
         setWishesLoading(true);
         try {
             const url = weddingId
                 ? `/guests/wishes?weddingId=${encodeURIComponent(weddingId)}`
-                : '/guests/wishes';
+                : '/guests/wishes'; // fallback, though activeWedding should be present
             const { data } = await apiClient.get(url);
             setFilteredWishes(data?.data ?? []);
         } catch (err) {
@@ -57,19 +43,16 @@ export default function WishesPage() {
         }
     }, []);
 
-    // Initial load: fetch all wishes
     useEffect(() => {
-        fetchWishes('');
-    }, [fetchWishes]);
-
-    const handleWeddingSelect = (weddingId: string) => {
-        setSelectedWeddingId(weddingId);
-        fetchWishes(weddingId);
-    };
+        if (activeWedding?.id) {
+            fetchWishes(activeWedding.id);
+        } else {
+            setFilteredWishes([]);
+        }
+    }, [activeWedding, fetchWishes]);
 
     const displayedWishes = filteredWishes;
     const showLoading = wishesLoading || (isLoading && wishes.length === 0);
-    const selectedW = weddings.find(w => w.id === selectedWeddingId);
 
     return (
         <div className="max-w-4xl mx-auto pb-10 animate-fade-up">
@@ -78,60 +61,16 @@ export default function WishesPage() {
                 description="All the beautiful wishes and messages left by your guests."
             />
 
-            {/* Wedding Selector (Premium Glass Style) */}
-            {weddings.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 mt-8 group">
-                    <span className="text-sm font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap">Filter by Event:</span>
-                    <div className="relative w-full sm:min-w-[340px]">
-                        <div
-                            className="w-full bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white hover:border-pink-300 transition-all shadow-sm"
-                            onClick={(e) => {
-                                const dropdown = e.currentTarget.nextElementSibling;
-                                if (dropdown) dropdown.classList.toggle('hidden');
-                            }}
-                        >
-                            <div className="overflow-hidden">
-                                {selectedW ? (
-                                    <div className="flex items-center gap-1.5 truncate">
-                                        <WeddingNameDisplay
-                                            brideName={selectedW.bride_name}
-                                            groomName={selectedW.groom_name}
-                                            size="sm"
-                                            className="text-slate-800"
-                                        />
-                                    </div>
-                                ) : (
-                                    <span className="text-sm text-slate-400">All registered events</span>
-                                )}
-                            </div>
-                            <svg className="w-4 h-4 text-slate-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        {/* Dropdown Options */}
-                        <div className="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-[60] py-2 animate-fade-up duration-200">
-                            <div
-                                className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 ${selectedWeddingId === '' ? 'bg-pink-50/80' : ''}`}
-                                onClick={(e) => {
-                                    handleWeddingSelect('');
-                                    e.currentTarget.parentElement?.classList.add('hidden');
-                                }}
-                            >
-                                <span className="text-sm text-slate-800 font-semibold tracking-tight">Show All Events</span>
-                            </div>
-                            {weddings.map(w => (
-                                <div
-                                    key={w.id}
-                                    className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWeddingId === w.id ? 'bg-pink-50/80' : ''}`}
-                                    onClick={(e) => {
-                                        handleWeddingSelect(w.id);
-                                        e.currentTarget.parentElement?.classList.add('hidden');
-                                    }}
-                                >
-                                    <WeddingNameDisplay brideName={w.bride_name} groomName={w.groom_name} size="sm" className="text-slate-800" />
-                                    <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">{w.location}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+            {/* Active Event Context Header */}
+            {activeWedding && (
+                <div className="glass-panel p-5 rounded-[1.5rem] relative z-30 mt-8 text-center flex flex-col items-center justify-center gap-1">
+                    <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Showing Wishes For</span>
+                    <WeddingNameDisplay
+                        brideName={activeWedding.bride_name}
+                        groomName={activeWedding.groom_name}
+                        size="md"
+                        className="text-slate-800 font-bold"
+                    />
                 </div>
             )}
 
@@ -148,8 +87,8 @@ export default function WishesPage() {
                     <div>
                         <p className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">No wishes yet</p>
                         <p className="text-slate-500 max-w-sm mx-auto leading-relaxed">
-                            {selectedWeddingId
-                                ? 'No wishes have been submitted for this specific wedding.'
+                            {!activeWedding
+                                ? 'Please select an active wedding channel from your Dashboard to view its wishes.'
                                 : 'When guests send their warm wishes and blessings, they will beautifully appear here.'}
                         </p>
                     </div>

@@ -5,7 +5,7 @@ import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import apiClient from '@/api/client';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useAppStore } from '@/store';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
@@ -68,8 +68,9 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
+    const { activeWedding, setActiveWedding } = useAppStore();
     const [weddings, setWeddings] = useState<any[]>([]);
-    const [selectedWedding, setSelectedWedding] = useState<string>('');
+    const selectedWedding = activeWedding?.id || '';
     const [guests, setGuests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [pdfLoading, setPdfLoading] = useState(false);
@@ -92,8 +93,12 @@ export default function DashboardPage() {
                 const fetchedWeddings: any[] = weddingData?.data ?? [];
                 setWeddings(fetchedWeddings);
 
-                if (fetchedWeddings.length > 0) {
-                    setSelectedWedding(fetchedWeddings[0].id);
+                if (fetchedWeddings.length > 0 && !activeWedding) {
+                    setActiveWedding(fetchedWeddings[0]);
+                } else if (fetchedWeddings.length > 0 && activeWedding) {
+                    // Update the active wedding if data changed
+                    const updated = fetchedWeddings.find(w => w.id === activeWedding.id);
+                    if (updated) setActiveWedding(updated);
                 }
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
@@ -320,7 +325,7 @@ export default function DashboardPage() {
                                         key={w.id}
                                         className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWedding === w.id ? 'bg-pink-50/80' : ''}`}
                                         onClick={(e) => {
-                                            setSelectedWedding(w.id);
+                                            setActiveWedding(w);
                                             e.currentTarget.parentElement?.classList.add('hidden');
                                         }}
                                     >
