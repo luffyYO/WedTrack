@@ -38,7 +38,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     placeholder={placeholder}
                     icon={<Search size={18} />}
                     fullWidth
-                    className="bg-white border-gray-200 shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    className="bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 shadow-sm focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white"
                 />
             </div>
             <div className="flex gap-2">

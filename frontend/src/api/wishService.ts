@@ -12,9 +12,15 @@ export interface Wish {
 
 export const wishService = {
     /**
-     * Fetch all wishes for the authenticated user's weddings, newest first.
+     * Fetch wishes. Pass a weddingId to scope results to a single wedding,
+     * or omit it to get all wishes across all user weddings.
      */
-    getWishes: () => client.get<{ data: Wish[] }>('/guests/wishes'),
+    getWishes: (weddingId?: string) => {
+        const url = weddingId
+            ? `/guests/wishes?weddingId=${encodeURIComponent(weddingId)}`
+            : '/guests/wishes';
+        return client.get<{ data: Wish[] }>(url);
+    },
 
     /**
      * Mark all unread wishes as read for the authenticated user.

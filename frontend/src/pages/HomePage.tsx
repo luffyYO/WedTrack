@@ -1,20 +1,55 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LayoutDashboard, HeartHandshake, QrCode } from 'lucide-react';
+import { Plus, LayoutDashboard, HeartHandshake, QrCode, Star, Sparkles, Navigation } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { WeddingNameDisplay } from '@/components/ui';
 import apiClient from '@/api/client';
 import { useAuthStore } from '@/store';
-import { supabase } from "@/config/supabaseClient";
+
+// ─── QR Status Dot ───────────────────────────────────────────────────────────
+
+type QrStatus = 'active' | 'expiring' | 'expired' | 'inactive';
+
+function getQrStatus(activationTime: string | null, expiryTime: string | null): QrStatus {
+    if (!activationTime || !expiryTime) return 'inactive';
+    const now = Date.now();
+    const activation = new Date(activationTime).getTime();
+    const expiry = new Date(expiryTime).getTime();
+    if (now < activation) return 'inactive';
+    if (now >= expiry) return 'expired';
+    // Within 48 hours of expiry → expiring soon
+    if (expiry - now <= 48 * 60 * 60 * 1000) return 'expiring';
+    return 'active';
+}
+
+const STATUS_CONFIG: Record<QrStatus, { color: string; label: string }> = {
+    active:   { color: 'bg-emerald-400',  label: 'Active'         },
+    expiring: { color: 'bg-amber-400',    label: 'Expiring Soon'  },
+    expired:  { color: 'bg-rose-500',     label: 'Expired'        },
+    inactive: { color: 'bg-slate-300',    label: 'Not Yet Active' },
+};
+
+function QrStatusDot({ activationTime, expiryTime }: { activationTime: string | null; expiryTime: string | null }) {
+    const status = getQrStatus(activationTime, expiryTime);
+    const { color, label } = STATUS_CONFIG[status];
+    return (
+        <div className="group absolute top-4 right-4 z-10">
+            <span className={`block w-3.5 h-3.5 rounded-full ${color} shadow-sm border-[2px] border-white/80`} />
+            {/* Tooltip */}
+            <span className="pointer-events-none absolute top-6 right-0 z-10 whitespace-nowrap rounded-[var(--radius-md)] bg-slate-800/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl">
+                {label}
+            </span>
+        </div>
+    );
+}
 
 export default function HomePage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const [weddings, setWeddings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -31,112 +66,182 @@ export default function HomePage() {
         };
         fetchStats();
     }, []);
-      
-                  useEffect(() => {
-  const checkUser = async () => {
-    const { data, error } = await supabase.auth.getUser();
-    console.log("USER:", data);
-    console.log("ERROR:", error);
-  };
-
-  checkUser();
-}, []);
-
-
 
     return (
-        <div className="w-full pb-10">
+        <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
             <PageHeader
-                title="Home Overview"
+                title="Platform Overview"
                 description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}!`}
                 action={
                     <div className="mt-4 sm:mt-0 w-full sm:w-auto flex flex-col sm:flex-row gap-3">
                         <Button
                             variant="secondary"
-                            size="sm"
-                            className="h-[36px] py-1.5 px-3.5 text-sm rounded-lg"
-                            icon={<LayoutDashboard size={15} />}
+                            size="md"
+                            icon={<LayoutDashboard size={16} />}
                             onClick={() => navigate('/dashboard')}
                         >
                             Open Dashboard
                         </Button>
                         <Button
-                            size="sm"
-                            className="h-[36px] py-1.5 px-3.5 text-sm rounded-lg"
-                            icon={<Plus size={15} />}
+                            variant="primary"
+                            size="md"
+                            icon={<Plus size={16} />}
                             onClick={() => navigate('/wedding-track/new')}
                         >
-                            Create Wedding QR
+                            Create Track
                         </Button>
                     </div>
                 }
             />
 
-            <div className="mt-6 max-w-[900px] mx-auto space-y-8">
+            <div className="mt-8 max-w-[1000px] mx-auto space-y-12">
+                {/* ── Premium Primary Statistic Card ── */}
                 <div className="flex justify-center">
-                    {/* Compact Primary Statistic Card */}
-                    <div className="bg-[linear-gradient(135deg,var(--color-primary-600),var(--color-primary-700))] rounded-2xl p-4 text-white shadow-md relative overflow-hidden flex flex-col items-center justify-center text-center h-[110px] w-full max-w-[340px]">
-                        <div className="absolute -right-1 -top-2 opacity-10">
-                            <HeartHandshake size={60} />
+                    <div className="glass-panel rounded-[2rem] p-10 text-slate-800 w-full max-w-[420px] relative overflow-hidden flex flex-col items-center justify-center text-center transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1 group border-[1.5px] border-white/70">
+                        {/* Soft background glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-100/40 to-transparent pointer-events-none" />
+                        <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-[0.06] group-hover:rotate-12 group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                            <HeartHandshake size={180} />
                         </div>
-                        <div className="relative z-10">
-                            <h3 className="text-primary-100 font-bold uppercase tracking-wider text-xs sm:text-[13px] mb-0.5">
-                                Weddings Tracked
+                        
+                        <div className="relative z-10 w-full">
+                            <h3 className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[11px] mb-4">
+                                Fleet Status
                             </h3>
                             {loading ? (
-                                <div className="animate-pulse h-8 w-12 bg-white/20 rounded mx-auto mt-1"></div>
+                                <div className="animate-pulse h-16 w-24 bg-slate-200/50 rounded-2xl mx-auto mt-2 mb-4"></div>
                             ) : (
-                                <div className="text-3xl sm:text-[36px] font-black tracking-tight leading-none">
+                                <div className="text-7xl font-black tracking-tighter leading-none bg-gradient-to-br from-slate-800 to-slate-500 bg-clip-text text-transparent mb-4">
                                     {weddings.length}
                                 </div>
                             )}
-                            <div className="text-[11px] text-white/60 font-medium uppercase tracking-tighter mt-0.5">Active Tracks</div>
+                            <div className="text-[13px] text-slate-600 font-semibold uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)] animate-pulse" />
+                                Active Events
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Weddings List */}
-                <div className="mt-0">
-                    <h2 className="text-xl font-bold text-gray-900 mb-5">Your Tracked Weddings QR</h2>
+                {/* ── Weddings List ── */}
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2.5">
+                        <Navigation size={22} className="text-pink-400" />
+                        Your Tracked Weddings
+                    </h2>
                 
                 {loading ? (
-                    <div className="w-full flex justify-center py-10">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="glass-panel p-6 rounded-[2rem] h-[220px] flex flex-col justify-between animate-pulse">
+                                <div className="space-y-4 w-full mt-2">
+                                    <div className="h-6 bg-slate-200/50 rounded-md w-3/4"></div>
+                                    <div className="h-4 bg-slate-200/50 rounded-md w-1/2"></div>
+                                    <div className="h-4 bg-slate-200/50 rounded-md w-2/3"></div>
+                                </div>
+                                <div className="h-11 bg-slate-200/50 rounded-xl w-full mt-4"></div>
+                            </div>
+                        ))}
                     </div>
                 ) : weddings.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
-                        <p className="text-gray-500">No weddings QR created yet.</p>
+                    <div className="text-center py-24 glass-panel rounded-[2.5rem] border border-dashed border-slate-300/60 animate-fade-up">
+                        <div className="w-24 h-24 bg-white/80 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm text-slate-400">
+                            <QrCode size={48} strokeWidth={1} />
+                        </div>
+                        <h3 className="text-slate-800 font-bold text-2xl mb-3 tracking-tight">Initialize Your First Track</h3>
+                        <p className="text-slate-500 text-base max-w-sm mx-auto mb-10 leading-relaxed">
+                            Generate a unique QR code to start tracking guest entries and gift contributions for your wedding event.
+                        </p>
+                        <Button 
+                            size="lg"
+                            icon={<Plus size={18} />}
+                            onClick={() => navigate('/wedding-track/new')} 
+                        >
+                            Create Wedding QR
+                        </Button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {weddings.map(w => (
-                            <div key={w.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col justify-between">
-                                <div>
+                        {weddings.map((w, index) => (
+                            <div 
+                                key={w.id} 
+                                className="relative glass-panel rounded-[2rem] p-7 flex flex-col justify-between group overflow-hidden hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-400"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                            >
+                                <QrStatusDot
+                                    activationTime={w.qr_activation_time ?? null}
+                                    expiryTime={w.qr_expires_at ?? null}
+                                />
+                                <div className="z-10 relative">
                                     <WeddingNameDisplay 
                                         brideName={w.bride_name} 
                                         groomName={w.groom_name} 
                                         size="md"
-                                        className="mb-1"
+                                        className="mb-3 text-slate-800 tracking-tight"
                                     />
-                                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-                                        {formatDate(w.date, { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                    </p>
-                                    <p className="text-sm text-gray-500 mt-1">{w.venue}, {w.location}</p>
+                                    <div className="flex flex-col gap-2.5 mt-5">
+                                        <p className="text-sm text-slate-600 flex items-center gap-3 font-medium bg-white/40 p-2 rounded-lg border border-white/50">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                                            {formatDate(w.date, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                        <p className="text-sm text-slate-600 flex items-center gap-3 font-medium bg-white/40 p-2 rounded-lg border border-white/50 line-clamp-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                                            {w.venue}, {w.location}
+                                        </p>
+                                    </div>
                                 </div>
                                 <Button 
-                                    className="mt-6 w-full" 
-                                    variant="outline"
+                                    className="mt-8 w-full shadow-sm relative z-10" 
+                                    variant="secondary"
                                     icon={<QrCode size={16} />}
                                     onClick={() => navigate(`/wedding-track/qr/${w.id}`)}
                                 >
-                                    View Details & QR
+                                    Manage Details
                                 </Button>
+                                {/* Hover Gradient effect */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-pink-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                             </div>
                         ))}
                     </div>
                 )}
+                </div>
+
+                {/* ── Quick Actions / Tips ── */}
+                <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-6 pb-8">
+                    <div className="glass-panel p-8 rounded-[2rem]">
+                        <h4 className="font-bold text-lg mb-6 text-slate-800 uppercase tracking-widest flex items-center gap-2.5">
+                            <Star size={20} className="text-amber-400" />
+                            Quick Protocol
+                        </h4>
+                        <ul className="space-y-4">
+                            {[
+                                "Share the QR code with guests via WhatsApp",
+                                "Track entries in real-time on the Dashboard",
+                                "Verify gift payments as they arrive",
+                                "Download final guest list as PDF"
+                            ].map((tip, i) => (
+                                <li key={i} className="text-[14px] text-slate-600 flex items-start gap-3 font-medium">
+                                    <span className="font-mono text-[11px] font-bold text-pink-400 bg-pink-50 px-1.5 py-0.5 rounded-md mt-0.5">0{i+1}</span>
+                                    {tip}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="glass-panel p-8 rounded-[2rem] flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5 pointer-events-none" />
+                        <Sparkles size={36} className="mb-5 text-pink-400 animate-pulse-glow rounded-full bg-white/80 p-2 shadow-sm" />
+                        <h4 className="font-bold text-xl text-slate-800 mb-2 relative z-10">Need Assistance?</h4>
+                        <p className="text-[14px] text-slate-500 mb-8 max-w-[240px] relative z-10">Our support team is active 24/7 for any technical inquiries.</p>
+                        <Button 
+                            variant="primary"
+                            onClick={() => window.open('https://wa.me/9149891771', '_blank')}
+                            className="relative z-10"
+                        >
+                            Contact Support
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
     );
 }

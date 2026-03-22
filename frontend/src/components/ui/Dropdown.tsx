@@ -75,10 +75,10 @@ export default function Dropdown<T extends string = string>({
                     'flex items-center justify-between h-9 px-3 text-[14px] rounded-[var(--radius-md)]',
                     'bg-[var(--color-surface)] border border-[var(--color-border)]',
                     'text-left transition-all duration-150',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white',
                     'disabled:opacity-50 disabled:cursor-not-allowed',
                     error && 'border-red-500',
-                    isOpen && 'ring-2 ring-primary-500 border-primary-500',
+                    isOpen && 'ring-2 ring-black dark:ring-white border-black dark:border-white',
                     !selectedOption && 'text-[var(--color-text-muted)]',
                     selectedOption && 'text-[var(--color-text-primary)]',
                     icon && 'pl-9'
@@ -124,8 +124,8 @@ export default function Dropdown<T extends string = string>({
                             className={cn(
                                 'px-3 py-2 text-[14px] cursor-pointer transition-colors duration-100',
                                 option.value === value
-                                    ? 'text-primary-700 bg-primary-50 font-medium'
-                                    : 'text-[var(--color-text-primary)] hover:bg-neutral-50',
+                                    ? 'text-black dark:text-white bg-neutral-100 dark:bg-neutral-800 font-medium'
+                                    : 'text-[var(--color-text-primary)] hover:bg-neutral-100 dark:hover:bg-neutral-800',
                                 option.disabled && 'opacity-40 cursor-not-allowed pointer-events-none'
                             )}
                         >

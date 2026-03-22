@@ -39,8 +39,11 @@ client.interceptors.response.use(
             // Don't redirect on public pages (guest form, QR view)
             const isPublicPage = window.location.pathname.startsWith('/guest-form');
             if (!isPublicPage) {
-                localStorage.removeItem('wedtrack_token');
-                window.location.href = '/';
+                // Clear the invalid session from Supabase to stop the redirect loop
+                supabase.auth.signOut().catch(console.error).finally(() => {
+                    localStorage.removeItem('wedtrack_token');
+                    window.location.href = '/login';
+                });
             }
         }
 

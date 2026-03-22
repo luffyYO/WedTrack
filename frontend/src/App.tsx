@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import AppRouter from '@/routes/router';
 import { supabase } from '@/config/supabaseClient';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useThemeStore } from '@/store';
 import type { Session } from '@supabase/supabase-js';
 
 /**
@@ -10,10 +10,20 @@ import type { Session } from '@supabase/supabase-js';
  */
 export default function App() {
     const setSession = useAuthStore((state) => state.setSession);
-   useEffect(() => {
-  console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL);
-  console.log("SUPABASE KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY);
-}, []);
+    const isDarkMode = useThemeStore((state) => state.isDarkMode);
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('bg-black', 'text-white');
+            document.body.classList.remove('bg-white', 'text-black');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.add('bg-white', 'text-black');
+            document.body.classList.remove('bg-black', 'text-white');
+        }
+    }, [isDarkMode]);
+
     useEffect(() => {
         const syncUser = async (session: Session | null) => {
             setSession(session);

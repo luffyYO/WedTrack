@@ -39,10 +39,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-white dark:bg-black rounded-[2rem] shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-gray-500">
-                    <thead className="text-[11px] text-gray-700 uppercase bg-gray-50/50 font-black border-b border-gray-100">
+                <table className="w-full text-sm text-left text-neutral-500 dark:text-neutral-400">
+                    <thead className="text-[11px] text-black dark:text-white uppercase bg-neutral-100 dark:bg-neutral-900 font-black border-b border-neutral-200 dark:border-neutral-800">
                         <tr>
                             <th className="px-4 py-3">Guest Name</th>
                             <th className="px-4 py-3">Father's Name</th>
@@ -52,7 +52,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                             <th className="px-4 py-3 text-center">Status / Action</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                         {results.map((guest) => {
                             const entryDate = parseSafeDate(guest.created_at);
                             const timeStr = entryDate && !isNaN(entryDate.getTime()) 
@@ -60,40 +60,40 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                 : '';
                                 
                             return (
-                                <tr key={guest.id} className="hover:bg-primary-50/30 transition-colors group">
+                                <tr key={guest.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group">
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-2">
-                                            <div className="bg-primary-50 text-primary-600 p-1.5 rounded-lg group-hover:bg-primary-600 group-hover:text-white transition-all">
+                                            <div className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 p-1.5 rounded-lg group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all">
                                                 <User size={12} />
                                             </div>
-                                            <span className="font-bold text-gray-900 text-sm">{guest.first_name} {guest.last_name || ''}</span>
+                                            <span className="font-bold text-black dark:text-white text-sm">{guest.first_name} {guest.last_name || ''}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2.5 text-gray-500 text-xs font-medium">
+                                    <td className="px-4 py-2.5 text-neutral-500 dark:text-neutral-400 text-xs font-medium">
                                         {guest.father_first_name} {guest.father_last_name || ''}
                                     </td>
                                     <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-1.5 text-gray-600">
-                                            <MapPin size={12} className="text-primary-400" />
+                                        <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+                                            <MapPin size={12} className="text-black dark:text-white" />
                                             <span className="font-medium text-xs">{guest.village || guest.district || '—'}</span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-2.5 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="font-extrabold text-gray-900 text-sm">₹{Number(guest.amount).toLocaleString('en-IN')}</span>
-                                            <span className="text-[9px] font-bold text-primary-500 uppercase tracking-tight">{guest.payment_type}</span>
+                                            <span className="font-extrabold text-black dark:text-white text-sm">₹{Number(guest.amount).toLocaleString('en-IN')}</span>
+                                            <span className="text-[9px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-tight">{guest.payment_type}</span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-2.5 whitespace-nowrap">
                                         <div className="flex flex-col">
-                                            <span className="text-gray-900 font-bold text-[12px]">{formatDate(guest.created_at)}</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">{timeStr}</span>
+                                            <span className="text-black dark:text-white font-bold text-[12px]">{formatDate(guest.created_at)}</span>
+                                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">{timeStr}</span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center justify-center gap-1.5 min-w-[100px]">
                                             {guest.is_paid ? (
-                                                <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-100">
+                                                <span className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-green-100 dark:border-green-800">
                                                     Verified
                                                 </span>
                                             ) : (
@@ -101,7 +101,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                     {onConfirm && (
                                                         <button
                                                             onClick={() => onConfirm(guest.id)}
-                                                            className="bg-green-600 hover:bg-green-700 text-white font-black px-2.5 py-1 rounded-lg text-[10px] transition-all shadow-sm active:scale-95"
+                                                            className="bg-black dark:bg-white text-white dark:text-black font-black px-2.5 py-1 rounded-lg text-[10px] hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all shadow-sm active:scale-95"
                                                         >
                                                             Paid
                                                         </button>
@@ -109,7 +109,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                     {onDelete && (
                                                         <button
                                                             onClick={() => onDelete(guest.id)}
-                                                            className="bg-white border border-red-100 text-red-500 hover:bg-red-50 font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all active:scale-95"
+                                                            className="bg-white dark:bg-black border border-red-200 dark:border-red-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-2.5 py-1 rounded-lg text-[10px] transition-all active:scale-95"
                                                         >
                                                             Cancel
                                                         </button>

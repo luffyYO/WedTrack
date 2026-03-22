@@ -25,8 +25,8 @@ export default function NavItemComponent({ item, collapsed = false, onNavigate }
                     'min-h-[44px] md:min-h-0',
                     collapsed ? 'justify-center px-2' : 'px-3',
                     isActive
-                        ? 'bg-primary-700 text-white'
-                        : 'text-[var(--color-text-secondary)] hover:bg-neutral-100 hover:text-[var(--color-text-primary)]'
+                        ? 'bg-neutral-900 text-white dark:bg-white dark:text-black shadow-sm'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-black dark:hover:text-white'
                 )
             }
             title={collapsed ? item.label : undefined}
@@ -36,7 +36,7 @@ export default function NavItemComponent({ item, collapsed = false, onNavigate }
             {!collapsed && <span className="truncate">{item.label}</span>}
 
             {item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-semibold px-1 bg-primary-100 text-primary-700">
+                <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-semibold px-1 bg-neutral-200 text-black dark:bg-neutral-800 dark:text-white">
                     {item.badge > 99 ? '99+' : item.badge}
                 </span>
             )}

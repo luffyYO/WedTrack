@@ -82,11 +82,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full px-8 py-10 bg-white rounded-2xl shadow-xl border border-[var(--color-border)]">
+    <div className="w-full px-8 sm:px-10 py-10 bg-white dark:bg-neutral-900/50 backdrop-blur-xl rounded-[2rem] shadow-xl border border-neutral-200 dark:border-neutral-800 transition-colors">
 
       {/* Subtitle */}
       <div className="text-center mb-8">
-        <p className="text-gray-500 text-sm">
+        <p className="text-neutral-500 dark:text-neutral-400 text-sm">
           {step === 1 ? "Sign in to your account" : "Enter the code sent to your email"}
         </p>
       </div>
@@ -107,11 +107,11 @@ export default function LoginPage() {
         <>
           {/* Email Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-bold mb-2">Email Address</label>
             <input
               type="email"
               value={email}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 transition"
+              className="w-full px-5 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-transparent transition-all shadow-sm"
               placeholder="you@example.com"
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -120,7 +120,7 @@ export default function LoginPage() {
           <button
             onClick={sendOtp}
             disabled={loading}
-            className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-6"
+            className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 mb-6"
           >
             {loading ? "Sending..." : "Send Login Code"}
           </button>
@@ -129,11 +129,11 @@ export default function LoginPage() {
         <>
           {/* OTP Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Passcode</label>
+            <label className="block text-sm font-bold mb-2">Passcode</label>
             <input
               type="text"
               value={otp}
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] text-gray-800 tracking-widest text-center text-xl font-bold transition"
+              className="w-full px-5 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white tracking-[0.5em] text-center text-2xl font-black bg-transparent transition-all shadow-sm"
               placeholder="000000"
               onChange={(e) => setOtp(e.target.value)}
             />
@@ -142,13 +142,13 @@ export default function LoginPage() {
           <button
             onClick={verifyOtp}
             disabled={loading}
-            className="w-full py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white font-semibold rounded-lg transition disabled:opacity-60 mb-4"
+            className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 mb-4"
           >
             {loading ? "Verifying..." : "Verify & Sign In"}
           </button>
           <button
             onClick={() => setStep(1)}
-            className="w-full text-sm text-gray-500 hover:text-primary-600 font-medium transition"
+            className="w-full text-sm text-neutral-500 dark:text-neutral-400 hover:text-black dark:hover:text-white font-medium transition"
           >
             Back to email
           </button>
@@ -157,15 +157,15 @@ export default function LoginPage() {
 
       {/* Divider */}
       <div className="flex items-center my-6">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="mx-3 text-sm text-gray-400 uppercase tracking-tighter">or</span>
-        <div className="flex-1 h-px bg-gray-200" />
+        <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800" />
+        <span className="mx-3 text-sm text-neutral-400 dark:text-neutral-600 uppercase tracking-tighter">or</span>
+        <div className="flex-1 h-px bg-neutral-200 dark:bg-neutral-800" />
       </div>
 
       {/* Google Login */}
       <button
         onClick={googleLogin}
-        className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-gray-700 font-medium"
+        className="w-full flex items-center justify-center gap-3 py-4 border-2 border-neutral-200 dark:border-neutral-800 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all font-bold shadow-sm hover:-translate-y-0.5"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

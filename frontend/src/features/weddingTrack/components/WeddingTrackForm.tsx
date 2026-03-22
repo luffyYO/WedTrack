@@ -2,6 +2,8 @@ import { type ChangeEvent } from 'react';
 import Input from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import DatePicker from '@/components/ui/DatePicker';
+import FloatingHearts from '@/components/ui/FloatingHearts';
+import { useState } from 'react';
 import type { WeddingTrackFormData, WeddingTrackFormErrors } from '../types/weddingTrack.types';
 
 interface WeddingTrackFormProps {
@@ -39,6 +41,8 @@ export default function WeddingTrackForm({
     onChange,
     disabled = false,
 }: WeddingTrackFormProps) {
+    const [heartsActive, setHeartsActive] = useState(false);
+
     const handleChange =
         (field: keyof WeddingTrackFormData) =>
             (e: ChangeEvent<HTMLInputElement>) =>
@@ -48,8 +52,9 @@ export default function WeddingTrackForm({
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <Card className="w-full">
-            <div className="grid grid-cols-1 gap-5">
+        <Card className="w-full relative overflow-visible z-10">
+            <FloatingHearts active={heartsActive} />
+            <div className="grid grid-cols-1 gap-5 relative z-10">
 
                 {/* Row 1: Bride & Groom side by side */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -59,6 +64,8 @@ export default function WeddingTrackForm({
                         placeholder={FIELD_PLACEHOLDERS.brideName}
                         value={data.brideName}
                         onChange={(e) => onChange('brideName', e.target.value.replace(/[^A-Za-z\s]/g, ""))}
+                        onFocus={() => setHeartsActive(true)}
+                        onBlur={() => setHeartsActive(false)}
                         error={errors.brideName}
                         disabled={disabled}
                         maxLength={50}
@@ -71,6 +78,8 @@ export default function WeddingTrackForm({
                         placeholder={FIELD_PLACEHOLDERS.groomName}
                         value={data.groomName}
                         onChange={(e) => onChange('groomName', e.target.value.replace(/[^A-Za-z\s]/g, ""))}
+                        onFocus={() => setHeartsActive(true)}
+                        onBlur={() => setHeartsActive(false)}
                         error={errors.groomName}
                         disabled={disabled}
                         maxLength={50}

@@ -1,5 +1,7 @@
 import supabase from '../config/db.js';
 import { generateQrCode } from '../utils/qrGenerator.js';
+import cache from '../utils/cache.js';
+import { encryptId, decryptId } from '../utils/obfuscate.js';
 
 /**
  * Derives the QR status from the two stored timestamps.
@@ -76,7 +78,7 @@ export const createWedding = async (req, res) => {
   try {
     const location = venue;
     const frontendUrl = process.env.FRONTEND_URL;
-    
+
     if (!frontendUrl) {
       return res.status(500).json({
         error: "Server configuration error",
@@ -108,7 +110,7 @@ export const createWedding = async (req, res) => {
       // `T00:00:00+05:30` correctly expresses midnight in IST as a UTC timestamp.
       // e.g., 2026-03-17T00:00:00+05:30 = 2026-03-16T18:30:00.000Z
       qrActivationTime = new Date(`${weddingDate}T00:00:00+05:30`).toISOString();
-      qrExpiresAt     = new Date(new Date(`${weddingDate}T00:00:00+05:30`).getTime() + IST_24H_MS).toISOString();
+      qrExpiresAt = new Date(new Date(`${weddingDate}T00:00:00+05:30`).getTime() + IST_24H_MS).toISOString();
     }
 
     // 1. Insert a new record into the weddings table via Supabase API
@@ -142,22 +144,27 @@ export const createWedding = async (req, res) => {
       throw new Error(insertError.message);
     }
     const weddingId = insertData.id;
+    const encryptedWeddingId = encryptId(weddingId);
 
-    // 2. Generate a guest form link using the created weddingId
-    const qrLink = `${frontendUrl}/guest-form/${weddingId}`;
+    // 2. Generate a guest form link using the encrypted weddingId
+    const qrLink = `${frontendUrl}/guest-form/${encryptedWeddingId}`;
 
     // 3. Store the generated qrLink inside the weddings table
+    // (We store the UUID internally but the qr_link contains the secure token)
     const { error: updateError } = await req.supabase
       .from('weddings')
       .update({ qr_link: qrLink })
       .eq('id', weddingId)
-      .eq('user_id', req.user.id); // Security check
+      .eq('user_id', req.user.id); /* Security check */
 
     if (updateError) throw new Error(updateError.message);
 
     // 4. Return a JSON response with wedding details. (Frontend generates the QR image to save server CPU)
+    // Invalidate Cache for this user
+    cache.del(`weddings_${req.user.id}`);
+
     res.status(201).json({
-      weddingId,
+      weddingId: encryptedWeddingId,
       qrLink,
       message: 'Wedding created successfully',
     });
@@ -168,8 +175,11 @@ export const createWedding = async (req, res) => {
 };
 
 export const getWeddingQR = async (req, res) => {
-  const { id } = req.params;
-  console.log(`[getWeddingQR] Fetching QR for wedding ID: ${id}`);
+  const id = decryptId(req.params.id);
+  
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid or tampered wedding ID' });
+  }
 
   try {
     let wedding, error;
@@ -181,16 +191,14 @@ export const getWeddingQR = async (req, res) => {
         .maybeSingle(); // Better: doesn't error when 0 rows are found
       wedding = response.data;
       error = response.error;
-      
-      console.log(`[getWeddingQR] Query completed for ${id}. Found: ${!!wedding}, Error: ${error ? error.message : 'none'}`);
     } catch (dbError) {
       console.error(`[getWeddingQR] Database query failed for ${id}:`, dbError);
       return res.status(500).json({ error: 'Database query failed', details: dbError?.message || dbError });
     }
 
     if (error) {
-       console.error(`[getWeddingQR] Supabase returned error for ${id}:`, error);
-       return res.status(500).json({ error: 'Failed to fetch wedding details', details: error.message });
+      console.error(`[getWeddingQR] Supabase returned error for ${id}:`, error);
+      return res.status(500).json({ error: 'Failed to fetch wedding details', details: error.message });
     }
 
     if (!wedding) {
@@ -198,11 +206,12 @@ export const getWeddingQR = async (req, res) => {
       return res.status(404).json({ error: 'Wedding track not found', details: 'No wedding matched the provided ID' });
     }
 
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     let qrUrl = wedding.qr_link;
-    if (!qrUrl) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      qrUrl = `${frontendUrl}/guest-form/${wedding.id}`;
-      console.log(`[getWeddingQR] Reconstructed missing qr_link for ${id}: ${qrUrl}`);
+    // ensure even existing old raw UUID links get updated to encrypted if accessed
+    const actualEncryptedId = encryptId(wedding.id);
+    if (!qrUrl || qrUrl.includes(wedding.id)) {
+      qrUrl = `${frontendUrl}/guest-form/${actualEncryptedId}`;
     }
 
     // Generate the QR Image Base64 on the fly since we only stored the link
@@ -211,7 +220,7 @@ export const getWeddingQR = async (req, res) => {
       qrImage = await generateQrCode(qrUrl);
     } catch (qrError) {
       console.error(`[getWeddingQR] QR generation error for ${id}:`, qrError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to generate QR code',
         details: qrError.message || 'Unable to generate QR image from the stored link'
       });
@@ -219,7 +228,7 @@ export const getWeddingQR = async (req, res) => {
 
     res.status(200).json({
       data: {
-        weddingId: wedding.id,
+        weddingId: actualEncryptedId,
         brideName: wedding.bride_name,
         groomName: wedding.groom_name,
         venue: wedding.location,
@@ -239,16 +248,43 @@ export const getWeddingQR = async (req, res) => {
   }
 };
 export const getWeddings = async (req, res) => {
+  const cacheKey = `weddings_${req.user.id}`;
+
+  // Try to get from cache first
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return res.status(200).json({ data: cachedData, cached: true });
+  }
+
   try {
     const { data: weddings, error } = await req.supabase
       .from('weddings')
-      .select('*')
+      .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_activation_time, qr_expires_at, created_at')
       .eq('user_id', req.user.id) // Enforce ownership
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
 
-    res.status(200).json({ data: weddings });
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Obfuscate the IDs before returning to frontend
+    const secureWeddings = weddings.map(w => {
+      const encryptedId = encryptId(w.id);
+      let newQrLink = w.qr_link;
+      // Retroactively fix old raw UUID QR links
+      if (!newQrLink || newQrLink.includes(w.id)) {
+        newQrLink = `${frontendUrl}/guest-form/${encryptedId}`;
+      }
+      return {
+        ...w,
+        id: encryptedId,
+        qr_link: newQrLink
+      };
+    });
+
+    // Store in cache for 5 minutes (standard TTL)
+    cache.set(cacheKey, secureWeddings);
+
+    res.status(200).json({ data: secureWeddings });
   } catch (error) {
     console.error('Error fetching weddings:', error);
     res.status(500).json({ error: 'Failed to fetch weddings', details: error.message });
@@ -256,7 +292,11 @@ export const getWeddings = async (req, res) => {
 };
 
 export const extendWeddingQR = async (req, res) => {
-  const { id } = req.params;
+  const id = decryptId(req.params.id);
+  
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid or tampered wedding ID' });
+  }
 
   try {
     // 1. Check ownership and current status

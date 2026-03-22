@@ -25,10 +25,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
     const paymentMethods = ['PhonePe', 'GPay', 'Paytm', 'Cash'];
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xl mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white dark:bg-black p-6 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-xl mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex flex-col gap-6">
                 <div>
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Search Category</h4>
+                    <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">Search Category</h4>
                     <div className="flex flex-wrap gap-2">
                         {filters.map((filter) => (
                             <button
@@ -37,8 +37,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                 className={cn(
                                     "px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 border",
                                     activeFilter === filter
-                                        ? "bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-100 scale-105"
-                                        : "bg-gray-50 text-gray-600 border-gray-100 hover:bg-gray-100 hover:border-gray-200"
+                                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-md scale-105"
+                                        : "bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                 )}
                             >
                                 {filter}
@@ -48,8 +48,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 </div>
 
                 {activeFilter === 'Amount' && (
-                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-gray-50 pt-4">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Amount Threshold</h4>
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-neutral-50 dark:border-neutral-800 pt-4">
+                        <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">Amount Threshold</h4>
                         <div className="flex flex-wrap gap-3">
                             {amountPresets.map((amount) => (
                                 <button
@@ -58,8 +58,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                     className={cn(
                                         "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                         selectedAmountRange === amount
-                                            ? "bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-100 scale-105"
-                                            : "bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100"
+                                            ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-md scale-105"
+                                            : "bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                     )}
                                 >
                                     &lt; {amount}
@@ -70,8 +70,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                 className={cn(
                                     "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                     selectedAmountRange === null
-                                        ? "bg-gray-900 text-white border-gray-900"
-                                        : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
+                                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                                        : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400 dark:text-neutral-500 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                 )}
                             >
                                 Clear
@@ -81,8 +81,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 )}
 
                 {activeFilter === 'Payment Method' && onPaymentMethodChange && (
-                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-gray-50 pt-4 mt-4">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Select Method</h4>
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-neutral-50 dark:border-neutral-800 pt-4 mt-4">
+                        <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">Select Method</h4>
                         <div className="flex flex-wrap gap-3">
                             {paymentMethods.map((method) => (
                                 <button
@@ -91,8 +91,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                     className={cn(
                                         "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                         selectedPaymentMethod === method
-                                            ? "bg-green-600 text-white border-green-600 shadow-lg shadow-green-100 scale-105"
-                                            : "bg-green-50 text-green-600 border-green-100 hover:bg-green-100"
+                                            ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-md scale-105"
+                                            : "bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                     )}
                                 >
                                     {method}
@@ -103,8 +103,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                 className={cn(
                                     "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                     selectedPaymentMethod === null
-                                        ? "bg-gray-900 text-white border-gray-900"
-                                        : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
+                                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                                        : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400 dark:text-neutral-500 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                 )}
                             >
                                 Clear
@@ -113,8 +113,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                     </div>
                 )}
                 {activeFilter === 'Side' && onPaymentMethodChange && (
-                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-gray-50 pt-4 mt-4">
-                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Select Side</h4>
+                    <div className="animate-in fade-in slide-in-from-left-4 duration-300 border-t border-neutral-50 dark:border-neutral-800 pt-4 mt-4">
+                        <h4 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">Select Side</h4>
                         <div className="flex flex-wrap gap-3">
                             {['Bride', 'Groom'].map((side) => (
                                 <button
@@ -123,8 +123,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                     className={cn(
                                         "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                         selectedPaymentMethod === side
-                                            ? "bg-pink-600 text-white border-pink-600 shadow-lg shadow-pink-100 scale-105"
-                                            : "bg-pink-50 text-pink-600 border-pink-100 hover:bg-pink-100"
+                                            ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-md scale-105"
+                                            : "bg-neutral-50 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                     )}
                                 >
                                     {side} Side
@@ -135,8 +135,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                                 className={cn(
                                     "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 border",
                                     selectedPaymentMethod === null
-                                        ? "bg-gray-900 text-white border-gray-900"
-                                        : "bg-gray-50 text-gray-400 border-gray-100 hover:bg-gray-100"
+                                        ? "bg-black dark:bg-white text-white dark:text-black border-black dark:border-white"
+                                        : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400 dark:text-neutral-500 border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                                 )}
                             >
                                 Clear

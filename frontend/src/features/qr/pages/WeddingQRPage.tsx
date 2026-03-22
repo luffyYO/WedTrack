@@ -10,18 +10,6 @@ import QRActionButtons from '../components/QRActionButtons';
 import type { QRFetchState, QRData } from '../types/qr.types';
 import { WeddingNameDisplay } from '@/components/ui';
 
-// ─── Decorative ring divider (SVG, theme-neutral) ────────────────────────────
-
-function RingDivider() {
-    return (
-        <div className="flex items-center justify-center gap-3 my-6 select-none" aria-hidden="true">
-            <span className="flex-1 max-w-[120px] h-[1.5px] bg-gray-100" />
-            <div className="w-1.5 h-1.5 rounded-full bg-primary-400 opacity-50" />
-            <span className="flex-1 max-w-[120px] h-[1.5px] bg-gray-100" />
-        </div>
-    );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WeddingQRPage() {
@@ -117,14 +105,14 @@ export default function WeddingQRPage() {
     const qrData = isSuccess ? fetchState.data : null;
 
     const weddingTitle = qrData
-        ? `${qrData.brideName} ❤️ weds ❤️ ${qrData.groomName}`
+        ? `${qrData.brideName} & ${qrData.groomName}`
         : 'Wedding Track';
 
     return (
-        <div className="min-h-[calc(100vh-var(--topbar-height))] flex flex-col items-center justify-start py-8 px-4">
+        <div className="min-h-[calc(100vh-var(--topbar-height))] flex flex-col items-center justify-start py-8 px-4 animate-fade-up">
 
             {/* ── Back button ── */}
-            <div className="w-full max-w-[400px] mb-6">
+            <div className="w-full max-w-[420px] mb-6">
                 <Button
                     variant="ghost"
                     size="sm"
@@ -136,100 +124,126 @@ export default function WeddingQRPage() {
             </div>
 
             {/* ── Wedding Header ── */}
-            <div className="text-center mb-2 w-full max-w-[400px]">
+            <div className="text-center mb-6 w-full max-w-[420px] relative">
                 {isLoading ? (
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="h-8 w-64 rounded-[var(--radius-md)] bg-neutral-100 animate-pulse mx-auto" />
-                        <div className="h-4 w-40 rounded-[var(--radius-md)] bg-neutral-100 animate-pulse mx-auto" />
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="h-8 w-64 rounded-full bg-slate-200/50 animate-pulse mx-auto" />
+                        <div className="h-4 w-40 rounded-full bg-slate-200/50 animate-pulse mx-auto" />
                     </div>
                 ) : isSuccess && qrData ? (
-                    <>
+                    <div className="relative inline-block mt-4 px-8">
+                        {/* ── Floral Name Decorations ── */}
+                        <div className="absolute -top-5 -left-2 text-3xl animate-bounce" style={{animationDuration: '3s'}}>💖</div>
+                        <div className="absolute -top-5 -right-2 text-3xl animate-bounce" style={{animationDuration: '3.5s', animationDelay: '0.5s'}}>💖</div>
+                        
                         <WeddingNameDisplay 
                             brideName={qrData.brideName} 
                             groomName={qrData.groomName} 
                             size="xl" 
-                            className="mb-1"
+                            className="mb-1 text-slate-800 drop-shadow-sm font-serif"
                         />
                         {qrData?.venue && (
-                            <p className="text-body-sm text-[var(--color-text-secondary)] mt-1">
+                            <p className="text-sm text-slate-500 mt-2 font-medium">
                                 {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
                             </p>
                         )}
                         
                         {/* ── Status Badge ── */}
                         {timeLeft && (
-                            <div className={`mt-3 px-3 py-1 rounded-full text-caption font-bold inline-block animate-fade-in ${
+                            <div className={`mt-4 px-5 py-2 rounded-full text-[11px] font-black inline-block uppercase tracking-widest shadow-sm border relative z-10 ${
                                 isExpired 
-                                    ? 'bg-red-50 text-red-600 border border-red-100' 
+                                    ? 'bg-rose-50 text-rose-600 border-rose-200' 
                                     : isInactive
-                                        ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                                        : 'bg-primary-50 text-primary-600 border border-primary-100'
+                                        ? 'bg-slate-50 text-slate-500 border-slate-200/60'
+                                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                             }`}>
                                 {timeLeft}
                             </div>
                         )}
-                    </>
+                    </div>
                 ) : null}
-
-                <RingDivider />
             </div>
 
             {/* ── QR Display ── */}
-            <div className="w-full max-w-[400px]">
-                <QRDisplay
-                    status={fetchState.status}
-                    qrImageUrl={qrData?.qrImageUrl}
-                    weddingTitle={weddingTitle}
-                    errorMessage={fetchState.status === 'error' ? fetchState.message : undefined}
-                />
+            <div className="w-full max-w-[420px] relative mt-2 mb-4">
+                {/* ── Floral Frame Accents ── */}
+                {isSuccess && (
+                    <>
+                        <div className="absolute -top-8 -left-8 text-5xl opacity-90 z-20 hover:scale-110 transition-transform cursor-default drop-shadow-md">🌸</div>
+                        <div className="absolute -bottom-8 -right-8 text-5xl opacity-90 z-20 hover:scale-110 transition-transform cursor-default drop-shadow-md">🌸</div>
+                        <div className="absolute -top-4 -right-4 text-4xl opacity-70 z-20 drop-shadow-sm">🌿</div>
+                        <div className="absolute -bottom-4 -left-4 text-4xl opacity-70 z-20 drop-shadow-sm">🌿</div>
+                        <div className="absolute top-1/2 -left-6 -translate-y-1/2 text-3xl opacity-60 z-20">✨</div>
+                        <div className="absolute top-1/2 -right-6 -translate-y-1/2 text-3xl opacity-60 z-20">✨</div>
+                    </>
+                )}
+
+                <div className="glass-panel p-4 rounded-[2.5rem] relative overflow-hidden group border-white/80 shadow-[0_20px_60px_rgba(244,114,182,0.15)] ring-4 ring-white/50">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-rose-50 pointer-events-none" />
+                    
+                    {/* Inner Premium Line */}
+                    <div className="absolute inset-2 border-2 border-pink-200/50 rounded-[2rem] pointer-events-none z-10" />
+
+                    <div className="relative z-10 w-full rounded-[2rem] overflow-hidden bg-white shadow-inner p-2">
+                        <QRDisplay
+                            status={fetchState.status}
+                            qrImageUrl={qrData?.qrImageUrl}
+                            weddingTitle={weddingTitle}
+                            errorMessage={fetchState.status === 'error' ? fetchState.message : undefined}
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* ── Share link label ── */}
             {isSuccess && qrData?.shareLink && (
-                <div className="mt-4 max-w-[320px] w-full">
-                    <p className="text-caption text-[var(--color-text-muted)] text-center truncate px-2">
+                <div className="mt-6 max-w-[360px] w-full">
+                    <p className="text-[12px] text-slate-400 text-center truncate px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl">
                         {qrData.shareLink}
                     </p>
                 </div>
             )}
 
             {/* ── Action Buttons or Error retry ── */}
-            <div className="mt-5 w-full max-w-[400px]">
+            <div className="mt-6 w-full max-w-[420px]">
                 {fetchState.status === 'error' ? (
                     <div className="flex flex-col items-center gap-4">
-                        <div className="flex items-center gap-2 text-[var(--color-danger)] text-body-sm">
+                        <div className="flex items-center gap-2 text-rose-500 bg-rose-50 px-4 py-2 rounded-lg font-medium text-sm border border-rose-100">
                             <AlertCircle size={15} />
                             <span>{fetchState.message}</span>
                         </div>
                         <Button
-                            variant="secondary"
-                            size="sm"
+                            variant="primary"
+                            size="md"
                             icon={<RefreshCw size={14} />}
                             onClick={fetchQR}
                         >
-                            Try again
+                            Retry Loading Code
                         </Button>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        <QRActionButtons
-                            shareLink={qrData?.shareLink ?? ''}
-                            qrImageUrl={qrData?.qrImageUrl ?? ''}
-                            weddingTitle={weddingTitle}
-                            disabled={isLoading}
-                        />
+                        <div className="relative z-20">
+                            <QRActionButtons
+                                shareLink={qrData?.shareLink ?? ''}
+                                qrImageUrl={qrData?.qrImageUrl ?? ''}
+                                weddingTitle={weddingTitle}
+                                disabled={isLoading}
+                            />
+                        </div>
 
-                        {/* ── Extend Button (Only if Success and TrackId exists) ── */}
+                        {/* ── Extend Button ── */}
                         {isSuccess && (
                             <Button
-                                variant={isExpired ? "primary" : "outline"}
+                                variant={isExpired ? "primary" : "secondary"}
                                 size="md"
                                 fullWidth
                                 onClick={handleExtend}
                                 isLoading={isExtending}
                                 icon={<RefreshCw size={16} />}
+                                className={!isExpired ? 'glass-panel text-slate-600 hover:text-slate-800' : ''}
                             >
-                                {isExpired ? "Re-activate QR for 24 Hours" : "Extend QR for 24 Hours"}
+                                {isExpired ? "Re-activate QR for 24 Hours" : "Extend Link Validity (+24hrs)"}
                             </Button>
                         )}
                     </div>
@@ -238,8 +252,8 @@ export default function WeddingQRPage() {
 
             {/* ── Track ID note ── */}
             {isSuccess && (
-                <p className="text-caption text-[var(--color-text-muted)] mt-6">
-                    Track ID: <span className="text-mono">{trackId}</span>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-slate-300 mt-8 mb-4">
+                    Track ID: <span className="font-mono text-slate-400">{trackId}</span>
                 </p>
             )}
         </div>

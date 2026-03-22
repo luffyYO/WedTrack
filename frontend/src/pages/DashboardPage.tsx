@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, IndianRupee, Download } from 'lucide-react';
+import { Plus, Users, IndianRupee, Download, LayoutDashboard, Search } from 'lucide-react';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
@@ -17,7 +17,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 function SkeletonBox({ className = '' }: { className?: string }) {
     return (
         <div
-            className={`animate-pulse bg-gray-200 rounded-xl ${className}`}
+            className={`animate-pulse bg-slate-200/60 rounded-xl ${className}`}
             aria-hidden="true"
         />
     );
@@ -26,18 +26,16 @@ function SkeletonBox({ className = '' }: { className?: string }) {
 function DashboardSkeleton() {
     return (
         <div className="mt-6 space-y-8 max-w-[900px] mx-auto" aria-label="Loading dashboard…">
-            {/* Wedding selector placeholder */}
-            <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="glass-panel p-5 rounded-[1.5rem] flex items-center gap-4">
                 <SkeletonBox className="h-4 w-28" />
-                <SkeletonBox className="h-10 flex-1 rounded-lg" />
+                <SkeletonBox className="h-10 flex-1 rounded-xl" />
             </div>
 
-            {/* Stats grid placeholder — 2×2 */}
-            <div className="grid grid-cols-2 gap-4 max-w-[700px] mx-auto">
+            <div className="grid grid-cols-2 gap-4 max-w-[750px] mx-auto">
                 {[...Array(4)].map((_, i) => (
                     <div
                         key={i}
-                        className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-2 h-[105px] sm:h-[140px]"
+                        className="glass-panel p-4 sm:p-6 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 h-[105px] sm:h-[150px]"
                     >
                         <SkeletonBox className="h-3 w-24" />
                         <SkeletonBox className="h-8 w-20" />
@@ -46,20 +44,18 @@ function DashboardSkeleton() {
                 ))}
             </div>
 
-            {/* Search bar placeholder */}
-            <SkeletonBox className="h-12 w-full rounded-xl" />
+            <SkeletonBox className="h-12 w-full rounded-[1.5rem]" />
 
-            {/* Table rows placeholder */}
-            <div className="space-y-3">
+            <div className="space-y-4">
                 <SkeletonBox className="h-4 w-40" />
                 {[...Array(5)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-4 items-center">
-                        <SkeletonBox className="h-9 w-9 rounded-full shrink-0" />
-                        <div className="flex-1 space-y-2">
+                    <div key={i} className="glass-panel rounded-[1.5rem] p-5 flex gap-4 items-center">
+                        <SkeletonBox className="h-10 w-10 rounded-full shrink-0" />
+                        <div className="flex-1 space-y-2.5">
                             <SkeletonBox className="h-3 w-1/3" />
                             <SkeletonBox className="h-2 w-1/4" />
                         </div>
-                        <SkeletonBox className="h-6 w-16 rounded-full" />
+                        <SkeletonBox className="h-8 w-20 rounded-[1rem]" />
                     </div>
                 ))}
             </div>
@@ -86,28 +82,19 @@ export default function DashboardPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
     const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
-    // ── FIX 3: Parallel fetch — weddings + first guess at guests loaded together ──
     useEffect(() => {
         const loadDashboard = async () => {
+            if (weddings.length > 0) return;
+            
             setLoading(true);
             try {
-                // Step 1: weddings are needed first to know which one to select
                 const { data: weddingData } = await apiClient.get('/weddings');
                 const fetchedWeddings: any[] = weddingData?.data ?? [];
                 setWeddings(fetchedWeddings);
 
-                if (fetchedWeddings.length === 0) {
-                    return; // nothing else to fetch
+                if (fetchedWeddings.length > 0) {
+                    setSelectedWedding(fetchedWeddings[0].id);
                 }
-
-                const firstId = fetchedWeddings[0].id;
-                setSelectedWedding(firstId);
-
-                // Step 2: guests fetch starts immediately after we know the ID
-                const { data: guestData } = await apiClient.get(`/guests/wedding/${firstId}`);
-                const fetchedGuests: any[] = guestData?.data ?? [];
-                setGuests(fetchedGuests);
-                setFilteredGuests(fetchedGuests);
             } catch (err) {
                 console.error('Failed to load dashboard:', err);
             } finally {
@@ -115,12 +102,12 @@ export default function DashboardPage() {
             }
         };
 
-        loadDashboard();
-    }, []);
+        if (loading) {
+            loadDashboard();
+        }
+    }, [loading, weddings.length]);
 
-    // Fetch Guests when a different wedding is selected or Side filter changes
     useEffect(() => {
-        // Skip the initial load — handled by loadDashboard above
         if (!selectedWedding) return;
 
         const fetchGuests = async () => {
@@ -140,13 +127,10 @@ export default function DashboardPage() {
         };
 
         fetchGuests();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedWedding, activeFilter, selectedPaymentMethod]);
 
-    // Debounce search query to prevent excessive filtering
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    // Filtering Logic
     useEffect(() => {
         let result = [...guests];
 
@@ -205,7 +189,6 @@ export default function DashboardPage() {
         }
     };
 
-    // ── FIX 4: Async PDF — jspdf loads on demand, not at page load ────────────
     const handleDownloadPDF = useCallback(async () => {
         const wedding = weddings.find(w => w.id === selectedWedding);
         if (!wedding) return;
@@ -227,7 +210,6 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [weddings, selectedWedding, filteredGuests]);
 
-    // Calculate reliable totals by only summing VERIFIED paid amounts
     const { totalCollected, totalVerifiedGifts, pendingGifts } = useMemo(() => {
         return guests.reduce(
             (acc, g) => {
@@ -243,7 +225,6 @@ export default function DashboardPage() {
         );
     }, [guests]);
 
-    // Filtered Summary Logic
     const isFilterActive = debouncedSearchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
 
     const { filteredVerifiedGiftsCount, filteredVerifiedAmount } = useMemo(() => {
@@ -261,48 +242,53 @@ export default function DashboardPage() {
     }, [filteredGuests, isFilterActive]);
 
     return (
-        <div className="w-full pb-10">
+        <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
             <PageHeader
-                title="Dashboard"
+                title="Management Dashboard"
                 description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}! View your recent wedding gift tracks here.`}
                 action={
                     <div className="mt-4 sm:mt-0 w-full sm:w-auto">
                         <Button
-                            size="sm"
+                            size="md"
                             fullWidth
-                            icon={<Plus size={15} />}
+                            variant="primary"
+                            icon={<Plus size={16} />}
                             onClick={() => navigate('/wedding-track/new')}
                         >
-                            Create Wedding Track
+                            Create Track
                         </Button>
                     </div>
                 }
             />
 
-            {/* ── FIX 8: Skeleton replaces spinner while loading ─────────────── */}
             {loading ? (
                 <DashboardSkeleton />
             ) : weddings.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center border border-dashed border-[var(--color-border)] rounded-[var(--radius-lg)] bg-[var(--color-surface)] p-6">
-                    <Users size={28} className="text-neutral-300" />
-                    <p className="text-body-sm text-[var(--color-text-muted)]">
-                        No weddings tracked yet. Start tracking gifts by creating a new wedding.
+                <div className="mt-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center glass-panel rounded-[2.5rem] border border-dashed border-slate-300 p-10">
+                    <div className="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-400">
+                        <Users size={28} />
+                    </div>
+                    <p className="text-slate-800 font-bold text-xl tracking-tight">
+                        No events tracked yet.
                     </p>
-                    <Button onClick={() => navigate('/wedding-track/new')}>Create New Wedding Track</Button>
+                    <p className="text-slate-500 max-w-sm mb-4">Start organizing your guest list and contributions by creating a new wedding record.</p>
+                    <Button onClick={() => navigate('/wedding-track/new')} className="shadow-sm">Create New Wedding Track</Button>
                 </div>
             ) : (
-                <div className="mt-6 space-y-8 max-w-[900px] mx-auto">
-                    {/* Wedding Selector */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative z-30">
-                        <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">Displaying data for:</span>
+                <div className="mt-8 space-y-8 max-w-[950px] mx-auto">
+                    {/* ── Wedding Selector ── */}
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 group">
+                        <div className="flex items-center gap-2 text-slate-400">
+                            <LayoutDashboard size={18} className="group-hover:text-pink-400 transition-colors" />
+                            <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Active Channel:</span>
+                        </div>
 
-                        {/* Custom Dropdown to support rich typography */}
-                        <div className="relative w-full sm:min-w-[320px]">
+                        <div className="relative w-full sm:min-w-[340px] z-[60]">
                             {(() => {
                                 const selectedW = weddings.find(w => w.id === selectedWedding);
                                 return (
                                     <div
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                                        className="w-full bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white hover:border-pink-300 transition-all shadow-sm"
                                         onClick={(e) => {
                                             const dropdown = e.currentTarget.nextElementSibling;
                                             if (dropdown) dropdown.classList.toggle('hidden');
@@ -315,23 +301,24 @@ export default function DashboardPage() {
                                                         brideName={selectedW.bride_name}
                                                         groomName={selectedW.groom_name}
                                                         size="sm"
+                                                        className="text-slate-800"
                                                     />
                                                 </div>
                                             ) : (
-                                                <span className="text-sm text-gray-500">Select a wedding</span>
+                                                <span className="text-sm text-slate-400">Select an event record...</span>
                                             )}
                                         </div>
-                                        <svg className="w-4 h-4 text-gray-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        <svg className="w-4 h-4 text-slate-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
                                 );
                             })()}
 
                             {/* Dropdown Options */}
-                            <div className="hidden absolute top-full left-0 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50 py-1">
+                            <div className="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-[60] py-2 animate-fade-up duration-200">
                                 {weddings.map(w => (
                                     <div
                                         key={w.id}
-                                        className={`p-3 cursor-pointer hover:bg-primary-50 transition-colors border-b border-gray-50 last:border-0 ${selectedWedding === w.id ? 'bg-primary-50/50' : ''}`}
+                                        className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWedding === w.id ? 'bg-pink-50/80' : ''}`}
                                         onClick={(e) => {
                                             setSelectedWedding(w.id);
                                             e.currentTarget.parentElement?.classList.add('hidden');
@@ -341,64 +328,74 @@ export default function DashboardPage() {
                                             brideName={w.bride_name}
                                             groomName={w.groom_name}
                                             size="sm"
+                                            className="text-slate-800"
                                         />
-                                        <div className="text-xs text-gray-400 mt-1">{w.location}</div>
+                                        <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">Location: {w.location}</div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </div>
 
-                    {/* Stats Overview - Balanced 2x2 Grid */}
-                    <div className="grid grid-cols-2 gap-4 max-w-[700px] mx-auto">
+                    {/* ── Stats Overview ── */}
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-[850px] mx-auto z-10 relative">
                         {/* Total Collected */}
-                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
-                            <span className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide">Total Collected</span>
-                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 flex items-center gap-0.5 sm:gap-1">
-                                <IndianRupee size={16} className="text-primary-500 sm:w-6 sm:h-6"/>
+                        <div className="glass-panel p-5 sm:p-7 rounded-[2rem] flex flex-col items-center justify-center text-center gap-1.5 sm:h-[160px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all group overflow-hidden relative">
+                            <div className="absolute -left-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.06] group-hover:rotate-12 transition-all duration-500">
+                                <IndianRupee size={120} />
+                            </div>
+                            <span className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10">Validated Revenue</span>
+                            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-br from-slate-800 to-slate-500 bg-clip-text text-transparent flex items-center justify-center gap-0.5 sm:gap-1 mt-1 relative z-10">
+                                <IndianRupee size={24} className="text-slate-600 sm:w-8 sm:h-8"/>
                                 {totalCollected.toLocaleString('en-IN')}
                             </h3>
-                            <span className="text-[10px] sm:text-xs text-gray-400 font-medium">Verified Payments</span>
+                            <span className="text-[9px] sm:text-[10px] text-pink-400/80 font-bold mt-1 relative z-10">SECURE TRANSACTION LEDGER</span>
                         </div>
 
                         {/* Total Gifts */}
-                        <div className="bg-[linear-gradient(135deg,var(--color-primary-600),var(--color-primary-700))] p-4 sm:p-4.5 rounded-2xl shadow-md border-none flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px] text-white">
-                            <span className="text-white/80 text-sm sm:text-base font-bold uppercase tracking-wide">Verified Gifts</span>
-                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black flex items-center gap-1.5 sm:gap-2">
-                                <Users size={16} className="text-white/80 sm:w-6 sm:h-6"/>
+                        <div className="bg-gradient-to-br from-pink-500 to-rose-400 text-white p-5 sm:p-7 rounded-[2rem] shadow-[0_8px_30px_rgba(236,72,153,0.3)] border border-pink-400 flex flex-col items-center justify-center text-center gap-1.5 sm:h-[160px] hover:shadow-[0_12px_40px_rgba(236,72,153,0.4)] hover:-translate-y-1 transition-all group overflow-hidden relative">
+                            <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 group-hover:-rotate-12 transition-all duration-500">
+                                <Users size={140} />
+                            </div>
+                            <span className="text-white/80 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10 text-shadow-sm">Verified Contributions</span>
+                            <h3 className="text-4xl sm:text-5xl lg:text-6xl font-black flex items-center justify-center gap-1.5 sm:gap-2 relative z-10 drop-shadow-md mt-1 tracking-tighter">
                                 {totalVerifiedGifts}
                             </h3>
-                            <span className="text-[10px] sm:text-xs text-white/60 font-medium">Verified Guests</span>
+                            <span className="text-[9px] sm:text-[10px] text-white/70 font-bold relative z-10 mt-1 uppercase text-shadow-sm">Confirmed Guest Entries</span>
                         </div>
 
                         {/* Total Registered */}
-                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
-                            <span className="text-gray-400 text-sm sm:text-base font-bold uppercase tracking-wide">Total Registered</span>
-                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">
+                        <div className="glass-panel p-5 sm:p-6 rounded-[1.5rem] flex flex-col items-center justify-center text-center gap-1 sm:h-[140px] hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all group relative">
+                            <span className="text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Total Inventory</span>
+                            <h3 className="text-3xl sm:text-4xl font-black text-slate-700 mt-1 tracking-tight">
                                 {guests.length}
                             </h3>
-                            <span className="text-[10px] sm:text-xs text-gray-400 font-medium">All Submissions</span>
+                            <span className="text-[9px] text-slate-400 font-bold mt-1">ALL PROTOCOL SUBMISSIONS</span>
                         </div>
 
                         {/* Pending Verifications */}
-                        <div className="bg-white p-4 sm:p-4.5 rounded-2xl shadow-sm border border-orange-100 flex flex-col items-center justify-center text-center gap-1 h-[105px] sm:h-[140px]">
-                            <span className="text-orange-500 text-sm sm:text-base font-bold uppercase tracking-wide">Pending</span>
-                            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-orange-600">
+                        <div className="glass-panel p-5 sm:p-6 rounded-[1.5rem] border border-red-200 flex flex-col items-center justify-center text-center gap-1 sm:h-[140px] hover:shadow-[0_8px_30px_rgba(239,68,68,0.15)] hover:border-red-300 transition-all group relative bg-gradient-to-br from-white/60 to-red-50/30">
+                            {pendingGifts > 0 && (
+                                <span className="absolute top-4 right-4 flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                                </span>
+                            )}
+                            <span className="text-red-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Awaiting Action</span>
+                            <h3 className="text-3xl sm:text-4xl font-black text-red-500 mt-1 drop-shadow-sm">
                                 {pendingGifts}
                             </h3>
-                            <span className="text-[10px] sm:text-xs text-orange-400 font-medium">Awaiting Confirmation</span>
+                            <span className="text-[9px] text-red-400/80 font-bold mt-1 uppercase">Verification Required</span>
                         </div>
                     </div>
 
-                    {/* Search & Filtering System */}
+                    {/* ── Search & Filtering ── */}
                     <div className="space-y-4">
                         <SearchBar
                             value={searchQuery}
                             onChange={setSearchQuery}
                             onSearch={(q) => setSearchQuery(q)}
-                            onSearchClick={() => {
-                                console.log('Searching for:', searchQuery);
-                            }}
+                            onSearchClick={() => {}}
                             onFilterToggle={() => setShowFilters(!showFilters)}
                             isFilterOpen={showFilters}
                             placeholder={
@@ -410,72 +407,81 @@ export default function DashboardPage() {
                         />
 
                         {showFilters && (
-                            <SearchFilters
-                                activeFilter={activeFilter}
-                                onFilterChange={(f) => {
-                                    setActiveFilter(f);
-                                    if (f !== 'Amount') setSelectedAmountRange(null);
-                                    if (f !== 'Payment Method') setSelectedPaymentMethod(null);
-                                }}
-                                onAmountRangeChange={setSelectedAmountRange}
-                                selectedAmountRange={selectedAmountRange}
-                                onPaymentMethodChange={setSelectedPaymentMethod}
-                                selectedPaymentMethod={selectedPaymentMethod}
-                            />
+                            <div className="glass-panel p-2 rounded-[1.5rem] animate-fade-up shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-white/80">
+                                <SearchFilters
+                                    activeFilter={activeFilter}
+                                    onFilterChange={(f) => {
+                                        setActiveFilter(f);
+                                        if (f !== 'Amount') setSelectedAmountRange(null);
+                                        if (f !== 'Payment Method') setSelectedPaymentMethod(null);
+                                    }}
+                                    onAmountRangeChange={setSelectedAmountRange}
+                                    selectedAmountRange={selectedAmountRange}
+                                    onPaymentMethodChange={setSelectedPaymentMethod}
+                                    selectedPaymentMethod={selectedPaymentMethod}
+                                />
+                            </div>
                         )}
                     </div>
 
-                    {/* Search Results / Full Table */}
+                    {/* ── Search Results / Table ── */}
                     <div className="space-y-6">
                         {isFilterActive && (
-                            <div className="bg-primary-50 border border-primary-100 p-4 rounded-xl flex flex-wrap gap-6 items-center animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="glass-panel p-6 rounded-[2rem] flex flex-wrap gap-8 items-center animate-fade-up">
                                 <div>
-                                    <span className="text-primary-700 text-xs font-bold uppercase tracking-wider">Verified Gifts</span>
-                                    <div className="text-2xl font-black text-primary-900 leading-tight">
+                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Verified Target Gifts</span>
+                                    <div className="text-4xl font-black text-slate-800 mt-1 tracking-tighter">
                                         {filteredVerifiedGiftsCount}
                                     </div>
                                 </div>
-                                <div className="hidden sm:block w-px h-10 bg-primary-200"></div>
+                                <div className="hidden sm:block w-px h-14 bg-slate-200/60"></div>
                                 <div>
-                                    <span className="text-primary-700 text-xs font-bold uppercase tracking-wider">Total Verified Amount</span>
-                                    <div className="text-2xl font-black text-primary-900 leading-tight flex items-center gap-1">
-                                        <IndianRupee size={20} className="text-primary-600" />
+                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Target Verified Amount</span>
+                                    <div className="text-4xl font-black text-slate-800 flex items-center gap-1 mt-1 tracking-tighter">
+                                        <IndianRupee size={28} className="text-slate-600" />
                                         {filteredVerifiedAmount.toLocaleString('en-IN')}
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-gray-900">
-                                {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Search Results' : 'Recent Guest Entries'}
-                                <span className="ml-2 text-sm font-normal text-gray-400">({filteredGuests.length})</span>
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                                {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Active Results' : 'Recent Submissions'}
+                                <span className="bg-white/60 text-slate-500 text-xs px-2.5 py-1 rounded-full shadow-sm border border-slate-200/50">
+                                    {filteredGuests.length}
+                                </span>
                             </h3>
 
                             <button
                                 onClick={handleDownloadPDF}
                                 disabled={filteredGuests.length === 0 || pdfLoading}
-                                title={pdfLoading ? 'Generating PDF…' : 'Download Guest List'}
-                                className="p-2 rounded-lg border border-gray-100 bg-white text-gray-600 hover:text-primary-600 hover:border-primary-100 hover:shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                                title={pdfLoading ? 'Generating PDF…' : 'Download Guest List PDF'}
+                                className="px-4 py-2 rounded-xl border border-slate-200/60 bg-white/60 backdrop-blur-md shadow-sm text-slate-600 hover:text-pink-500 hover:border-pink-200 hover:bg-white transition-all disabled:opacity-40 disabled:cursor-not-allowed group flex items-center gap-2"
                             >
                                 {pdfLoading ? (
-                                    <div className="w-[18px] h-[18px] border-2 border-gray-300 border-t-primary-500 rounded-full animate-spin" />
+                                    <div className="w-4 h-4 border-2 border-slate-300 border-t-pink-500 rounded-full animate-spin" />
                                 ) : (
-                                    <Download size={18} className="group-hover:scale-110 transition-transform" />
+                                    <>
+                                        <Download size={16} className="group-hover:-translate-y-0.5 transition-transform" />
+                                        <span className="text-sm font-semibold hidden sm:inline">Export PDF</span>
+                                    </>
                                 )}
                             </button>
                         </div>
 
                         {guests.length === 0 ? (
-                            <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 shadow-sm text-gray-400">
-                                No guests have registered yet.
+                            <div className="p-16 text-center glass-panel rounded-[2rem] text-slate-400 font-medium">
+                                No guests have registered for this event yet.
                             </div>
                         ) : (
-                            <SearchResults
-                                results={filteredGuests}
-                                onConfirm={confirmGuest}
-                                onDelete={deleteGuest}
-                            />
+                            <div className="glass-panel overflow-hidden rounded-[2rem] border border-white/60">
+                                <SearchResults
+                                    results={filteredGuests}
+                                    onConfirm={confirmGuest}
+                                    onDelete={deleteGuest}
+                                />
+                            </div>
                         )}
                     </div>
                 </div>

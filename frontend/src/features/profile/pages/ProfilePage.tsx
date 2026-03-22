@@ -6,7 +6,6 @@ import { Save, AlertCircle } from 'lucide-react';
 
 import ProfileHeader from '../components/ProfileHeader';
 import ProfileBasicInfo from '../components/ProfileBasicInfo';
-import ProfileOptionalDetails from '../components/ProfileOptionalDetails';
 
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/config/supabaseClient';
@@ -187,13 +186,6 @@ export default function ProfilePage() {
                 />
 
                 <ProfileBasicInfo
-                    data={formState.data}
-                    isEditing={isEditing}
-                    onChange={handleFieldChange}
-                    errors={formState.errors}
-                />
-
-                <ProfileOptionalDetails
                     data={formState.data}
                     isEditing={isEditing}
                     onChange={handleFieldChange}

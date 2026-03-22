@@ -1,5 +1,7 @@
 import supabase from '../config/db.js';
 import { io } from '../server.js';
+import cache from '../utils/cache.js';
+import { encryptId, decryptId } from '../utils/obfuscate.js';
 
 export const submitGuestForm = async (req, res) => {
   try {
@@ -8,19 +10,19 @@ export const submitGuestForm = async (req, res) => {
       return res.status(400).json({ error: "Empty request body" });
     }
 
-    let { 
-      weddingId, 
-      firstName, 
-      lastName, 
-      fatherFirstName, 
-      fatherLastName, 
-      district, 
-      village, 
-      amount, 
-      paymentType, 
+    let {
+      weddingId,
+      firstName,
+      lastName,
+      fatherFirstName,
+      fatherLastName,
+      district,
+      village,
+      amount,
+      paymentType,
       wishes,
       giftSide,
-      email 
+      email
     } = req.body;
 
     // Trim and sanitize inputs
@@ -38,51 +40,49 @@ export const submitGuestForm = async (req, res) => {
       if (!name) return true; // Optional fields are checked if provided
       if (name.length < 2 || name.length > 100) return false;
       // Allow more characters - sometimes names have hyphens or periods
-      if (!/^[A-Za-z\s\.\-]+$/.test(name)) return false; 
+      if (!/^[A-Za-z\s\.\-]+$/.test(name)) return false;
       if (/(.)\1{4,}/i.test(name)) return false; // Relaxed repeated chars to 5
       // Relaxed consonants to 10 - many Indian place names/names have long clusters
-      if (/[bcdfghjklmnpqrstvwxyz]{10,}/i.test(name)) return false; 
+      if (/[bcdfghjklmnpqrstvwxyz]{10,}/i.test(name)) return false;
       return true;
     };
 
     // Required Field Checks
     if (!firstName || !isValidName(firstName)) {
-      console.error('Validation failed: firstName invalid', { firstName });
       return res.status(400).json({ message: 'First Name is required and must contain only letters.' });
     }
 
     // Optional Field Checks
     if (lastName && !isValidName(lastName)) {
-      console.log('Validation failed: lastName', { lastName });
       return res.status(400).json({ error: 'Invalid Last Name.' });
     }
     if (fatherFirstName && !isValidName(fatherFirstName)) {
-      console.log('Validation failed: fatherFirstName', { fatherFirstName });
       return res.status(400).json({ error: 'Invalid Father\'s First Name.' });
     }
     if (fatherLastName && !isValidName(fatherLastName)) {
-      console.log('Validation failed: fatherLastName', { fatherLastName });
       return res.status(400).json({ error: 'Invalid Father\'s Last Name.' });
     }
     if (district && !isValidName(district)) {
-      console.log('Validation failed: district', { district });
       return res.status(400).json({ error: 'Invalid District.' });
     }
     if (village && !isValidName(village)) {
-      console.log('Validation failed: village', { village });
       return res.status(400).json({ error: 'Invalid Village/City.' });
     }
 
     // Amount Validation
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
-      console.error('Validation failed: amount is NaN or <= 0', { amount });
       return res.status(400).json({ message: 'Amount must be a valid number greater than 0.' });
     }
 
     if (!weddingId) {
-      console.error('Validation failed: weddingId is missing');
       return res.status(400).json({ message: 'Wedding ID is missing.' });
+    }
+    
+    // Decrypt the obfuscated wedding ID
+    weddingId = decryptId(weddingId);
+    if (!weddingId) {
+      return res.status(400).json({ message: 'Invalid or tampered Wedding ID.' });
     }
 
     // Gift Side Validation
@@ -137,6 +137,12 @@ export const submitGuestForm = async (req, res) => {
       return res.status(500).json({ error: 'Database error storing guest', details: error.message });
     }
 
+    // 1. Invalidate weddings cache as a safety (though guest submission doesn't change wedding info)
+    // 2. Invalidate wishes cache for all weddings in this guest's wedding scope (complex to target, so we clear user's wishes)
+    // We don't have req.user here since it's a public route.
+    // Instead, we just let it expire or if we had wedding_id, we could invalidate specific keys.
+    cache.del(`wishes_${weddingId}`);
+
     // Emit real-time socket event if the guest included a wish
     if (wishes && wishes.trim()) {
       try {
@@ -164,7 +170,10 @@ export const submitGuestForm = async (req, res) => {
 };
 
 export const getGuestsByWedding = async (req, res) => {
-  const { weddingId } = req.params;
+  const weddingId = decryptId(req.params.weddingId);
+  if (!weddingId) {
+    return res.status(400).json({ error: 'Invalid or tampered Wedding ID' });
+  }
   const { side } = req.query;
 
   try {
@@ -183,7 +192,7 @@ export const getGuestsByWedding = async (req, res) => {
     // The guests table RLS policies handle access control reliably natively now.
     let query = req.supabase
       .from('guests')
-      .select('*')
+      .select('id, first_name, last_name, father_first_name, amount, payment_type, wishes, gift_side, is_paid, created_at, village, district')
       .eq('wedding_id', weddingId);
 
     if (side && (side === 'bride' || side === 'groom')) {
@@ -194,7 +203,13 @@ export const getGuestsByWedding = async (req, res) => {
 
     if (error) throw new Error(error.message);
 
-    res.status(200).json({ data: guests });
+    const secureGuests = guests.map(g => ({
+      ...g,
+      id: encryptId(g.id),
+      wedding_id: encryptId(g.wedding_id)
+    }));
+
+    res.status(200).json({ data: secureGuests });
   } catch (error) {
     console.error('Error fetching guests:', error);
     res.status(500).json({ error: 'Failed to fetch guests', details: error.message });
@@ -202,7 +217,10 @@ export const getGuestsByWedding = async (req, res) => {
 };
 
 export const confirmGuestPayment = async (req, res) => {
-  const { id } = req.params;
+  const id = decryptId(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid or tampered Guest ID' });
+  }
 
   try {
     // First, find the guest to get the wedding_id
@@ -245,7 +263,10 @@ export const confirmGuestPayment = async (req, res) => {
 };
 
 export const deleteGuest = async (req, res) => {
-  const { id } = req.params;
+  const id = decryptId(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Invalid or tampered Guest ID' });
+  }
 
   try {
     // First, find the guest to get the wedding_id
@@ -288,6 +309,64 @@ export const deleteGuest = async (req, res) => {
 // ── Wishes / Notifications ────────────────────────────────────────────────────
 
 export const getWishes = async (req, res) => {
+  const rawWeddingId = req.query.weddingId;
+  const weddingId = rawWeddingId ? decryptId(rawWeddingId) : null;
+  if (rawWeddingId && !weddingId) {
+    return res.status(400).json({ error: 'Invalid or tampered Wedding ID' });
+  }
+
+  // ── Per-wedding filtered view (Bug 1 fix) ─────────────────────────────────
+  if (weddingId) {
+    const cacheKey = `wishes_${weddingId}`;
+    const cachedWishes = cache.get(cacheKey);
+    if (cachedWishes) {
+      return res.status(200).json({ data: cachedWishes, cached: true });
+    }
+
+    try {
+      // Ownership check: confirm this wedding belongs to the requesting user
+      const { data: wedding, error: wError } = await req.supabase
+        .from('weddings')
+        .select('id')
+        .eq('id', weddingId)
+        .eq('user_id', req.user.id)
+        .single();
+
+      if (wError || !wedding) {
+        return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
+      }
+
+      const { data: wishes, error } = await req.supabase
+        .from('guests')
+        .select('id, first_name, last_name, wishes, is_read, created_at, wedding_id')
+        .eq('wedding_id', weddingId)
+        .not('wishes', 'is', null)
+        .neq('wishes', '')
+        .order('created_at', { ascending: false });
+
+      if (error) throw new Error(error.message);
+
+      const secureWishes = wishes.map(w => ({
+        ...w,
+        id: encryptId(w.id),
+        wedding_id: encryptId(w.wedding_id)
+      }));
+
+      cache.set(cacheKey, secureWishes, 60);
+      return res.status(200).json({ data: secureWishes });
+    } catch (error) {
+      console.error('Error fetching wishes by weddingId:', error);
+      return res.status(500).json({ error: 'Failed to fetch wishes', details: error.message });
+    }
+  }
+
+  // ── Global view: all wishes across all user weddings (existing behaviour) ──
+  const cacheKey = `wishes_user_${req.user.id}`;
+  const cachedWishes = cache.get(cacheKey);
+  if (cachedWishes) {
+    return res.status(200).json({ data: cachedWishes, cached: true });
+  }
+
   try {
     // Fetch all weddings owned by this user
     const { data: weddings, error: wError } = await req.supabase
@@ -313,7 +392,15 @@ export const getWishes = async (req, res) => {
 
     if (error) throw new Error(error.message);
 
-    res.status(200).json({ data: wishes });
+    const secureWishes = wishes.map(w => ({
+      ...w,
+      id: encryptId(w.id),
+      wedding_id: encryptId(w.wedding_id)
+    }));
+
+    cache.set(cacheKey, secureWishes, 60); // Cache wishes for 1 minute only (more dynamic)
+
+    res.status(200).json({ data: secureWishes });
   } catch (error) {
     console.error('Error fetching wishes:', error);
     res.status(500).json({ error: 'Failed to fetch wishes', details: error.message });

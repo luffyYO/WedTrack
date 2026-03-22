@@ -13,10 +13,10 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         <div
             ref={ref}
             className={cn(
-                'bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)]',
-                'shadow-[var(--shadow-sm)]',
-                hoverable && 'transition-shadow duration-200 hover:shadow-[var(--shadow-md)] cursor-pointer',
-                !noPadding && 'p-6',
+                // The new Glassmorphism Base!
+                'glass-panel rounded-[var(--radius-2xl)] overflow-hidden',
+                hoverable && 'transition-all duration-400 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 cursor-pointer',
+                !noPadding && 'p-6 sm:p-8 md:p-10',
                 className
             )}
             {...props}
@@ -37,11 +37,11 @@ interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const CardHeader = ({ title, description, subtitle, action, className, ...props }: CardHeaderProps) => (
-    <div className={cn('flex items-start justify-between mb-5', className)} {...props}>
+    <div className={cn('flex items-start justify-between mb-6', className)} {...props}>
         <div>
-            <h3 className="text-heading-sm text-[var(--color-text-primary)]">{title}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{title}</h3>
             {(description || subtitle) && (
-                <p className="text-body-sm text-[var(--color-text-secondary)] mt-0.5">{description || subtitle}</p>
+                <p className="text-sm sm:text-base text-slate-500 mt-1.5 leading-relaxed">{description || subtitle}</p>
             )}
         </div>
         {action && <div className="ml-4 shrink-0">{action}</div>}
@@ -56,7 +56,7 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
         <div
             ref={ref}
             className={cn(
-                'mt-5 pt-4 border-t border-[var(--color-border)] flex items-center justify-end gap-2',
+                'mt-6 pt-5 border-t border-slate-200/50 flex items-center justify-end gap-3',
                 className
             )}
             {...props}

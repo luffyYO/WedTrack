@@ -7,6 +7,8 @@ import guestRoutes from "./routes/guests.js";
 import authRoutes from "./routes/auth.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import compression from "compression";
+import helmet from "helmet";
 
 dotenv.config();
 
@@ -21,16 +23,22 @@ if (missingEnvVars.length > 0) {
 }
 
 const app = express();
+
+// Enable proxy trust to correctly identify client IPs when deployed on Render or other proxies
+// This is critical for express-rate-limit to work properly and avoid X-Forwarded-For validation errors
+app.set('trust proxy', 1);
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: [
-      "http://localhost:5173",
+      "http://localhost:3000",
       "https://wedtrackss.in"
     ],
     methods: ["GET", "POST"]
   }
 });
+
 
 app.use(cors({
   origin: [
@@ -43,8 +51,17 @@ app.use(cors({
   credentials: true
 }));
 
+// Performance & Security Middleware
+app.use(helmet());
+app.use(compression());
+
 // Parse incoming JSON requests
 app.use(express.json());
+
+// Debug logging for request IP validation
+app.use((req, res, next) => {
+  next();
+});
 
 // Routes
 app.use("/api", authRoutes);
@@ -65,6 +82,11 @@ app.get("/", (req, res) => {
     message: "WedTrack Backend is running",
     time: new Date().toISOString(),
   });
+});
+
+// Dedicated health endpoint for Render uptime monitoring
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
 });
 
 

@@ -13,18 +13,26 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-    primary: 'bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 shadow-sm',
-    secondary: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 active:bg-neutral-300',
-    ghost: 'text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200',
-    outline: 'border border-neutral-300 text-neutral-700 hover:bg-neutral-50 active:bg-neutral-100',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm',
+    // Beautiful subtle gradient with floating drop shadow
+    primary: 'bg-gradient-to-tr from-pink-500 to-rose-400 text-white shadow-[0_8px_20px_-6px_rgba(236,72,153,0.5)] border border-pink-400/20 hover:shadow-[0_12px_24px_-6px_rgba(236,72,153,0.6)] hover:-translate-y-0.5',
+    
+    // Glassmorphism button
+    secondary: 'bg-white/70 backdrop-blur-md border border-white/60 text-slate-700 shadow-sm hover:bg-white/90 hover:shadow-md hover:-translate-y-0.5',
+    
+    // Minimal airy ghost
+    ghost: 'text-slate-600 hover:bg-slate-100/50 hover:text-slate-900 active:bg-slate-200/50',
+    
+    // Elegant outline
+    outline: 'border border-slate-200 bg-white/30 backdrop-blur-sm text-slate-700 hover:bg-white hover:border-slate-300 hover:-translate-y-0.5 shadow-sm',
+    
+    // Danger stays critical but softer
+    danger: 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-[0_8px_20px_-6px_rgba(239,68,68,0.4)] hover:-translate-y-0.5 hover:shadow-lg',
 };
 
-// Touch-friendly: min h-10 (40px) on mobile, sizes scale with screen
 const sizeClasses: Record<ButtonSize, string> = {
-    sm: 'h-9 sm:h-9   px-3 text-[13px] gap-1.5 rounded-[var(--radius-md)]',
-    md: 'h-10 sm:h-10 px-4 text-[14px] gap-2   rounded-[var(--radius-md)]',
-    lg: 'h-11 sm:h-12 px-5 text-[15px] gap-2   rounded-[var(--radius-lg)]',
+    sm: 'h-9 px-4 text-[13px] gap-1.5 rounded-[var(--radius-lg)]',
+    md: 'h-11 px-6 text-[14px] gap-2 rounded-[var(--radius-xl)]',
+    lg: 'h-12 sm:h-14 px-8 text-[15px] sm:text-[16px] gap-2.5 rounded-[var(--radius-2xl)]',
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -48,9 +56,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             disabled={disabled || isLoading}
             className={cn(
                 'inline-flex items-center justify-center font-medium',
-                'transition-all duration-150 select-none cursor-pointer',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2',
-                'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+                'transition-all duration-300 select-none cursor-pointer',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:translate-y-0 disabled:hover:shadow-none',
                 variantClasses[variant],
                 sizeClasses[size],
                 fullWidth && 'w-full',
@@ -59,7 +67,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {...props}
         >
             {isLoading ? (
-                <Loader2 className="animate-spin" size={14} />
+                <Loader2 className="animate-spin" size={16} />
             ) : (
                 iconPosition === 'left' && icon
             )}

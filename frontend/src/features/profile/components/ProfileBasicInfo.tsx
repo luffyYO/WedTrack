@@ -22,7 +22,7 @@ const ROLE_OPTIONS = [
 export default function ProfileBasicInfo({ data, isEditing, onChange, errors }: ProfileBasicInfoProps) {
     return (
         <Card className="w-full relative overflow-hidden p-0 border-none sm:border-solid bg-transparent sm:bg-[var(--color-surface)]">
-            <div className="absolute top-0 left-0 w-1 h-full bg-primary-500 hidden sm:block" />
+            <div className="absolute top-0 left-0 w-1 h-full bg-black dark:bg-white hidden sm:block" />
             <CardHeader
                 title="Account Information"
                 subtitle="Your required login and contact details."

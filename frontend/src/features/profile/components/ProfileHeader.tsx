@@ -15,8 +15,8 @@ export default function ProfileHeader({ profile, isEditing, onEditToggle, onSign
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-6 bg-[var(--color-surface)] rounded-[var(--radius-xl)] border border-[var(--color-border)] shadow-[var(--shadow-sm)] relative overflow-hidden">
 
             {/* Decorative background accent */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-bl-[100px] -z-10 opacity-50" />
-            <div className="absolute -top-4 -right-4 text-primary-100/40 -z-10">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-neutral-100 dark:bg-neutral-800 rounded-bl-[100px] -z-10 opacity-50" />
+            <div className="absolute -top-4 -right-4 text-neutral-200/40 dark:text-neutral-800/40 -z-10">
                 <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.5" />
                     <path d="M16 11V8l-4-4-4 4v3H6v2h2v5c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-5h2v-2h-2zm-6 5V8.83l2-2 2 2V16h-4z" />
@@ -25,7 +25,7 @@ export default function ProfileHeader({ profile, isEditing, onEditToggle, onSign
 
             {/* Avatar */}
             <div className="relative group shrink-0">
-                <div className="w-24 h-24 rounded-full bg-primary-700 text-white flex items-center justify-center text-display-xs font-semibold shadow-md border-4 border-[var(--color-surface)]">
+                <div className="w-24 h-24 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-display-xs font-semibold shadow-md border-4 border-[var(--color-surface)]">
                     {getInitials(profile.fullName)}
                 </div>
 

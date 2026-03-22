@@ -41,5 +41,8 @@ export default defineConfig({
     // NOTE: `open: true` removed — it breaks CI/build environments where
     // there is no browser available. Run `npm run dev` locally to auto-open.
   },
+  css: {
+    transformer: "postcss", // 🔥 THIS FIXES YOUR ERROR
+  },
 });
 
