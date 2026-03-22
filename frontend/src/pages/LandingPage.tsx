@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useAuthStore, useThemeStore } from '@/store';
+import { useAuthStore } from '@/store';
 import { 
-    Linkedin, 
     Instagram, 
     Facebook, 
     Menu, 
@@ -17,8 +16,9 @@ import {
     LayoutDashboard, 
     Bell, 
     Send,
-    Moon,
-    Sun
+    Navigation,
+    HeartHandshake,
+    ListX
 } from 'lucide-react';
 import MobileMenuPanel from '@/components/navigation/MobileMenuPanel';
 
@@ -26,8 +26,6 @@ export default function LandingPage() {
     const navigate = useNavigate();
     const { isAuthenticated, isLoading } = useAuthStore();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    
-    const { isDarkMode, toggleDarkMode } = useThemeStore();
     
     // 3D Animated Splash Screen
     const [showSplash, setShowSplash] = useState(true);
@@ -37,10 +35,10 @@ export default function LandingPage() {
     const [doubtMessage, setDoubtMessage] = useState('');
 
     useEffect(() => {
-        // Delay to show splash screen
+        // Delay to show splash screen (logo spin)
         const timer = setTimeout(() => {
             setShowSplash(false);
-        }, 3000);
+        }, 2500);
         return () => clearTimeout(timer);
     }, []);
 
@@ -53,7 +51,7 @@ export default function LandingPage() {
     const handleWhatsAppSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const adminNumber = '9149891771';
-        const text = `*New Doubt/Feedback from WedTrack Landing*%0A%0A*Name:* ${doubtName}%0A*Message:* ${doubtMessage}`;
+        const text = `*New Inquiry from WedTrack Landing*%0A%0A*Name:* ${doubtName}%0A*Message:* ${doubtMessage}`;
         window.open(`https://wa.me/${adminNumber}?text=${text}`, '_blank');
         setDoubtName('');
         setDoubtMessage('');
@@ -69,35 +67,26 @@ export default function LandingPage() {
 
     if (showSplash) {
         return (
-            <div className={`fixed inset-0 z-[100] flex items-center justify-center transition-colors duration-1000 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] transition-colors duration-1000">
                 <div className="relative animate-spin-3d">
                     <img 
                         src="/logo.jpeg" 
                         alt="WedTrack 3D Logo" 
-                        className={`w-40 h-40 rounded-full object-cover shadow-2xl border-4 ${isDarkMode ? 'border-neutral-800' : 'border-neutral-200'}`} 
+                        className="w-40 h-40 rounded-[2.5rem] object-cover shadow-[0_20px_50px_rgba(244,114,182,0.3)] border-[3px] border-white/80" 
                     />
                 </div>
             </div>
         );
     }
 
-    // Theme Variables for Monochrome Look
-    const mainBg = isDarkMode ? 'bg-black text-white' : 'bg-white text-black';
-    const altBg = isDarkMode ? 'bg-neutral-900' : 'bg-neutral-50';
-    const cardBg = isDarkMode ? 'bg-neutral-900 border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700 text-white' : 'bg-white border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 text-black';
-    const textMuted = isDarkMode ? 'text-neutral-400' : 'text-neutral-500';
-    const invertBtn = isDarkMode ? 'bg-white text-black hover:bg-neutral-200' : 'bg-black text-white hover:bg-neutral-800';
-    const borderLine = isDarkMode ? 'border-neutral-800' : 'border-neutral-200';
-    const headerBg = isDarkMode ? 'bg-black/90 border-neutral-800' : 'bg-white/90 border-neutral-100';
-
     const Logo = ({ size = "md" }) => (
         <div className="flex items-center gap-3">
             <img 
                 src="/logo.jpeg" 
                 alt="WedTrack logo" 
-                className={`${size === "lg" ? "w-14 h-14" : "w-10 h-10"} rounded-full object-cover shadow-sm border border-neutral-200`}
+                className={`${size === "lg" ? "w-16 h-16" : "w-10 h-10"} rounded-2xl object-cover shadow-sm border border-white/50`}
             />
-            <span className={`font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-black'} ${size === "lg" ? "text-3xl" : "text-xl"}`}>
+            <span className={`font-bold tracking-tight text-slate-800 ${size === "lg" ? "text-3xl" : "text-xl"}`}>
                 WedTrack
             </span>
         </div>
@@ -106,7 +95,7 @@ export default function LandingPage() {
     const navItems = [
         { label: 'About', sectionId: 'about', icon: Info },
         { label: 'Features', sectionId: 'features', icon: Sparkles },
-        { label: 'Doubt', sectionId: 'doubt', icon: HelpCircle }
+        { label: 'Support', sectionId: 'doubt', icon: HelpCircle }
     ];
 
     const mobileNavItems = navItems.map(item => ({
@@ -116,36 +105,36 @@ export default function LandingPage() {
     }));
 
     return (
-        <div className={`min-h-screen font-sans overflow-x-hidden relative transition-colors duration-500 ${mainBg}`}>
-            
+        <div className="min-h-screen font-sans overflow-x-hidden relative text-slate-700">
+            {/* Global soft decorative blobs */}
+            <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-pink-300/20 blur-[120px] rounded-full pointer-events-none" />
+            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-rose-300/20 blur-[120px] rounded-full pointer-events-none" />
+
             {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b shadow-sm transition-colors duration-500 ${headerBg}`}>
+            <header className="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_20px_rgba(244,114,182,0.05)]">
                 <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
                     <Logo />
                     
-                    <div className="flex items-center gap-3 sm:gap-6">
-                        {/* Day / Night Toggle */}
-                        <button 
-                            onClick={toggleDarkMode}
-                            aria-label="Toggle Dark Mode"
-                            className={`p-2 rounded-full transition-all ${isDarkMode ? 'bg-neutral-800 text-yellow-400 hover:bg-neutral-700' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
-                        >
-                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-
+                    <div className="flex items-center gap-4 sm:gap-6">
                         <button 
                             onClick={() => navigate('/login')}
-                            className={`px-5 py-2 rounded-full font-bold transition-all text-sm tracking-wide ${invertBtn}`}
+                            className="hidden sm:inline-flex px-6 py-2.5 rounded-2xl font-bold transition-all text-sm tracking-wide bg-white border border-slate-200 text-slate-700 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600 shadow-sm hover:shadow"
                         >
-                            LOGIN
+                            Sign In
+                        </button>
+                        <button 
+                            onClick={() => navigate('/login')}
+                            className="px-6 py-2.5 rounded-2xl font-bold transition-all text-sm tracking-wide bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:shadow-pink-500/30 hover:-translate-y-0.5"
+                        >
+                            Get Started
                         </button>
 
                         <button 
-                            className={`p-2 transition-colors ${isDarkMode ? 'text-white hover:text-neutral-300' : 'text-black hover:text-neutral-600'}`}
+                            className="p-2 transition-colors sm:hidden text-slate-600 hover:text-pink-500"
                             onClick={() => setIsMobileMenuOpen(true)}
                             aria-label="Open menu"
                         >
-                            <Menu size={24} />
+                            <Menu size={26} />
                         </button>
                     </div>
                 </div>
@@ -157,47 +146,51 @@ export default function LandingPage() {
                 items={mobileNavItems}
             />
             
-            <main className="pt-20 sm:pt-28 relative z-10">
+            <main className="pt-24 sm:pt-32 relative z-10">
                 {/* Hero Section */}
-                <section className="relative py-16 sm:py-24 overflow-hidden px-4">
-                    <div className="container mx-auto">
-                        <div className="max-w-4xl mx-auto text-center">
-                            <div className={`inline-flex items-center justify-center gap-2 px-6 py-2 rounded-full font-bold text-sm tracking-widest uppercase border shadow-sm mb-8 animate-fade-in ${isDarkMode ? 'bg-neutral-900 border-neutral-800 text-white' : 'bg-neutral-100 border-neutral-300 text-black'}`}>
+                <section className="relative py-12 sm:py-20 overflow-hidden px-4">
+                    <div className="container mx-auto relative">
+                        <div className="absolute top-10 left-10 text-pink-300 animate-float-heart opacity-60">💖</div>
+                        <div className="absolute top-20 right-20 text-pink-300 animate-float-heart opacity-60" style={{animationDelay: '1s'}}>💖</div>
+                        
+                        <div className="max-w-4xl mx-auto text-center relative z-10">
+                            <div className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-[0.2em] uppercase border border-pink-200/50 bg-white/80 shadow-sm mb-8 animate-fade-up text-pink-500 backdrop-blur-md">
                                 <Sparkles size={16} />
-                                <span>The Minimalist Wedding Platform</span>
+                                <span>The Premium Wedding Management Platform</span>
                             </div>
                             
-                            <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-8 animate-fade-in-up">
-                                Uncompromised <br />
-                                <span>Simplicity.</span>
+                            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] mb-8 animate-fade-up text-slate-800" style={{animationDelay: '100ms'}}>
+                                Celebrate with <br />
+                                <span className="bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">Elegance and Order.</span>
                             </h1>
                             
-                            <p className={`text-xl max-w-2xl mx-auto leading-relaxed mb-12 animate-fade-in-up delay-100 ${textMuted}`}>
-                                We removed all the noise so you can focus on the signal. Manage guests, log entries securely with QR codes, and track gifts in real-time.
+                            <p className="text-xl max-w-2xl mx-auto leading-relaxed mb-12 animate-fade-up text-slate-500 font-medium" style={{animationDelay: '200ms'}}>
+                                Simplify guest management and elegantly track gift entries with secure QR tracking. Focus on your special day.
                             </p>
 
-                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200">
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{animationDelay: '300ms'}}>
                                 <button 
                                     onClick={() => navigate('/login')} 
-                                    className={`w-full sm:w-auto px-10 py-5 rounded-full text-lg font-bold shadow-lg hover:-translate-y-1 transition-all ${invertBtn}`}
+                                    className="w-full sm:w-auto px-10 py-4 rounded-[1.5rem] text-lg font-bold shadow-xl hover:shadow-pink-500/30 hover:-translate-y-1 transition-all bg-gradient-to-r from-pink-500 to-rose-400 text-white border border-pink-400"
                                 >
-                                    Start Managing
+                                    Start Organizing
                                 </button>
                                 <button 
                                     onClick={() => scrollToSection('about')} 
-                                    className={`w-full sm:w-auto px-10 py-5 border-2 transition-all rounded-full text-lg font-bold ${isDarkMode ? 'border-neutral-700 hover:border-neutral-500 text-white' : 'border-neutral-300 hover:border-neutral-500 text-black'}`}
+                                    className="w-full sm:w-auto px-10 py-4 border border-slate-200/80 bg-white/70 backdrop-blur-md hover:bg-white transition-all rounded-[1.5rem] text-lg font-bold text-slate-700 shadow-sm hover:shadow"
                                 >
-                                    Learn More
+                                    Discover Features
                                 </button>
                             </div>
                         </div>
 
-                        <div className="mt-20 mx-auto max-w-5xl animate-fade-in delay-300">
-                            <div className={`rounded-3xl p-2 sm:p-4 shadow-2xl border ${isDarkMode ? 'bg-neutral-900 border-neutral-800' : 'bg-gray-100 border-neutral-200'}`}>
+                        <div className="mt-20 mx-auto max-w-5xl animate-fade-up" style={{animationDelay: '400ms'}}>
+                            <div className="rounded-[2.5rem] p-3 sm:p-5 shadow-[0_20px_60px_rgba(244,114,182,0.15)] glass-panel border border-white/60 relative group">
+                                <div className="absolute inset-0 bg-gradient-to-t from-pink-50/20 to-transparent pointer-events-none z-10 rounded-[2.5rem]" />
                                 <img 
                                     src="/Landingpage.png" 
                                     alt="WedTrack Dashboard Preview" 
-                                    className="w-full rounded-2xl grayscale hover:grayscale-0 transition-all duration-1000 object-cover"
+                                    className="w-full rounded-[2rem] object-cover border border-slate-100/50 relative z-0"
                                 />
                             </div>
                         </div>
@@ -205,80 +198,86 @@ export default function LandingPage() {
                 </section>
 
                 {/* About Section */}
-                <section id="about" className={`py-24 border-y ${altBg} ${borderLine}`}>
+                <section id="about" className="py-24 relative z-10">
                     <div className="container mx-auto px-4 sm:px-6">
                         <div className="max-w-3xl mb-16 mx-auto text-center">
-                            <h2 className="text-4xl sm:text-5xl font-extrabold mb-6">The Modern Problem</h2>
-                            <div className={`h-1 w-24 mx-auto rounded-full ${isDarkMode ? 'bg-white' : 'bg-black'}`} />
+                            <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">The Modern Reception</h2>
+                            <div className="h-1.5 w-24 mx-auto rounded-full bg-gradient-to-r from-pink-400 to-rose-300" />
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                            <div className={`p-10 rounded-[2rem] border transition-all ${cardBg}`}>
-                                <div className="font-mono text-xl mb-4 font-bold opacity-50">01.</div>
-                                <h3 className="text-2xl font-bold mb-4">The Chaos of Paper</h3>
-                                <p className={`leading-relaxed ${textMuted}`}>Physical guest lists and unrecorded gift envelopes lead to financial leaks, confusion at the gates, and unnecessary wedding day stress.</p>
+                            <div className="p-10 rounded-[2.5rem] border border-white/60 glass-panel shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(244,114,182,0.1)] transition-all relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-200 group-hover:bg-pink-300 transition-colors" />
+                                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 text-slate-400">
+                                    <ListX size={28} />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-4 text-slate-800">The Chaos of Paper</h3>
+                                <p className="leading-relaxed text-slate-500 font-medium">Physical guest lists and unrecorded gift envelopes lead to financial leaks, confusion at the gates, and unnecessary wedding day stress. The traditional system is fractured.</p>
                             </div>
 
-                            <div className={`p-10 rounded-[2rem] border transition-all ${cardBg}`}>
-                                <div className="font-mono text-xl mb-4 font-bold opacity-50">02.</div>
-                                <h3 className="text-2xl font-bold mb-4">The Digital Order</h3>
-                                <p className={`leading-relaxed ${textMuted}`}>Smart QR passes guarantee secure entry. Real-time dashboards provide a unified view of attendance and gift tracking instantly.</p>
+                            <div className="p-10 rounded-[2.5rem] border border-white/60 glass-panel shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(244,114,182,0.1)] transition-all relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-slate-200 group-hover:bg-emerald-400 transition-colors" />
+                                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6 text-emerald-500">
+                                    <HeartHandshake size={28} />
+                                </div>
+                                <h3 className="text-2xl font-bold mb-4 text-slate-800">The Digital Harmony</h3>
+                                <p className="leading-relaxed text-slate-500 font-medium">Smart QR passes guarantee secure entry while providing a unified, real-time view of attendance and financial gifts, protecting the integrity of your celebration.</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Features Section */}
-                <section id="features" className="py-24">
+                <section id="features" className="py-24 relative z-10">
                     <div className="container mx-auto px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto mb-16">
-                            <h2 className="text-4xl sm:text-5xl font-extrabold mb-6">Built for Efficiency</h2>
+                            <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">Designed for Joy</h2>
                         </div>
 
                         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                             {[
-                                { title: 'QR Entry', desc: 'Secure, unique QR codes eliminating unauthorized access.', icon: QrCode },
-                                { title: 'Live Ledger', desc: 'Real-time tracking of wishes and financial gifts.', icon: Send },
-                                { title: 'Dashboard', desc: 'A unified view of guests, events, and metrics.', icon: LayoutDashboard },
-                                { title: 'Alerts', desc: 'Zero-clutter notifications for crucial milestones.', icon: Bell }
+                                { title: 'Seamless QR Entry', desc: 'Secure, unique QR codes instantly authorizing your esteemed guests.', icon: QrCode },
+                                { title: 'Live Gift Ledger', desc: 'Immaculate real-time tracking of wishes and financial contributions.', icon: Send },
+                                { title: 'Unified Dashboard', desc: 'A stunning comprehensive view of all events, attendees, and metrics.', icon: LayoutDashboard },
+                                { title: 'Smart Alerts', desc: 'Zero-clutter transparent notifications for crucial reception milestones.', icon: Bell }
                             ].map((feature, i) => (
-                                <div key={i} className={`p-8 rounded-[2rem] border transition-all duration-300 hover:-translate-y-2 ${cardBg}`}>
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-sm ${invertBtn}`}>
+                                <div key={i} className="p-8 rounded-[2.5rem] border border-white/60 glass-panel shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_40px_rgba(244,114,182,0.12)] hover:-translate-y-2 transition-all duration-400">
+                                    <div className="w-16 h-16 rounded-[1.2rem] flex items-center justify-center mb-6 shadow-sm border border-pink-100 bg-white text-pink-500">
                                         <feature.icon size={26} />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                                    <p className={`text-sm leading-relaxed ${textMuted}`}>{feature.desc}</p>
+                                    <h3 className="text-xl font-bold mb-3 text-slate-800">{feature.title}</h3>
+                                    <p className="text-sm leading-relaxed text-slate-500 font-medium">{feature.desc}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </section>
 
-                {/* Review Section */}
-                <section className={`py-24 border-y ${altBg} ${borderLine}`}>
+                {/* Loved By Section */}
+                <section className="py-24 relative z-10">
                     <div className="container mx-auto px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto mb-16">
-                            <h2 className="text-4xl sm:text-5xl font-extrabold mb-6">Tested & Proven</h2>
-                            <div className="flex items-center justify-center gap-1.5 opacity-80">
-                                <Star size={20} fill="currentColor" />
-                                <Star size={20} fill="currentColor" />
-                                <Star size={20} fill="currentColor" />
-                                <Star size={20} fill="currentColor" />
-                                <Star size={20} fill="currentColor" />
+                            <div className="flex items-center justify-center gap-1.5 mb-6">
+                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
                             </div>
+                            <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">Trusted By Couples</h2>
                         </div>
 
                         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
                             {[
-                                { name: 'Rajkumar & Priya', msg: "Finally, a tool that strips away the fluff. QR entry worked flawlessly at the gates.", pic: "https://i.pravatar.cc/150?img=47" },
-                                { name: 'Rahul & Neha', msg: "The monochrome dashboard was a relief to our eyes during stressful planning nights. Excellent.", pic: "https://i.pravatar.cc/150?img=33" },
-                                { name: 'Sneha & Rohan', msg: "Pure functionality wrapped in a minimalist design. Exactly what we needed to track our event.", pic: "https://i.pravatar.cc/150?img=44" }
+                                { name: 'Rajkumar & Priya', msg: "Absolutely stunning software. The QR invites made our reception flawlessly smooth, and the modern UI was a joy to use.", pic: "https://i.pravatar.cc/150?img=47" },
+                                { name: 'Rahul & Neha', msg: "The pastel UI and glass feel fits exactly the vibe we wanted for our wedding organization. Super reliable.", pic: "https://i.pravatar.cc/150?img=33" },
+                                { name: 'Sneha & Rohan', msg: "So effortless! Tracking all the gifts securely through the dashboard removed an entire layer of post-wedding stress.", pic: "https://i.pravatar.cc/150?img=44" }
                             ].map((review, i) => (
-                                <div key={i} className={`p-8 rounded-[2rem] border transition-all hover:-translate-y-1 ${cardBg}`}>
-                                    <p className={`italic text-lg mb-8 leading-relaxed ${textMuted}`}>"{review.msg}"</p>
+                                <div key={i} className="p-8 rounded-[2.5rem] border border-white/60 glass-panel flex flex-col hover:shadow-lg transition-all">
+                                    <p className="italic text-slate-600 mb-8 leading-relaxed font-medium">"{review.msg}"</p>
                                     <div className="flex items-center gap-4 mt-auto">
-                                        <img src={review.pic} alt={review.name} className="w-12 h-12 rounded-full border border-neutral-400 grayscale" />
-                                        <h4 className="font-bold text-sm uppercase tracking-wide">{review.name}</h4>
+                                        <img src={review.pic} alt={review.name} className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" />
+                                        <h4 className="font-bold text-sm tracking-wide text-slate-800">{review.name}</h4>
                                     </div>
                                 </div>
                             ))}
@@ -287,49 +286,50 @@ export default function LandingPage() {
                 </section>
 
                 {/* Doubt Section */}
-                <section id="doubt" className="py-24">
+                <section id="doubt" className="py-24 relative z-10">
                     <div className="container mx-auto px-4 sm:px-6">
-                        <div className={`max-w-5xl mx-auto rounded-[3rem] overflow-hidden flex flex-col md:flex-row border shadow-xl ${cardBg}`}>
-                            <div className={`p-10 sm:p-14 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r ${borderLine}`}>
-                                <h2 className="text-4xl font-extrabold mb-6">Inquiries.</h2>
-                                <p className={`mb-10 text-lg leading-relaxed ${textMuted}`}>Direct support when you need it. No bots, no wait times.</p>
-                                <div className="space-y-6 text-sm font-bold uppercase tracking-widest">
+                        <div className="max-w-5xl mx-auto rounded-[3rem] overflow-hidden flex flex-col md:flex-row border border-white/80 shadow-[0_20px_50px_rgba(244,114,182,0.1)] glass-panel">
+                            <div className="p-10 sm:p-14 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r border-slate-200/60 bg-white/40">
+                                <h2 className="text-4xl font-black mb-6 text-slate-800">Need Assistance?</h2>
+                                <p className="mb-10 text-lg leading-relaxed text-slate-500 font-medium">Our delightful support team is here for you throughout your planning phase. Direct replies, zero bots.</p>
+                                <div className="space-y-6 text-sm font-bold text-slate-700">
                                     <div className="flex items-center gap-5">
-                                        <Phone size={20} />
+                                        <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-500"><Phone size={18} /></div>
                                         <span>+91 9149891771</span>
                                     </div>
                                     <div className="flex items-center gap-5">
-                                        <Mail size={20} />
+                                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500"><Mail size={18} /></div>
                                         <span>hi@wedtrack.in</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className={`p-10 sm:p-14 md:w-1/2 ${isDarkMode ? 'bg-neutral-800/30' : 'bg-neutral-50/50'}`}>
-                                <form onSubmit={handleWhatsAppSubmit} className="space-y-6">
+                            <div className="p-10 sm:p-14 md:w-1/2 bg-white/80 backdrop-blur-md relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-100 blur-[40px] rounded-full pointer-events-none" />
+                                <form onSubmit={handleWhatsAppSubmit} className="space-y-6 relative z-10">
                                     <div>
-                                        <label className={`block text-xs font-bold mb-2 uppercase tracking-widest ${textMuted}`}>Identifier</label>
+                                        <label className="block text-[11px] font-bold mb-2 uppercase tracking-[0.15em] text-slate-400">Name</label>
                                         <input 
                                             type="text" 
                                             required
                                             value={doubtName}
                                             onChange={(e) => setDoubtName(e.target.value)}
-                                            placeholder="Your Name"
-                                            className={`w-full px-6 py-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-current bg-transparent font-medium ${borderLine} ${textMuted}`}
+                                            placeholder="Your full name"
+                                            className="w-full px-6 py-4 rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-4 focus:ring-pink-100 focus:border-pink-300 bg-white transition-all shadow-inner text-slate-700"
                                         />
                                     </div>
                                     <div>
-                                        <label className={`block text-xs font-bold mb-2 uppercase tracking-widest ${textMuted}`}>Message</label>
+                                        <label className="block text-[11px] font-bold mb-2 uppercase tracking-[0.15em] text-slate-400">Inquiry Message</label>
                                         <textarea 
                                             rows={3} 
                                             required
                                             value={doubtMessage}
                                             onChange={(e) => setDoubtMessage(e.target.value)}
-                                            placeholder="State your inquiry..."
-                                            className={`w-full px-6 py-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-current bg-transparent font-medium resize-none ${borderLine} ${textMuted}`}
+                                            placeholder="How can we assist you?"
+                                            className="w-full px-6 py-4 rounded-2xl border border-slate-200/80 focus:outline-none focus:ring-4 focus:ring-pink-100 focus:border-pink-300 bg-white transition-all shadow-inner text-slate-700 resize-none"
                                         ></textarea>
                                     </div>
-                                    <button type="submit" className={`w-full py-5 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95 ${invertBtn}`}>
-                                        Transmit
+                                    <button type="submit" className="w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all active:scale-95 bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white shadow-[0_8px_15px_rgba(0,0,0,0.1)]">
+                                        Send Message
                                         <Send size={18} />
                                     </button>
                                 </form>
@@ -340,15 +340,15 @@ export default function LandingPage() {
             </main>
 
             {/* Footer */}
-            <footer className={`pt-24 pb-10 border-t ${cardBg}`}>
+            <footer className="pt-24 pb-10 border-t border-slate-200/60 bg-white/40 backdrop-blur-lg relative z-10">
                 <div className="container mx-auto px-4 sm:px-6">
-                    <div className={`grid md:grid-cols-4 gap-12 mb-16 pb-16 border-b ${borderLine}`}>
+                    <div className="grid md:grid-cols-4 gap-12 mb-16 pb-16 border-b border-slate-200/80">
                         <div className="col-span-1 md:col-span-2 space-y-6">
                             <Logo size="lg" />
-                            <p className={`max-w-sm leading-relaxed text-sm ${textMuted}`}>The brutalist, uncompromised solution to wedding management. Secure protocol, encrypted paths, and live telemetry.</p>
+                            <p className="max-w-sm leading-relaxed text-sm text-slate-500 font-medium">The elegant, uncompromised solution to wedding management. Secure invitations, real-time logging, and beautiful tracking.</p>
                             <div className="flex gap-4 pt-4">
-                                {[Linkedin, Instagram, Facebook].map((Icon, i) => (
-                                    <a key={i} href="#" className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all hover:scale-110 ${isDarkMode ? 'border-neutral-700 hover:bg-white hover:text-black' : 'border-neutral-300 hover:bg-black hover:text-white'}`}>
+                                {[Instagram, Facebook, Navigation].map((Icon, i) => (
+                                    <a key={i} href="#" className="w-12 h-12 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center transition-all hover:scale-110 hover:border-pink-300 hover:text-pink-500 text-slate-500">
                                         <Icon size={20} />
                                     </a>
                                 ))}
@@ -356,11 +356,11 @@ export default function LandingPage() {
                         </div>
                         
                         <div>
-                            <h4 className="font-extrabold text-xs mb-6 tracking-widest uppercase">Index</h4>
-                            <ul className={`space-y-4 text-sm font-medium ${textMuted}`}>
+                            <h4 className="font-extrabold text-[11px] mb-6 tracking-widest uppercase text-slate-800">Quick Links</h4>
+                            <ul className="space-y-4 text-sm font-medium text-slate-500">
                                 {navItems.map((item) => (
                                     <li key={item.label}>
-                                        <button onClick={() => scrollToSection(item.sectionId)} className="hover:opacity-60 transition-opacity">
+                                        <button onClick={() => scrollToSection(item.sectionId)} className="hover:text-pink-500 transition-colors">
                                             {item.label}
                                         </button>
                                     </li>
@@ -369,17 +369,17 @@ export default function LandingPage() {
                         </div>
 
                         <div>
-                            <h4 className="font-extrabold text-xs mb-6 tracking-widest uppercase">Nodes</h4>
-                            <ul className={`space-y-4 text-sm font-medium ${textMuted}`}>
-                                <li className="flex items-center gap-3"><MapPin size={16}/> Delhi NCR</li>
-                                <li className="flex items-center gap-3"><Phone size={16}/> +91 9149891771</li>
-                                <li className="flex items-center gap-3"><Mail size={16}/> hi@wedtrack.in</li>
+                            <h4 className="font-extrabold text-[11px] mb-6 tracking-widest uppercase text-slate-800">Contact</h4>
+                            <ul className="space-y-4 text-sm font-medium text-slate-500">
+                                <li className="flex items-center gap-3 hover:text-slate-800"><MapPin size={16} className="text-pink-400"/> Coimbatore, TN</li>
+                                <li className="flex items-center gap-3 hover:text-slate-800"><Phone size={16} className="text-pink-400"/> +91 9149891771</li>
+                                <li className="flex items-center gap-3 hover:text-slate-800"><Mail size={16} className="text-pink-400"/> hi@wedtrack.in</li>
                             </ul>
                         </div>
                     </div>
                     
-                    <div className={`text-center text-xs font-bold tracking-[0.3em] uppercase opacity-50`}>
-                        © 2024 WedTrack. ALL SYSTEMS OPERATIONAL.
+                    <div className="text-center text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400">
+                        © 2024 WedTrack. Elegantly Crafted for Your Special Day.
                     </div>
                 </div>
             </footer>

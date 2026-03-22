@@ -8,7 +8,9 @@ import { WeddingNameDisplay } from '@/components/ui';
 
 import WeddingBanner from '../components/WeddingBanner';
 import WeddingTrackForm from '../components/WeddingTrackForm';
+import ImageGalleryUpload from '../components/ImageGalleryUpload';
 import { weddingTrackService } from '../services/weddingTrackService';
+import { uploadWeddingGallery } from '@/api/uploadService';
 import type {
   WeddingTrackFormData,
   WeddingTrackFormErrors,
@@ -66,6 +68,7 @@ export default function WeddingTrackCreatePage() {
   });
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
 
   // ── Field change ────────────────────────────────────────────────────────────
   const handleChange = useCallback((field: keyof WeddingTrackFormData, value: string) => {
@@ -107,7 +110,17 @@ export default function WeddingTrackCreatePage() {
     };
 
     try {
-      const { data: res } = await weddingTrackService.create(trimmedData);
+      let uploadedUrls: string[] = [];
+      if (galleryFiles.length > 0) {
+        uploadedUrls = await uploadWeddingGallery(galleryFiles);
+      }
+
+      const payload = {
+        ...trimmedData,
+        galleryImages: uploadedUrls
+      };
+
+      const { data: res } = await weddingTrackService.create(payload);
 
       // Navigate to QR page — backend is now the source of truth
       navigate(`/wedding-track/qr/${res.weddingId}`);
@@ -151,6 +164,14 @@ export default function WeddingTrackCreatePage() {
         onChange={handleChange}
         disabled={formState.isSubmitting}
       />
+
+      <div className="mt-8">
+        <ImageGalleryUpload 
+          files={galleryFiles} 
+          onChange={setGalleryFiles} 
+          disabled={formState.isSubmitting}
+        />
+      </div>
 
       {apiError && (
         <div className="mt-4 flex items-start gap-2.5 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-danger-bg)] border border-red-200">

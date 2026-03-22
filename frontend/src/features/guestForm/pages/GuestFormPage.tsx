@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, Heart } from 'lucide-react';
 import apiClient from '@/api/client';
 import { WeddingNameDisplay } from '@/components/ui';
 import FloatingHearts from '@/components/ui/FloatingHearts';
+import AutoScrollGallery from '../components/AutoScrollGallery';
 
 export default function GuestFormPage() {
     const { weddingId } = useParams<{ weddingId: string }>();
@@ -206,6 +207,8 @@ export default function GuestFormPage() {
         <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] flex py-12 px-4 items-start justify-center overflow-y-auto">
             <div className="max-w-[460px] w-full glass-panel rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-white/60 overflow-hidden animate-fade-up">
                 
+                <AutoScrollGallery images={wedding.galleryImages} />
+
                 {/* ── Soft Premium Header ── */}
                 <div className="h-44 bg-gradient-to-br from-pink-100 to-rose-50 flex flex-col items-center justify-center text-slate-800 p-8 text-center relative overflow-hidden border-b border-white">
                     <div className="absolute -right-8 -bottom-8 opacity-[0.05] pointer-events-none">

@@ -112,7 +112,7 @@ export default function WeddingQRPage() {
         <div className="min-h-[calc(100vh-var(--topbar-height))] flex flex-col items-center justify-start py-8 px-4 animate-fade-up">
 
             {/* ── Back button ── */}
-            <div className="w-full max-w-[420px] mb-6">
+            <div className="w-full max-w-[420px] mb-4">
                 <Button
                     variant="ghost"
                     size="sm"
@@ -123,89 +123,90 @@ export default function WeddingQRPage() {
                 </Button>
             </div>
 
-            {/* ── Wedding Header ── */}
-            <div className="text-center mb-6 w-full max-w-[420px] relative">
-                {isLoading ? (
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="h-8 w-64 rounded-full bg-slate-200/50 animate-pulse mx-auto" />
-                        <div className="h-4 w-40 rounded-full bg-slate-200/50 animate-pulse mx-auto" />
-                    </div>
-                ) : isSuccess && qrData ? (
-                    <div className="relative inline-block mt-4 px-8">
-                        {/* ── Floral Name Decorations ── */}
-                        <div className="absolute -top-5 -left-2 text-3xl animate-bounce" style={{animationDuration: '3s'}}>💖</div>
-                        <div className="absolute -top-5 -right-2 text-3xl animate-bounce" style={{animationDuration: '3.5s', animationDelay: '0.5s'}}>💖</div>
-                        
-                        <WeddingNameDisplay 
-                            brideName={qrData.brideName} 
-                            groomName={qrData.groomName} 
-                            size="xl" 
-                            className="mb-1 text-slate-800 drop-shadow-sm font-serif"
-                        />
-                        {qrData?.venue && (
-                            <p className="text-sm text-slate-500 mt-2 font-medium">
-                                {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
-                            </p>
-                        )}
-                        
-                        {/* ── Status Badge ── */}
-                        {timeLeft && (
-                            <div className={`mt-4 px-5 py-2 rounded-full text-[11px] font-black inline-block uppercase tracking-widest shadow-sm border relative z-10 ${
-                                isExpired 
-                                    ? 'bg-rose-50 text-rose-600 border-rose-200' 
-                                    : isInactive
-                                        ? 'bg-slate-50 text-slate-500 border-slate-200/60'
-                                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            }`}>
-                                {timeLeft}
-                            </div>
-                        )}
-                    </div>
-                ) : null}
-            </div>
-
-            {/* ── QR Display ── */}
-            <div className="w-full max-w-[420px] relative mt-2 mb-4">
-                {/* ── Floral Frame Accents ── */}
-                {isSuccess && (
-                    <>
-                        <div className="absolute -top-8 -left-8 text-5xl opacity-90 z-20 hover:scale-110 transition-transform cursor-default drop-shadow-md">🌸</div>
-                        <div className="absolute -bottom-8 -right-8 text-5xl opacity-90 z-20 hover:scale-110 transition-transform cursor-default drop-shadow-md">🌸</div>
-                        <div className="absolute -top-4 -right-4 text-4xl opacity-70 z-20 drop-shadow-sm">🌿</div>
-                        <div className="absolute -bottom-4 -left-4 text-4xl opacity-70 z-20 drop-shadow-sm">🌿</div>
-                        <div className="absolute top-1/2 -left-6 -translate-y-1/2 text-3xl opacity-60 z-20">✨</div>
-                        <div className="absolute top-1/2 -right-6 -translate-y-1/2 text-3xl opacity-60 z-20">✨</div>
-                    </>
-                )}
-
-                <div className="glass-panel p-4 rounded-[2.5rem] relative overflow-hidden group border-white/80 shadow-[0_20px_60px_rgba(244,114,182,0.15)] ring-4 ring-white/50">
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-rose-50 pointer-events-none" />
+            {/* ── Unified QR Pass Card ── */}
+            <div className="w-full max-w-[420px] relative mt-2 mb-6">
+                <div id="qr-pass-card" className="glass-panel p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden group border-white/80 shadow-[0_20px_60px_rgba(244,114,182,0.15)] ring-4 ring-white/50 bg-gradient-to-br from-[#fdfbfb] to-[#fdeff2]">
                     
                     {/* Inner Premium Line */}
-                    <div className="absolute inset-2 border-2 border-pink-200/50 rounded-[2rem] pointer-events-none z-10" />
+                    <div className="absolute inset-3 border-2 border-pink-200/60 rounded-[2rem] pointer-events-none z-10" />
 
-                    <div className="relative z-10 w-full rounded-[2rem] overflow-hidden bg-white shadow-inner p-2">
-                        <QRDisplay
-                            status={fetchState.status}
-                            qrImageUrl={qrData?.qrImageUrl}
-                            weddingTitle={weddingTitle}
-                            errorMessage={fetchState.status === 'error' ? fetchState.message : undefined}
-                        />
+                    {/* ── Floral Frame Accents Inside Card ── */}
+                    {isSuccess && (
+                        <>
+                            <div className="absolute -top-6 -left-6 text-6xl opacity-80 z-20 drop-shadow-sm select-none">🌸</div>
+                            <div className="absolute -bottom-6 -right-6 text-6xl opacity-80 z-20 drop-shadow-sm select-none" style={{ transform: 'rotate(180deg)'}}>🌸</div>
+                            <div className="absolute top-4 right-4 text-3xl opacity-60 z-20 drop-shadow-sm select-none">🌿</div>
+                            <div className="absolute bottom-4 left-4 text-3xl opacity-60 z-20 drop-shadow-sm select-none" style={{ transform: 'rotate(180deg)'}}>🌿</div>
+                            <div className="absolute top-10 left-1/2 -translate-x-1/2 text-2xl opacity-70 z-20 select-none animate-bounce" style={{animationDuration: '3s'}}>💖</div>
+                        </>
+                    )}
+
+                    <div className="relative z-20 w-full flex flex-col items-center pt-8 pb-4">
+                        {isLoading ? (
+                            <div className="flex flex-col items-center gap-3 mb-6 w-full">
+                                <div className="h-8 w-64 rounded-full bg-pink-100/50 animate-pulse mx-auto" />
+                                <div className="h-4 w-40 rounded-full bg-pink-100/50 animate-pulse mx-auto" />
+                                <div className="w-[260px] h-[260px] bg-pink-50 rounded-2xl animate-pulse mt-4" />
+                            </div>
+                        ) : isSuccess && qrData ? (
+                            <>
+                                {/* Names Inside the Card */}
+                                <div className="text-center mb-6 w-full px-4">
+                                    <WeddingNameDisplay 
+                                        brideName={qrData.brideName} 
+                                        groomName={qrData.groomName} 
+                                        size="xl" 
+                                        className="mb-1 text-slate-800 drop-shadow-sm font-serif"
+                                    />
+                                    {qrData?.venue && (
+                                        <p className="text-sm text-slate-500 mt-2 font-medium">
+                                            {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* QR Code Container */}
+                                <div className="relative rounded-[1.5rem] overflow-hidden bg-white shadow-sm p-3 border border-pink-100 mb-2">
+                                    <QRDisplay
+                                        status="success"
+                                        qrImageUrl={qrData.qrImageUrl}
+                                        weddingTitle={weddingTitle}
+                                    />
+                                </div>
+
+                                {/* Status Badge */}
+                                {timeLeft && (
+                                    <div className={`mt-6 px-5 py-2 rounded-full text-[11px] font-black inline-block uppercase tracking-widest shadow-sm border relative z-10 ${
+                                        isExpired 
+                                            ? 'bg-rose-50 text-rose-600 border-rose-200' 
+                                            : isInactive
+                                                ? 'bg-slate-50 text-slate-500 border-slate-200/60'
+                                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                                    }`}>
+                                        {timeLeft}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="w-[260px] h-[260px] bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
+                                <AlertCircle size={40} className="opacity-20" />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* ── Share link label ── */}
             {isSuccess && qrData?.shareLink && (
-                <div className="mt-6 max-w-[360px] w-full">
-                    <p className="text-[12px] text-slate-400 text-center truncate px-4 py-2 bg-slate-50 border border-slate-200/60 rounded-xl">
+                <div className="mb-6 max-w-[360px] w-full">
+                    <p className="text-[12px] text-slate-400 text-center truncate px-4 py-2 bg-white/60 border border-slate-200/60 rounded-xl shadow-sm">
                         {qrData.shareLink}
                     </p>
                 </div>
             )}
 
             {/* ── Action Buttons or Error retry ── */}
-            <div className="mt-6 w-full max-w-[420px]">
+            <div className="mt-2 w-full max-w-[420px]">
                 {fetchState.status === 'error' ? (
                     <div className="flex flex-col items-center gap-4">
                         <div className="flex items-center gap-2 text-rose-500 bg-rose-50 px-4 py-2 rounded-lg font-medium text-sm border border-rose-100">
@@ -241,7 +242,7 @@ export default function WeddingQRPage() {
                                 onClick={handleExtend}
                                 isLoading={isExtending}
                                 icon={<RefreshCw size={16} />}
-                                className={!isExpired ? 'glass-panel text-slate-600 hover:text-slate-800' : ''}
+                                className={!isExpired ? 'glass-panel text-slate-600 hover:text-slate-800 border-[1.5px] border-white/80' : ''}
                             >
                                 {isExpired ? "Re-activate QR for 24 Hours" : "Extend Link Validity (+24hrs)"}
                             </Button>
@@ -249,10 +250,9 @@ export default function WeddingQRPage() {
                     </div>
                 )}
             </div>
-
             {/* ── Track ID note ── */}
             {isSuccess && (
-                <p className="text-[10px] uppercase font-bold tracking-widest text-slate-300 mt-8 mb-4">
+                <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-slate-300 mt-8 mb-4">
                     Track ID: <span className="font-mono text-slate-400">{trackId}</span>
                 </p>
             )}

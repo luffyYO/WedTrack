@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import AppRouter from '@/routes/router';
 import { supabase } from '@/config/supabaseClient';
-import { useAuthStore, useThemeStore } from '@/store';
+import { useAuthStore } from '@/store';
 import type { Session } from '@supabase/supabase-js';
 
 /**
@@ -10,19 +10,12 @@ import type { Session } from '@supabase/supabase-js';
  */
 export default function App() {
     const setSession = useAuthStore((state) => state.setSession);
-    const isDarkMode = useThemeStore((state) => state.isDarkMode);
 
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-            document.body.classList.add('bg-black', 'text-white');
-            document.body.classList.remove('bg-white', 'text-black');
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.body.classList.add('bg-white', 'text-black');
-            document.body.classList.remove('bg-black', 'text-white');
-        }
-    }, [isDarkMode]);
+        document.documentElement.classList.remove('dark');
+        document.body.classList.add('bg-white', 'text-black');
+        document.body.classList.remove('bg-black', 'text-white');
+    }, []);
 
     useEffect(() => {
         const syncUser = async (session: Session | null) => {

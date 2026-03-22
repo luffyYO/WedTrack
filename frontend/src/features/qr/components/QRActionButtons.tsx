@@ -81,8 +81,13 @@ export default function QRActionButtons({
 
             // 4. Draw Bride & Groom Names
             ctx.fillStyle = '#1e293b'; // slate-800
-            ctx.font = 'bold 54px Georgia, serif';
-            ctx.fillText(weddingTitle, width / 2, 180);
+            let titleSize = 54;
+            ctx.font = `bold ${titleSize}px Georgia, serif`;
+            while (ctx.measureText(weddingTitle).width > width - 180 && titleSize > 32) {
+                titleSize -= 2;
+                ctx.font = `bold ${titleSize}px Georgia, serif`;
+            }
+            ctx.fillText(weddingTitle, width / 2, 180, width - 180);
 
             // 5. Draw Subtitle
             ctx.fillStyle = '#64748b'; // slate-500
@@ -120,8 +125,14 @@ export default function QRActionButtons({
 
             // 8. Footer Message
             ctx.fillStyle = '#f43f5e'; // rose-500
-            ctx.font = 'bold 34px sans-serif';
-            ctx.fillText('Scan to send your blessings & gifts', width / 2, height - 130);
+            let footerSize = 34;
+            const footerMessage = 'Scan to send your blessings & gifts';
+            ctx.font = `bold ${footerSize}px sans-serif`;
+            while (ctx.measureText(footerMessage).width > width - 280 && footerSize > 22) {
+                footerSize -= 2;
+                ctx.font = `bold ${footerSize}px sans-serif`;
+            }
+            ctx.fillText(footerMessage, width / 2, height - 130, width - 280);
             
             ctx.fillStyle = '#94a3b8'; // slate-400
             ctx.font = '20px sans-serif';

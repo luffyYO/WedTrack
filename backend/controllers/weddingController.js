@@ -15,7 +15,7 @@ const computeQrStatus = (activationTime, expiryTime) => {
 };
 
 export const createWedding = async (req, res) => {
-  let { brideName, groomName, venue, date, upiId, village, extraCell } = req.body;
+  let { brideName, groomName, venue, date, upiId, village, extraCell, galleryImages } = req.body;
 
   // Trim and sanitize inputs
   brideName = brideName?.trim() || '';
@@ -128,7 +128,8 @@ export const createWedding = async (req, res) => {
           extra_cell: extraCell,
           user_id: req.user.id,
           qr_activation_time: qrActivationTime,
-          qr_expires_at: qrExpiresAt
+          qr_expires_at: qrExpiresAt,
+          gallery_images: Array.isArray(galleryImages) ? galleryImages : []
         }
       ])
       .select('id')
@@ -186,7 +187,7 @@ export const getWeddingQR = async (req, res) => {
     try {
       const response = await supabase
         .from('weddings')
-        .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_activation_time, qr_expires_at')
+        .select('id, bride_name, groom_name, location, wedding_date, village, qr_link, qr_activation_time, qr_expires_at, gallery_images')
         .eq('id', id)
         .maybeSingle(); // Better: doesn't error when 0 rows are found
       wedding = response.data;
@@ -238,7 +239,8 @@ export const getWeddingQR = async (req, res) => {
         qrImageUrl: qrImage,
         qrActivationTime: wedding.qr_activation_time,
         qrExpiresAt: wedding.qr_expires_at,
-        qrStatus: computeQrStatus(wedding.qr_activation_time, wedding.qr_expires_at)
+        qrStatus: computeQrStatus(wedding.qr_activation_time, wedding.qr_expires_at),
+        galleryImages: wedding.gallery_images || []
       }
     });
 
