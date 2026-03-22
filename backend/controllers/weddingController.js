@@ -169,6 +169,7 @@ export const createWedding = async (req, res) => {
 
 export const getWeddingQR = async (req, res) => {
   const { id } = req.params;
+  console.log(`[getWeddingQR] Fetching QR for wedding ID: ${id}`);
 
   try {
     let wedding, error;
@@ -180,16 +181,20 @@ export const getWeddingQR = async (req, res) => {
         .maybeSingle(); // Better: doesn't error when 0 rows are found
       wedding = response.data;
       error = response.error;
+      
+      console.log(`[getWeddingQR] Query completed for ${id}. Found: ${!!wedding}, Error: ${error ? error.message : 'none'}`);
     } catch (dbError) {
-      console.error('Database connection or query error:', dbError);
+      console.error(`[getWeddingQR] Database query failed for ${id}:`, dbError);
       return res.status(500).json({ error: 'Database query failed', details: dbError?.message || dbError });
     }
 
     if (error) {
+       console.error(`[getWeddingQR] Supabase returned error for ${id}:`, error);
        return res.status(500).json({ error: 'Failed to fetch wedding details', details: error.message });
     }
 
     if (!wedding) {
+      console.warn(`[getWeddingQR] Wedding not found for ID: ${id}`);
       return res.status(404).json({ error: 'Wedding track not found', details: 'No wedding matched the provided ID' });
     }
 
@@ -197,6 +202,7 @@ export const getWeddingQR = async (req, res) => {
     if (!qrUrl) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       qrUrl = `${frontendUrl}/guest-form/${wedding.id}`;
+      console.log(`[getWeddingQR] Reconstructed missing qr_link for ${id}: ${qrUrl}`);
     }
 
     // Generate the QR Image Base64 on the fly since we only stored the link
@@ -204,7 +210,7 @@ export const getWeddingQR = async (req, res) => {
     try {
       qrImage = await generateQrCode(qrUrl);
     } catch (qrError) {
-      console.error('QR generation error:', qrError);
+      console.error(`[getWeddingQR] QR generation error for ${id}:`, qrError);
       return res.status(500).json({ 
         error: 'Failed to generate QR code',
         details: qrError.message || 'Unable to generate QR image from the stored link'
@@ -228,7 +234,7 @@ export const getWeddingQR = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching wedding QR:', error);
+    console.error(`[getWeddingQR] Unexpected error fetching wedding QR for ${id}:`, error);
     res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 };
