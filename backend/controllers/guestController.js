@@ -127,9 +127,7 @@ export const submitGuestForm = async (req, res) => {
           gift_side: giftSide,
           is_paid: false // Host must manually verify payment
         }
-      ])
-      .select('id')
-      .single();
+      ]);
 
     if (error) throw new Error(error.message);
 
@@ -137,7 +135,7 @@ export const submitGuestForm = async (req, res) => {
     if (wishes && wishes.trim()) {
       try {
         io.emit('new_wish', {
-          id: data.id,
+          id: Date.now().toString(), // Use timestamp as temporary unique key for React
           wedding_id: weddingId,
           first_name: firstName,
           last_name: lastName,
@@ -151,8 +149,7 @@ export const submitGuestForm = async (req, res) => {
     }
 
     res.status(201).json({
-      message: 'Guest details submitted successfully',
-      guestId: data.id
+      message: 'Guest details submitted successfully'
     });
   } catch (error) {
     console.error('Error submitting guest:', error);
