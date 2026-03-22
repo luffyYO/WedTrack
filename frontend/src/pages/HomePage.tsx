@@ -7,12 +7,14 @@ import { formatDate } from '@/utils/formatters';
 import { WeddingNameDisplay } from '@/components/ui';
 import apiClient from '@/api/client';
 import { useAuthStore } from '@/store';
+import { supabase } from "@/config/supabaseClient";
 
 export default function HomePage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const [weddings, setWeddings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -29,6 +31,18 @@ export default function HomePage() {
         };
         fetchStats();
     }, []);
+      
+                  useEffect(() => {
+  const checkUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    console.log("USER:", data);
+    console.log("ERROR:", error);
+  };
+
+  checkUser();
+}, []);
+
+
 
     return (
         <div className="w-full pb-10">
