@@ -166,7 +166,7 @@ export const getGuestsByWedding = async (req, res) => {
 
   try {
     // Security check: Ensure the wedding belongs to the user
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('id', weddingId)
@@ -177,7 +177,7 @@ export const getGuestsByWedding = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    let query = supabase
+    let query = req.supabase
       .from('guests')
       .select('*')
       .eq('wedding_id', weddingId);
@@ -202,7 +202,7 @@ export const confirmGuestPayment = async (req, res) => {
 
   try {
     // First, find the guest to get the wedding_id
-    const { data: guestData, error: guestFetchError } = await supabase
+    const { data: guestData, error: guestFetchError } = await req.supabase
       .from('guests')
       .select('wedding_id')
       .eq('id', id)
@@ -213,7 +213,7 @@ export const confirmGuestPayment = async (req, res) => {
     }
 
     // Security check: Ensure the wedding belongs to the user
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('id', guestData.wedding_id)
@@ -224,7 +224,7 @@ export const confirmGuestPayment = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('guests')
       .update({ is_paid: true })
       .eq('id', id)
@@ -245,7 +245,7 @@ export const deleteGuest = async (req, res) => {
 
   try {
     // First, find the guest to get the wedding_id
-    const { data: guestData, error: guestFetchError } = await supabase
+    const { data: guestData, error: guestFetchError } = await req.supabase
       .from('guests')
       .select('wedding_id')
       .eq('id', id)
@@ -256,7 +256,7 @@ export const deleteGuest = async (req, res) => {
     }
 
     // Security check: Ensure the wedding belongs to the user
-    const { data: wedding, error: weddingError } = await supabase
+    const { data: wedding, error: weddingError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('id', guestData.wedding_id)
@@ -267,7 +267,7 @@ export const deleteGuest = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    const { error } = await supabase
+    const { error } = await req.supabase
       .from('guests')
       .delete()
       .eq('id', id);
@@ -286,7 +286,7 @@ export const deleteGuest = async (req, res) => {
 export const getWishes = async (req, res) => {
   try {
     // Fetch all weddings owned by this user
-    const { data: weddings, error: wError } = await supabase
+    const { data: weddings, error: wError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('user_id', req.user.id);
@@ -299,7 +299,7 @@ export const getWishes = async (req, res) => {
     const weddingIds = weddings.map((w) => w.id);
 
     // Fetch guests who left a wish
-    const { data: wishes, error } = await supabase
+    const { data: wishes, error } = await req.supabase
       .from('guests')
       .select('id, first_name, last_name, wishes, is_read, created_at, wedding_id')
       .in('wedding_id', weddingIds)
@@ -319,7 +319,7 @@ export const getWishes = async (req, res) => {
 export const markWishesRead = async (req, res) => {
   try {
     // Fetch all weddings owned by this user
-    const { data: weddings, error: wError } = await supabase
+    const { data: weddings, error: wError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('user_id', req.user.id);
@@ -331,7 +331,7 @@ export const markWishesRead = async (req, res) => {
 
     const weddingIds = weddings.map((w) => w.id);
 
-    const { error } = await supabase
+    const { error } = await req.supabase
       .from('guests')
       .update({ is_read: true })
       .in('wedding_id', weddingIds)

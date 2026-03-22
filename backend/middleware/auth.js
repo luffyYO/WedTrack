@@ -1,4 +1,8 @@
 import supabase from '../config/db.js';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -16,7 +20,18 @@ export const authenticate = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized', details: error?.message || 'Invalid token' });
     }
 
+    // Create a request-specific Supabase client that forwards the user token
+    // This allows Row-Level Security (RLS) policies to see the current authenticated user
+    const reqSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
     req.user = user;
+    req.supabase = reqSupabase;
     next();
   } catch (err) {
     console.error('Auth middleware error:', err);

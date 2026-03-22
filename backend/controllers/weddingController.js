@@ -112,7 +112,8 @@ export const createWedding = async (req, res) => {
     }
 
     // 1. Insert a new record into the weddings table via Supabase API
-    const { data: insertData, error: insertError } = await supabase
+    // Use req.supabase which has the user's Auth context to pass RLS policies
+    const { data: insertData, error: insertError } = await req.supabase
       .from('weddings')
       .insert([
         {
@@ -146,7 +147,7 @@ export const createWedding = async (req, res) => {
     const qrLink = `${frontendUrl}/guest-form/${weddingId}`;
 
     // 3. Store the generated qrLink inside the weddings table
-    const { error: updateError } = await supabase
+    const { error: updateError } = await req.supabase
       .from('weddings')
       .update({ qr_link: qrLink })
       .eq('id', weddingId)
@@ -223,7 +224,7 @@ export const getWeddingQR = async (req, res) => {
 };
 export const getWeddings = async (req, res) => {
   try {
-    const { data: weddings, error } = await supabase
+    const { data: weddings, error } = await req.supabase
       .from('weddings')
       .select('*')
       .eq('user_id', req.user.id) // Enforce ownership
@@ -243,7 +244,7 @@ export const extendWeddingQR = async (req, res) => {
 
   try {
     // 1. Check ownership and current status
-    const { data: wedding, error: fetchError } = await supabase
+    const { data: wedding, error: fetchError } = await req.supabase
       .from('weddings')
       .select('id')
       .eq('id', id)
@@ -257,7 +258,7 @@ export const extendWeddingQR = async (req, res) => {
     // 2. Extend expiration to now + 24 hours
     const newExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await req.supabase
       .from('weddings')
       .update({ qr_expires_at: newExpiry })
       .eq('id', id);

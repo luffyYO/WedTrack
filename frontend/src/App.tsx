@@ -10,7 +10,10 @@ import type { Session } from '@supabase/supabase-js';
  */
 export default function App() {
     const setSession = useAuthStore((state) => state.setSession);
-
+   useEffect(() => {
+  console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL);
+  console.log("SUPABASE KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY);
+}, []);
     useEffect(() => {
         const syncUser = async (session: Session | null) => {
             if (session?.user) {
@@ -37,6 +40,10 @@ export default function App() {
             }
             setSession(session);
         };
+        // useEffect(() => {
+        //     console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL);
+        //     console.log("SUPABASE KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY);
+        //     }, []);
 
         // Initial session check
         supabase.auth.getSession().then(({ data: { session } }) => {
