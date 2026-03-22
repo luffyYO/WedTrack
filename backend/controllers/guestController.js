@@ -177,7 +177,10 @@ export const getGuestsByWedding = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    let query = req.supabase
+    // Since we securely verified the user owns the wedding ID above, we can safely
+    // use the global `supabase` client here. The `guests` table doesn't have a direct `user_id`,
+    // which normally causes RLS to block `req.supabase` from reading the rows.
+    let query = supabase
       .from('guests')
       .select('*')
       .eq('wedding_id', weddingId);
@@ -201,8 +204,8 @@ export const confirmGuestPayment = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // First, find the guest to get the wedding_id
-    const { data: guestData, error: guestFetchError } = await req.supabase
+    // First, find the guest to get the wedding_id securely bypassing RLS
+    const { data: guestData, error: guestFetchError } = await supabase
       .from('guests')
       .select('wedding_id')
       .eq('id', id)
@@ -224,7 +227,7 @@ export const confirmGuestPayment = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    const { data, error } = await req.supabase
+    const { data, error } = await supabase
       .from('guests')
       .update({ is_paid: true })
       .eq('id', id)
@@ -244,8 +247,8 @@ export const deleteGuest = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // First, find the guest to get the wedding_id
-    const { data: guestData, error: guestFetchError } = await req.supabase
+    // First, find the guest to get the wedding_id securely bypassing RLS
+    const { data: guestData, error: guestFetchError } = await supabase
       .from('guests')
       .select('wedding_id')
       .eq('id', id)
@@ -267,7 +270,7 @@ export const deleteGuest = async (req, res) => {
       return res.status(403).json({ error: 'Access denied', details: 'You do not own this wedding track' });
     }
 
-    const { error } = await req.supabase
+    const { error } = await supabase
       .from('guests')
       .delete()
       .eq('id', id);
@@ -298,8 +301,8 @@ export const getWishes = async (req, res) => {
 
     const weddingIds = weddings.map((w) => w.id);
 
-    // Fetch guests who left a wish
-    const { data: wishes, error } = await req.supabase
+    // Fetch guests who left a wish using global client
+    const { data: wishes, error } = await supabase
       .from('guests')
       .select('id, first_name, last_name, wishes, is_read, created_at, wedding_id')
       .in('wedding_id', weddingIds)
@@ -331,7 +334,7 @@ export const markWishesRead = async (req, res) => {
 
     const weddingIds = weddings.map((w) => w.id);
 
-    const { error } = await req.supabase
+    const { error } = await supabase
       .from('guests')
       .update({ is_read: true })
       .in('wedding_id', weddingIds)
