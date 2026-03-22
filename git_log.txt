@@ -1,0 +1,5 @@
+commit a6f5c62ee609add412740155a13c70da44a3c356
+Author: Kishore-ux-maker <kishorekethavath10@gmail.com>
+Date:   Sun Mar 22 18:40:44 2026 +0530
+
+    Fix 500 error on guest submission by removing forbidden RLS select clause

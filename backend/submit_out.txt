@@ -1,0 +1,2 @@
+STATUS: 404
+BODY: {"error":"Wedding track not found"}

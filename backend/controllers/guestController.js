@@ -2,92 +2,94 @@ import supabase from '../config/db.js';
 import { io } from '../server.js';
 
 export const submitGuestForm = async (req, res) => {
-  // Guard: Prevent crashes from empty request bodies
-  if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(400).json({ error: "Empty request body" });
-  }
-
-  let { 
-    weddingId, 
-    firstName, 
-    lastName, 
-    fatherFirstName, 
-    fatherLastName, 
-    district, 
-    village, 
-    amount, 
-    paymentType, 
-    wishes,
-    giftSide 
-  } = req.body;
-
-  // Trim and sanitize inputs
-  firstName = firstName?.trim() || '';
-  lastName = lastName?.trim() || '';
-  fatherFirstName = fatherFirstName?.trim() || '';
-  fatherLastName = fatherLastName?.trim() || '';
-  district = district?.trim() || '';
-  village = village?.trim() || '';
-  wishes = wishes?.trim() || '';
-
-  // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
-  const isValidName = (name) => {
-    if (!name) return true; // Optional fields are checked if provided
-    if (name.length < 2 || name.length > 100) return false;
-    // Allow more characters - sometimes names have hyphens or periods
-    if (!/^[A-Za-z\s\.\-]+$/.test(name)) return false; 
-    if (/(.)\1{4,}/i.test(name)) return false; // Relaxed repeated chars to 5
-    // Relaxed consonants to 10 - many Indian place names/names have long clusters
-    if (/[bcdfghjklmnpqrstvwxyz]{10,}/i.test(name)) return false; 
-    return true;
-  };
-
-  // Required Field Checks
-  if (!firstName || !isValidName(firstName)) {
-    console.error('Validation failed: firstName invalid', { firstName });
-    return res.status(400).json({ message: 'First Name is required and must contain only letters.' });
-  }
-
-  // Optional Field Checks
-  if (lastName && !isValidName(lastName)) {
-    console.log('Validation failed: lastName', { lastName });
-    return res.status(400).json({ error: 'Invalid Last Name.' });
-  }
-  if (fatherFirstName && !isValidName(fatherFirstName)) {
-    console.log('Validation failed: fatherFirstName', { fatherFirstName });
-    return res.status(400).json({ error: 'Invalid Father\'s First Name.' });
-  }
-  if (fatherLastName && !isValidName(fatherLastName)) {
-    console.log('Validation failed: fatherLastName', { fatherLastName });
-    return res.status(400).json({ error: 'Invalid Father\'s Last Name.' });
-  }
-  if (district && !isValidName(district)) {
-    console.log('Validation failed: district', { district });
-    return res.status(400).json({ error: 'Invalid District.' });
-  }
-  if (village && !isValidName(village)) {
-    console.log('Validation failed: village', { village });
-    return res.status(400).json({ error: 'Invalid Village/City.' });
-  }
-
-  // Amount Validation
-  const numericAmount = parseFloat(amount);
-  if (isNaN(numericAmount) || numericAmount <= 0) {
-    console.error('Validation failed: amount is NaN or <= 0', { amount });
-    return res.status(400).json({ message: 'Amount must be a valid number greater than 0.' });
-  }
-
-  if (!weddingId) {
-    console.error('Validation failed: weddingId is missing');
-    return res.status(400).json({ message: 'Wedding ID is missing.' });
-  }
-
-  // Gift Side Validation
-  if (!giftSide || (giftSide !== 'bride' && giftSide !== 'groom')) {
-    return res.status(400).json({ error: 'Please select Bride or Groom side.' });
-  }
-
   try {
+    // Guard: Prevent crashes from empty request bodies
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ error: "Empty request body" });
+    }
+
+    let { 
+      weddingId, 
+      firstName, 
+      lastName, 
+      fatherFirstName, 
+      fatherLastName, 
+      district, 
+      village, 
+      amount, 
+      paymentType, 
+      wishes,
+      giftSide,
+      email 
+    } = req.body;
+
+    // Trim and sanitize inputs
+    firstName = firstName?.trim() || '';
+    lastName = lastName?.trim() || '';
+    fatherFirstName = fatherFirstName?.trim() || '';
+    fatherLastName = fatherLastName?.trim() || '';
+    district = district?.trim() || '';
+    village = village?.trim() || '';
+    wishes = wishes?.trim() || '';
+    email = email?.trim() || '';
+
+    // Validation function: 2-50 chars, letters/spaces only, block gibberish patterns
+    const isValidName = (name) => {
+      if (!name) return true; // Optional fields are checked if provided
+      if (name.length < 2 || name.length > 100) return false;
+      // Allow more characters - sometimes names have hyphens or periods
+      if (!/^[A-Za-z\s\.\-]+$/.test(name)) return false; 
+      if (/(.)\1{4,}/i.test(name)) return false; // Relaxed repeated chars to 5
+      // Relaxed consonants to 10 - many Indian place names/names have long clusters
+      if (/[bcdfghjklmnpqrstvwxyz]{10,}/i.test(name)) return false; 
+      return true;
+    };
+
+    // Required Field Checks
+    if (!firstName || !isValidName(firstName)) {
+      console.error('Validation failed: firstName invalid', { firstName });
+      return res.status(400).json({ message: 'First Name is required and must contain only letters.' });
+    }
+
+    // Optional Field Checks
+    if (lastName && !isValidName(lastName)) {
+      console.log('Validation failed: lastName', { lastName });
+      return res.status(400).json({ error: 'Invalid Last Name.' });
+    }
+    if (fatherFirstName && !isValidName(fatherFirstName)) {
+      console.log('Validation failed: fatherFirstName', { fatherFirstName });
+      return res.status(400).json({ error: 'Invalid Father\'s First Name.' });
+    }
+    if (fatherLastName && !isValidName(fatherLastName)) {
+      console.log('Validation failed: fatherLastName', { fatherLastName });
+      return res.status(400).json({ error: 'Invalid Father\'s Last Name.' });
+    }
+    if (district && !isValidName(district)) {
+      console.log('Validation failed: district', { district });
+      return res.status(400).json({ error: 'Invalid District.' });
+    }
+    if (village && !isValidName(village)) {
+      console.log('Validation failed: village', { village });
+      return res.status(400).json({ error: 'Invalid Village/City.' });
+    }
+
+    // Amount Validation
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      console.error('Validation failed: amount is NaN or <= 0', { amount });
+      return res.status(400).json({ message: 'Amount must be a valid number greater than 0.' });
+    }
+
+    if (!weddingId) {
+      console.error('Validation failed: weddingId is missing');
+      return res.status(400).json({ message: 'Wedding ID is missing.' });
+    }
+
+    // Gift Side Validation
+    if (!giftSide || (giftSide !== 'bride' && giftSide !== 'groom')) {
+      return res.status(400).json({ error: 'Please select Bride or Groom side.' });
+    }
+
     // 1. Validate QR status using both activation_time and expiry
     const { data: wedding, error: fetchError } = await supabase
       .from('weddings')
@@ -116,20 +118,24 @@ export const submitGuestForm = async (req, res) => {
         {
           wedding_id: weddingId,
           first_name: firstName,
-          last_name: lastName,
-          father_first_name: fatherFirstName,
-          father_last_name: fatherLastName,
-          district: district,
-          village: village,
+          last_name: lastName || null,
+          father_first_name: fatherFirstName || null,
+          father_last_name: fatherLastName || null,
+          district: district || null,
+          village: village || null,
           amount: numericAmount,
           payment_type: paymentType,
-          wishes: wishes,
+          wishes: wishes || null,
           gift_side: giftSide,
+          email: email || null,
           is_paid: false // Host must manually verify payment
         }
       ]);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error('Supabase Insert Error:', error);
+      return res.status(500).json({ error: 'Database error storing guest', details: error.message });
+    }
 
     // Emit real-time socket event if the guest included a wish
     if (wishes && wishes.trim()) {
@@ -148,12 +154,12 @@ export const submitGuestForm = async (req, res) => {
       }
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Guest details submitted successfully'
     });
   } catch (error) {
-    console.error('Error submitting guest:', error);
-    res.status(500).json({ error: 'Failed to submit guest details', details: error.message });
+    console.error('Unexpected Error submitting guest:', error);
+    return res.status(500).json({ error: 'Failed to submit guest details', details: error.message });
   }
 };
 
