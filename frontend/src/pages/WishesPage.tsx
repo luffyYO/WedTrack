@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function WishesPage() {
-    const { wishes, isLoading } = useWishStore();
+    const { wishes, isLoading, markAllRead, unreadCount } = useWishStore();
     const { activeWedding } = useAppStore();
     const [filteredWishes, setFilteredWishes] = useState<any[]>([]);
     const [wishesLoading, setWishesLoading] = useState(false);
@@ -50,6 +50,15 @@ export default function WishesPage() {
             setFilteredWishes([]);
         }
     }, [activeWedding, fetchWishes]);
+
+    // Automatically clear unread blinking and "New" badges when wishes are opened and populated
+    useEffect(() => {
+        if (unreadCount > 0 && filteredWishes.length > 0) {
+            markAllRead();
+            // Optimistically update the UI to clear the "New" tags locally
+            setFilteredWishes(prev => prev.map(w => ({ ...w, is_read: true })));
+        }
+    }, [filteredWishes, unreadCount, markAllRead]);
 
     const displayedWishes = filteredWishes;
     const showLoading = wishesLoading || (isLoading && wishes.length === 0);

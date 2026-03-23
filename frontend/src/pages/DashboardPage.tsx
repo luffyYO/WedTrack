@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, IndianRupee, Download, LayoutDashboard, Search } from 'lucide-react';
+import { Plus, Users, IndianRupee, Download, LayoutDashboard } from 'lucide-react';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
