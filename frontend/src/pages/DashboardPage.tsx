@@ -73,6 +73,7 @@ export default function DashboardPage() {
     const selectedWedding = activeWedding?.id || '';
     const [guests, setGuests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [guestsLoading, setGuestsLoading] = useState(false);
     const [pdfLoading, setPdfLoading] = useState(false);
 
     // Search & Filter State
@@ -116,6 +117,7 @@ export default function DashboardPage() {
         if (!selectedWedding) return;
 
         const fetchGuests = async () => {
+            setGuestsLoading(true);
             try {
                 let url = `/guests/wedding/${selectedWedding}`;
                 if (activeFilter === 'Side' && selectedPaymentMethod) {
@@ -128,6 +130,8 @@ export default function DashboardPage() {
                 }
             } catch (err) {
                 console.error('Failed to load guests:', err);
+            } finally {
+                setGuestsLoading(false);
             }
         };
 
@@ -475,7 +479,20 @@ export default function DashboardPage() {
                             </button>
                         </div>
 
-                        {guests.length === 0 ? (
+                        {guestsLoading ? (
+                            <div className="glass-panel overflow-hidden rounded-[2rem] border border-white/60 p-6 space-y-6">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className="flex gap-4 items-center">
+                                        <div className="animate-pulse bg-slate-200/60 h-10 w-10 rounded-xl shrink-0" />
+                                        <div className="flex-1 space-y-3">
+                                            <div className="animate-pulse bg-slate-200/60 h-3 w-1/3 rounded" />
+                                            <div className="animate-pulse bg-slate-200/60 h-2 w-1/4 rounded" />
+                                        </div>
+                                        <div className="animate-pulse bg-slate-200/60 h-8 w-20 rounded-[1rem]" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : guests.length === 0 ? (
                             <div className="p-16 text-center glass-panel rounded-[2rem] text-slate-400 font-medium">
                                 No guests have registered for this event yet.
                             </div>

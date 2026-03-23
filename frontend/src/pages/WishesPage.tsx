@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useWishStore, useAppStore } from '@/store';
 import PageHeader from '@/components/layout/PageHeader';
 import apiClient from '@/api/client';
@@ -25,10 +25,13 @@ export default function WishesPage() {
     const { activeWedding } = useAppStore();
     const [filteredWishes, setFilteredWishes] = useState<any[]>([]);
     const [wishesLoading, setWishesLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
 
     // Re-fetch wishes whenever activeWedding changes
     const fetchWishes = useCallback(async (weddingId: string) => {
         setWishesLoading(true);
+        setCurrentPage(1); // Reset page on fetch
         try {
             const url = weddingId
                 ? `/guests/wishes?weddingId=${encodeURIComponent(weddingId)}`
@@ -60,8 +63,13 @@ export default function WishesPage() {
         }
     }, [filteredWishes, unreadCount, markAllRead]);
 
-    const displayedWishes = filteredWishes;
     const showLoading = wishesLoading || (isLoading && wishes.length === 0);
+
+    const totalPages = Math.ceil(filteredWishes.length / itemsPerPage);
+    const displayedWishes = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredWishes.slice(start, start + itemsPerPage);
+    }, [filteredWishes, currentPage]);
 
     return (
         <div className="max-w-4xl mx-auto pb-10 animate-fade-up">
@@ -87,7 +95,7 @@ export default function WishesPage() {
                 <div className="flex justify-center py-20">
                     <div className="w-8 h-8 rounded-full border-2 border-pink-200 border-t-pink-500 animate-spin shadow-sm" />
                 </div>
-            ) : displayedWishes.length === 0 ? (
+            ) : filteredWishes.length === 0 ? (
                 /* ── Empty state ── */
                 <div className="flex flex-col items-center justify-center gap-4 py-24 px-4 text-center mt-8 glass-panel rounded-[2.5rem] border border-dashed border-slate-300">
                     <div className="w-20 h-20 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
@@ -103,52 +111,81 @@ export default function WishesPage() {
                     </div>
                 </div>
             ) : (
-                /* ── Wishes Grid ── */
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                    {displayedWishes.map((wish, index) => (
-                        <div
-                            key={wish.id}
-                            className="glass-panel border border-white/80 rounded-[2.5rem] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(244,114,182,0.1)] hover:-translate-y-1.5 transition-all duration-400 group relative overflow-hidden"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                            {/* Decorative gradient overlay on hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-pink-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                            
-                            <div className="flex items-start justify-between gap-3 mb-5 relative z-10">
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                                        {[wish.first_name, wish.last_name].filter(Boolean).join(' ')}
-                                        {wish.amount && Number(wish.amount) > 0 && (
-                                            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]" aria-label="Gifted"></span>
-                                        )}
-                                    </h3>
-                                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest flex items-center gap-1.5">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />
-                                        {timeAgo(wish.created_at)}
+                /* ── Wishes Grid & Pagination ── */
+                <div className="space-y-8 mt-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {displayedWishes.map((wish, index) => (
+                            <div
+                                key={wish.id}
+                                className="glass-panel border border-white/80 rounded-[2.5rem] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(244,114,182,0.1)] hover:-translate-y-1.5 transition-all duration-400 group relative overflow-hidden"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                                {/* Decorative gradient overlay on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-pink-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                
+                                <div className="flex items-start justify-between gap-3 mb-5 relative z-10">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                                            {[wish.first_name, wish.last_name].filter(Boolean).join(' ')}
+                                            {wish.amount && Number(wish.amount) > 0 && (
+                                                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]" aria-label="Gifted"></span>
+                                            )}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />
+                                            {timeAgo(wish.created_at)}
+                                        </p>
+                                    </div>
+                                    {!wish.is_read && (
+                                        <span className="shrink-0 text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md px-3 py-1.5 rounded-full">
+                                            New
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div
+                                    className="relative rounded-2xl px-6 py-5 bg-white/70 border border-slate-100 shadow-inner mt-2 z-10"
+                                >
+                                    <span
+                                        className="absolute -top-4 -left-2 text-5xl leading-none text-pink-200 select-none pointer-events-none font-serif opacity-60"
+                                        aria-hidden="true"
+                                    >
+                                        "
+                                    </span>
+                                    <p className="text-[15px] sm:text-base text-slate-700 leading-relaxed italic z-10 relative">
+                                        {wish.wishes}
                                     </p>
                                 </div>
-                                {!wish.is_read && (
-                                    <span className="shrink-0 text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md px-3 py-1.5 rounded-full">
-                                        New
-                                    </span>
-                                )}
                             </div>
+                        ))}
+                    </div>
 
-                            <div
-                                className="relative rounded-2xl px-6 py-5 bg-white/70 border border-slate-100 shadow-inner mt-2 z-10"
-                            >
-                                <span
-                                    className="absolute -top-4 -left-2 text-5xl leading-none text-pink-200 select-none pointer-events-none font-serif opacity-60"
-                                    aria-hidden="true"
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-6 py-4 border border-white/60 rounded-[2rem] glass-panel w-full max-w-md mx-auto">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    aria-label="Previous Page"
                                 >
-                                    "
-                                </span>
-                                <p className="text-[15px] sm:text-base text-slate-700 leading-relaxed italic z-10 relative">
-                                    {wish.wishes}
-                                </p>
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                                    aria-label="Next Page"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
                             </div>
                         </div>
-                    ))}
+                    )}
                 </div>
             )}
         </div>
