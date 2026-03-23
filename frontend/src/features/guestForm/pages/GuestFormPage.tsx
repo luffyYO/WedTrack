@@ -206,8 +206,16 @@ export default function GuestFormPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] flex py-12 px-4 items-start justify-center overflow-y-auto">
             <div className="max-w-[460px] w-full glass-panel rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-white/60 overflow-hidden animate-fade-up">
-                
-                <AutoScrollGallery images={wedding.galleryImages} />
+                <AutoScrollGallery images={
+                    wedding.galleryImages?.length > 0 
+                        ? wedding.galleryImages 
+                        : [
+                            'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=600&q=80',
+                            'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80'
+                        ]
+                } />
 
                 {/* ── Soft Premium Header ── */}
                 <div className="h-44 bg-gradient-to-br from-pink-100 to-rose-50 flex flex-col items-center justify-center text-slate-800 p-8 text-center relative overflow-hidden border-b border-white">

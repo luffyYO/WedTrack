@@ -185,12 +185,12 @@ export default function LandingPage() {
                         </div>
 
                         <div className="mt-20 mx-auto max-w-5xl animate-fade-up" style={{animationDelay: '400ms'}}>
-                            <div className="rounded-[2.5rem] p-3 sm:p-5 shadow-[0_20px_60px_rgba(244,114,182,0.15)] glass-panel border border-white/60 relative group">
+                            <div className="rounded-[2.5rem] p-3 sm:p-5 shadow-[0_20px_60px_rgba(244,114,182,0.15)] glass-panel border border-white/60 relative group cursor-pointer overflow-hidden">
                                 <div className="absolute inset-0 bg-gradient-to-t from-pink-50/20 to-transparent pointer-events-none z-10 rounded-[2.5rem]" />
                                 <img 
                                     src="/Landingpage.png" 
                                     alt="WedTrack Dashboard Preview" 
-                                    className="w-full rounded-[2rem] object-cover border border-slate-100/50 relative z-0"
+                                    className="w-full rounded-[2rem] object-cover border border-slate-100/50 relative z-0 transition-all duration-700 group-hover:grayscale group-hover:scale-[1.02]"
                                 />
                             </div>
                         </div>
