@@ -83,7 +83,7 @@ export default function LoginPage() {
   };
 
     return (
-        <div className="w-full max-w-[440px] px-8 sm:px-10 py-12 glass-panel rounded-[2.5rem] shadow-[0_20px_60px_rgba(244,114,182,0.15)] border border-white/80 ring-4 ring-white/50 relative overflow-hidden group mx-auto animate-fade-up">
+        <div className="w-full max-w-[440px] px-5 sm:px-10 py-10 sm:py-12 glass-panel rounded-[2.5rem] shadow-[0_20px_60px_rgba(244,114,182,0.15)] border border-white/80 ring-4 ring-white/50 relative overflow-hidden group mx-auto animate-fade-up">
             {/* Soft decorative background in login panel */}
             <div className="absolute inset-0 bg-gradient-to-br from-pink-50/60 to-transparent pointer-events-none" />
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-pink-300/20 blur-[50px] rounded-full pointer-events-none" />
@@ -143,7 +143,7 @@ export default function LoginPage() {
                         <input
                             type="text"
                             value={otp}
-                            className="w-full px-5 py-4 rounded-2xl border border-slate-200/60 focus:outline-none focus:ring-4 focus:ring-pink-100 focus:border-pink-300 tracking-[0.6em] text-center text-3xl font-black bg-white/70 backdrop-blur-sm transition-all shadow-inner text-slate-800 placeholder:text-slate-300"
+                            className="w-full px-4 sm:px-5 py-4 rounded-2xl border border-slate-200/60 focus:outline-none focus:ring-4 focus:ring-pink-100 focus:border-pink-300 tracking-[0.3em] sm:tracking-[0.6em] text-center text-2xl sm:text-3xl font-black bg-white/70 backdrop-blur-sm transition-all shadow-inner text-slate-800 placeholder:text-slate-300"
                             placeholder="000000"
                             onChange={(e) => setOtp(e.target.value)}
                         />

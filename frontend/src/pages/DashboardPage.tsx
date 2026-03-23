@@ -31,7 +31,7 @@ function DashboardSkeleton() {
                 <SkeletonBox className="h-10 flex-1 rounded-xl" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 max-w-[750px] mx-auto">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 max-w-[750px] mx-auto">
                 {[...Array(4)].map((_, i) => (
                     <div
                         key={i}
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Stats Overview ── */}
-                    <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-[850px] mx-auto z-10 relative">
+                    <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 sm:gap-6 max-w-[850px] mx-auto z-10 relative">
                         {/* Total Collected */}
                         <div className="glass-panel p-5 sm:p-7 rounded-[2rem] flex flex-col items-center justify-center text-center gap-1.5 sm:h-[160px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all group overflow-hidden relative">
                             <div className="absolute -left-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.06] group-hover:rotate-12 transition-all duration-500">

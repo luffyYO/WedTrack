@@ -237,7 +237,7 @@ export default function GuestFormPage() {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name <span className="text-rose-400">*</span></label>
                             <input required type="text" name="firstName" value={formData.firstName} onChange={handleChange} 
@@ -252,7 +252,7 @@ export default function GuestFormPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Name</label>
                             <input type="text" name="fatherFirstName" value={formData.fatherFirstName} onChange={handleChange} 
@@ -267,7 +267,7 @@ export default function GuestFormPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">District</label>
                             <input type="text" name="district" value={formData.district} onChange={handleChange} 
@@ -282,7 +282,7 @@ export default function GuestFormPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gift Amount (₹) <span className="text-rose-400">*</span></label>
                             <input required type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} 
@@ -310,7 +310,7 @@ export default function GuestFormPage() {
 
                     <div className="pt-2">
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Select Guest Alignment <span className="text-rose-400">*</span></label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.giftSide === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
                                 <input required type="radio" name="giftSide" value="bride" checked={formData.giftSide === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
                                 <span>BRIDE'S SIDE</span>
