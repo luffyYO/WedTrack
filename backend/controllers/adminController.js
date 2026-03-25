@@ -2,11 +2,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import supabase from '../config/db.js';
 import adminSupabase from '../config/adminDb.js';
-import { OTP, generateSecret, verifySync, generateURI } from 'otplib';
+import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
-
-// Create an OTP instance for TOTP operations
-const otp = new OTP();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_admin_jwt_key_wedtrack';
 const JWT_EXPIRES_IN = '12h';
@@ -446,10 +443,15 @@ export const verify2FA = async (req, res) => {
     }
 
     // Verify the TOTP code
-    const isValid = verifySync({ token: code, secret: admin.totp_secret });
+    const isValid = speakeasy.totp.verify({
+      secret: admin.totp_secret,
+      encoding: 'base32',
+      token: String(code),
+      window: 1
+    });
 
     if (!isValid) {
-      return res.status(401).json({ error: 'Invalid 2FA code' });
+      return res.status(400).json({ error: 'Invalid verification code' });
     }
 
     // Code is valid, issue the final auth token
@@ -485,8 +487,9 @@ export const generate2FASecret = async (req, res) => {
       return res.status(400).json({ error: '2FA is already enabled. Disable it first to regenerate.' });
     }
 
-    const secret = generateSecret();
-    const otpauthUrl = generateURI({ issuer: 'WedTrack Admin', label: username, secret });
+    const secretObj = speakeasy.generateSecret({ length: 20, name: `WedTrack Admin (${username})` });
+    const secret = secretObj.base32;
+    const otpauthUrl = secretObj.otpauth_url;
     
     // Generate QR code image url (data URL)
     const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
@@ -530,7 +533,12 @@ export const enable2FA = async (req, res) => {
       return res.status(400).json({ error: 'No 2FA setup in progress' });
     }
 
-    const isValid = verifySync({ token: code, secret: admin.totp_secret });
+    const isValid = speakeasy.totp.verify({
+      secret: admin.totp_secret,
+      encoding: 'base32',
+      token: String(code),
+      window: 1
+    });
 
     if (!isValid) {
       return res.status(400).json({ error: 'Invalid verification code' });
