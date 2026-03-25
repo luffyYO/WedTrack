@@ -28,6 +28,7 @@ const loginLimiter = rateLimit({
 });
 
 // Public admin routes
+router.get('/health', (req, res) => res.json({ status: 'Admin routes active', time: new Date().toISOString() }));
 router.post('/login', loginLimiter, adminLogin);
 router.post('/verify-2fa', loginLimiter, verify2FA);
 
