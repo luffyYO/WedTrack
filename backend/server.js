@@ -68,10 +68,10 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/admin", adminRoutes);
 app.use("/api", authRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/guests", guestRoutes);
-app.use("/api/admin", adminRoutes);
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
