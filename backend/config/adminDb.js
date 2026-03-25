@@ -3,11 +3,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Service role client — bypasses ALL Supabase Row Level Security.
-// Only for use in admin-level backend operations. NEVER expose to frontend.
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Fail gracefully at runtime if keys are missing instead of crashing at startup
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.warn("⚠️ WARNING: SUPABASE_SERVICE_ROLE_KEY is missing. Admin features will not work.");
+}
+
 const adminSupabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseServiceKey || 'placeholder-key',
   {
     auth: {
       autoRefreshToken: false,

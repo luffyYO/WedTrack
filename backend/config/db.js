@@ -6,10 +6,14 @@ dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
+// Fail gracefully at runtime if keys are missing instead of crashing at startup
 if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase environment variables.");
+  console.warn("⚠️ WARNING: SUPABASE_URL or SUPABASE_ANON_KEY is missing. Database features will not work.");
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-key'
+);
 
 export default supabase;
