@@ -15,6 +15,8 @@ const TasksPage = lazy(() => import('@/pages/TasksPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 const WishesPage = lazy(() => import('@/pages/WishesPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 
 // Feature pages
 const WeddingTrackCreatePage = lazy(() => import('@/features/weddingTrack/pages/WeddingTrackCreatePage'));
@@ -40,6 +42,8 @@ const router = createBrowserRouter([
         ],
     },
     { path: '/', element: <Suspense fallback={<Loader />}><LandingPage /></Suspense> },
+    { path: '/privacy', element: <Suspense fallback={<Loader />}><PrivacyPolicy /></Suspense> },
+    { path: '/terms', element: <Suspense fallback={<Loader />}><TermsOfService /></Suspense> },
 
     // ── Public / Guest routes (Scanned from QR) ────────────────────────────────
     { path: '/guest-form/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },
