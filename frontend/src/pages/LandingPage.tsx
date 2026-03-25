@@ -18,9 +18,11 @@ import {
     Send,
     Navigation,
     HeartHandshake,
-    ListX
+    ListX,
+    MessageCircle
 } from 'lucide-react';
 import MobileMenuPanel from '@/components/navigation/MobileMenuPanel';
+import FAQSection from '@/components/landing/FAQSection';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -95,6 +97,7 @@ export default function LandingPage() {
     const navItems = [
         { label: 'About', sectionId: 'about', icon: Info },
         { label: 'Features', sectionId: 'features', icon: Sparkles },
+        { label: 'FAQ', sectionId: 'faq', icon: MessageCircle },
         { label: 'Support', sectionId: 'doubt', icon: HelpCircle }
     ];
 
@@ -337,6 +340,9 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
+                
+                {/* FAQ Section */}
+                <FAQSection />
             </main>
 
             {/* Footer */}

@@ -158,10 +158,16 @@ export default function WeddingQRPage() {
                                         size="xl" 
                                         className="mb-1 text-slate-800 drop-shadow-sm font-serif"
                                     />
-                                    {qrData?.venue && (
-                                        <p className="text-sm text-slate-500 mt-2 font-medium">
-                                            {qrData.venue}{qrData?.date ? ` · ${formatDate(qrData.date)}` : ''}
-                                        </p>
+                                    {(qrData?.village || qrData?.venue || qrData?.date) && (
+                                        <div className="text-[15px] text-slate-500 mt-2 font-medium tracking-wide flex items-center justify-center gap-[4px] flex-wrap">
+                                            <span>{[qrData.village, qrData.venue].filter(Boolean).join(', ')}</span>
+                                            {qrData.date && (
+                                                <>
+                                                    <span className="text-slate-400">·</span>
+                                                    <span>{formatDate(qrData.date, { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                                                </>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 

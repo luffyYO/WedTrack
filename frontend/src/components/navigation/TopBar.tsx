@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, User } from 'lucide-react';
 import { useAuthStore, useWishStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { io as socketIO } from 'socket.io-client';
@@ -9,34 +9,6 @@ import API_BASE_URL from '@/config/api';
 interface TopBarProps {
     pageTitle?: string;
     onMenuToggle?: () => void;
-}
-
-// Smart Gender Detection Heuristic based on Indian/Western common names ending
-function guessGender(name: string): 'male' | 'female' {
-    if (!name) return 'male';
-    const lower = name.toLowerCase().trim();
-    if (lower.match(/[aeiyü]$/i) || lower.includes("bride")) return 'female';
-    return 'male';
-}
-
-function FemaleAvatar() {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-pink-500">
-            <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-            <path d="M15.5 10c0 4.14-3.5 7.5-3.5 14" />
-            <path d="M8.5 10c0 4.14 3.5 7.5 3.5 14" />
-            <path d="M4 22h16" />
-        </svg>
-    );
-}
-
-function MaleAvatar() {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-slate-600">
-            <path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-            <path d="M6 22v-4a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v4" />
-        </svg>
-    );
 }
 
 export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
@@ -64,7 +36,6 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
     }, [navigate]);
 
     const userFirstName = user?.user_metadata?.first_name || user?.user_metadata?.name || 'User';
-    const gender = guessGender(userFirstName);
 
     return (
         <header
@@ -115,8 +86,8 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                         className="flex items-center gap-2 px-1 py-1 pr-3 rounded-full bg-white/50 border border-white/60 hover:bg-white hover:shadow-md transition-all group shrink-0"
                         title={userFirstName}
                     >
-                        <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center shadow-inner">
-                            {gender === 'female' ? <FemaleAvatar /> : <MaleAvatar />}
+                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shadow-inner text-slate-600">
+                            <User size={18} strokeWidth={2.5} />
                         </div>
                         <span className="text-sm font-semibold text-slate-700 hidden sm:block group-hover:text-pink-600 transition-colors">
                             {userFirstName}

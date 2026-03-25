@@ -1,12 +1,20 @@
 export default function AutoScrollGallery({ images }: { images: string[] }) {
-    if (!images || images.length === 0) return null;
+    // If no images are provided, use default beautiful wedding placeholders
+    const defaultImages = [
+        "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&q=80&w=800"
+    ];
+
+    const actualImages = (!images || images.length === 0) ? defaultImages : images;
 
     // Repeat enough times to fill the viewport and allow for seamless scrolling
     // Even if there's only 1 image (260px), 8 copies will comfortably overflow the 460px container
-    const displayImages = [...images, ...images, ...images, ...images, ...images, ...images, ...images, ...images];
+    const displayImages = [...actualImages, ...actualImages, ...actualImages, ...actualImages, ...actualImages, ...actualImages, ...actualImages, ...actualImages];
     
     // Calculate the precise total width of the original, unique set of images
-    const shiftPixels = images.length * 260; // since each image is strictly 260px wide
+    const shiftPixels = actualImages.length * 260; // since each image is strictly 260px wide
 
     return (
         <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-gradient-to-b from-slate-50 to-[#fdfbfb] border-b border-white/60">
@@ -21,7 +29,7 @@ export default function AutoScrollGallery({ images }: { images: string[] }) {
                     100% { transform: translateX(-${shiftPixels}px); }
                 }
                 .gallery-scroll-track {
-                    animation: scroll-precise ${images.length * 10}s linear infinite;
+                    animation: scroll-precise ${actualImages.length * 10}s linear infinite;
                     width: max-content;
                 }
                 .gallery-scroll-track:hover {

@@ -30,7 +30,7 @@ const WeddingNameDisplay: React.FC<WeddingNameDisplayProps> = ({
             sizeClasses[size],
             className
         )}>
-            <span className={cn("font-bold tracking-tight", !isLarge && "truncate max-w-[40%]")}>
+            <span className={cn("font-bold tracking-tight break-words")}>
                 {brideName}
             </span>
             
@@ -42,7 +42,7 @@ const WeddingNameDisplay: React.FC<WeddingNameDisplayProps> = ({
                 <span className="text-red-500 text-[0.9em]">❤️</span>
             </div>
 
-            <span className={cn("font-bold tracking-tight", !isLarge && "truncate max-w-[40%]")}>
+            <span className={cn("font-bold tracking-tight break-words")}>
                 {groomName}
             </span>
         </div>

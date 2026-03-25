@@ -133,13 +133,13 @@ export default function HomePage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="glass-panel p-6 rounded-[2rem] h-[220px] flex flex-col justify-between animate-pulse">
-                                <div className="space-y-4 w-full mt-2">
+                            <div key={i} className="glass-panel p-4 sm:p-5 rounded-2xl h-[180px] flex flex-col justify-between animate-pulse">
+                                <div className="space-y-3 w-full mt-2">
                                     <div className="h-6 bg-slate-200/50 rounded-md w-3/4"></div>
-                                    <div className="h-4 bg-slate-200/50 rounded-md w-1/2"></div>
-                                    <div className="h-4 bg-slate-200/50 rounded-md w-2/3"></div>
+                                    <div className="h-5 bg-slate-200/50 rounded-md w-1/2 bg-white/40"></div>
+                                    <div className="h-5 bg-slate-200/50 rounded-md w-2/3 bg-white/40"></div>
                                 </div>
-                                <div className="h-11 bg-slate-200/50 rounded-xl w-full mt-4"></div>
+                                <div className="h-9 bg-slate-200/50 rounded-md w-full mt-3"></div>
                             </div>
                         ))}
                     </div>
@@ -165,7 +165,7 @@ export default function HomePage() {
                         {weddings.map((w, index) => (
                             <div 
                                 key={w.id} 
-                                className="relative glass-panel rounded-[2rem] p-7 flex flex-col justify-between group overflow-hidden hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-400"
+                                className="relative glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between group overflow-hidden hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-400"
                                 style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 <QrStatusDot
@@ -177,22 +177,28 @@ export default function HomePage() {
                                         brideName={w.bride_name} 
                                         groomName={w.groom_name} 
                                         size="md"
-                                        className="mb-3 text-slate-800 tracking-tight"
+                                        className="mb-2 text-slate-800 tracking-tight"
                                     />
-                                    <div className="flex flex-col gap-2.5 mt-5">
-                                        <p className="text-sm text-slate-600 flex items-center gap-3 font-medium bg-white/40 p-2 rounded-lg border border-white/50">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
-                                            {formatDate(w.date, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                    <div className="flex flex-col gap-1.5 mt-3">
+                                        <p className="text-[13px] text-slate-600 flex items-start gap-2.5 font-medium bg-white/40 p-1.5 rounded-lg border border-white/50 break-words">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
+                                            <span>{w.village || '—'}</span>
                                         </p>
-                                        <p className="text-sm text-slate-600 flex items-center gap-3 font-medium bg-white/40 p-2 rounded-lg border border-white/50 line-clamp-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
-                                            {w.venue}, {w.location}
+                                        <p className="text-[13px] text-slate-600 flex items-start gap-2.5 font-medium bg-white/40 p-1.5 rounded-lg border border-white/50 break-words">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
+                                            <span>{w.location || '—'}</span>
                                         </p>
                                     </div>
+                                    {w.qr_expires_at && (
+                                        <p className="text-[11px] text-slate-400 font-semibold tracking-wide mt-3 text-center border-t border-slate-100/50 pt-2">
+                                            Expires: {formatDate(w.qr_expires_at, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                                        </p>
+                                    )}
                                 </div>
                                 <Button 
-                                    className="mt-8 w-full shadow-sm relative z-10" 
+                                    className="mt-4 w-full shadow-sm relative z-10" 
                                     variant="secondary"
+                                    size="sm"
                                     icon={<QrCode size={16} />}
                                     onClick={() => navigate(`/wedding-track/qr/${w.id}`)}
                                 >

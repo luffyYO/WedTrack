@@ -5,6 +5,7 @@ export interface QRData {
     brideName: string;
     groomName: string;
     venue?: string;
+    village?: string;
     date?: string;
     /** URL or base64 data URI of the QR image */
     qrImageUrl: string;

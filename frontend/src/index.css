@@ -59,13 +59,21 @@ html {
 
 body {
   font-family: var(--font-sans);
-  /* Premium Light Glassmorphism Background: soft, warm gradient */
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-  background-attachment: fixed;
   color: #334155; /* slate-700 */
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Performant fixed background without paint jank on scroll */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+  pointer-events: none;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */

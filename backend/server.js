@@ -5,6 +5,7 @@ import supabase from "./config/db.js";
 import weddingRoutes from "./routes/weddings.js";
 import guestRoutes from "./routes/guests.js";
 import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import compression from "compression";
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
 app.use("/api", authRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/guests", guestRoutes);
+app.use("/api/admin", adminRoutes);
 
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);

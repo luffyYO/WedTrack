@@ -339,7 +339,7 @@ export default function DashboardPage() {
                                             size="sm"
                                             className="text-slate-800"
                                         />
-                                        <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">Location: {w.location}</div>
+                                        <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">Location: {[w.village, w.location].filter(Boolean).join(', ')}</div>
                                     </div>
                                 ))}
                             </div>

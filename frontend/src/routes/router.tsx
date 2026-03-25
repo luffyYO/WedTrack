@@ -21,6 +21,16 @@ const WeddingTrackCreatePage = lazy(() => import('@/features/weddingTrack/pages/
 const WeddingQRPage = lazy(() => import('@/features/qr/pages/WeddingQRPage'));
 const GuestFormPage = lazy(() => import('@/features/guestForm/pages/GuestFormPage'));
 
+// Admin pages
+const AdminLogin = lazy(() => import('@/features/admin/pages/AdminLogin'));
+const AdminLayout = lazy(() => import('@/features/admin/layout/AdminLayout'));
+const AdminDashboard = lazy(() => import('@/features/admin/pages/AdminDashboard'));
+const AdminUsers = lazy(() => import('@/features/admin/pages/AdminUsers'));
+const AdminWeddings = lazy(() => import('@/features/admin/pages/AdminWeddings'));
+const AdminQrs = lazy(() => import('@/features/admin/pages/AdminQrs'));
+const AdminLogs = lazy(() => import('@/features/admin/pages/AdminLogs'));
+const AdminSettings = lazy(() => import('@/features/admin/pages/AdminSettings'));
+
 const router = createBrowserRouter([
     // ── Public / Auth routes ───────────────────────────────────────────────────
     {
@@ -52,6 +62,22 @@ const router = createBrowserRouter([
                 ],
             },
         ],
+    },
+
+    // ── Admin routes ───────────────────────────────────────────────────────────
+    { path: '/admin/login', element: <Suspense fallback={<Loader />}><AdminLogin /></Suspense> },
+    {
+        path: '/admin',
+        element: <Suspense fallback={<Loader />}><AdminLayout /></Suspense>,
+        children: [
+            { index: true, element: <Suspense fallback={<Loader />}><AdminDashboard /></Suspense> },
+            { path: 'dashboard', element: <Suspense fallback={<Loader />}><AdminDashboard /></Suspense> },
+            { path: 'users', element: <Suspense fallback={<Loader />}><AdminUsers /></Suspense> },
+            { path: 'weddings', element: <Suspense fallback={<Loader />}><AdminWeddings /></Suspense> },
+            { path: 'qrs', element: <Suspense fallback={<Loader />}><AdminQrs /></Suspense> },
+            { path: 'logs', element: <Suspense fallback={<Loader />}><AdminLogs /></Suspense> },
+            { path: 'settings', element: <Suspense fallback={<Loader />}><AdminSettings /></Suspense> },
+        ]
     },
 
     // ── 404 ────────────────────────────────────────────────────────────────────
