@@ -384,6 +384,11 @@ export default function LandingPage() {
                         </div>
                     </div>
                     
+                    <div className="text-center mb-8" style={{ fontSize: '14px' }}>
+                        <a href="/privacy" className="hover:text-pink-500 transition-colors">Privacy policy</a> | 
+                        <a href="/terms" className="hover:text-pink-500 transition-colors ml-1">Terms of Service</a>
+                    </div>
+                    
                     <div className="text-center text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400">
                         © 2024 WedTrack. Elegantly Crafted for Your Special Day.
                     </div>

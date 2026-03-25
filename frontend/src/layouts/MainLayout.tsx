@@ -84,6 +84,11 @@ export default function MainLayout() {
                         <Outlet />
                     </ErrorBoundary>
                 </main>
+
+                <footer style={{ textAlign: 'center', padding: '20px', fontSize: '14px' }}>
+                    <a href="/privacy">Privacy policy</a> | 
+                    <a href="/terms">Terms of Service</a>
+                </footer>
             </div>
         </div>
     );

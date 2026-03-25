@@ -18,6 +18,12 @@ export default function AuthLayout() {
                 <div className="animate-fade-in-up delay-100">
                     <Outlet />
                 </div>
+
+                <footer className="mt-12 text-center" style={{ fontSize: '14px' }}>
+                    <a href="/privacy" className="text-slate-400 hover:text-pink-500 transition-colors">Privacy policy</a>
+                    <span className="mx-2 text-slate-300">|</span>
+                    <a href="/terms" className="text-slate-400 hover:text-pink-500 transition-colors">Terms of Service</a>
+                </footer>
             </div>
         </div>
     );
