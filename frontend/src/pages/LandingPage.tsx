@@ -84,13 +84,13 @@ export default function LandingPage() {
     }
 
     const Logo = ({ size = "md" }) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
             <img 
                 src="/logo.jpeg" 
                 alt="WedTrack logo" 
-                className={`${size === "lg" ? "w-16 h-16" : "w-10 h-10"} rounded-2xl object-cover shadow-sm border border-white/50`}
+                className={`${size === "lg" ? "w-16 h-16" : "w-8 h-8 sm:w-10 sm:h-10"} rounded-xl sm:rounded-2xl object-cover shadow-sm border border-white/50`}
             />
-            <span className={`font-bold tracking-tight text-slate-800 ${size === "lg" ? "text-3xl" : "text-xl"}`}>
+            <span className={`font-bold tracking-tight text-slate-800 ${size === "lg" ? "text-3xl" : "text-base sm:text-xl"}`}>
                 WedTrack
             </span>
         </div>
@@ -117,7 +117,7 @@ export default function LandingPage() {
 
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_20px_rgba(244,114,182,0.05)]">
-                <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+                <div className="container mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between">
                     <Logo />
                     
                     <div className="flex items-center gap-2 sm:gap-6">
@@ -129,17 +129,17 @@ export default function LandingPage() {
                         </button>
                         <button 
                             onClick={() => navigate('/login')}
-                            className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold transition-all text-xs sm:text-sm tracking-wide bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:shadow-pink-500/30 hover:-translate-y-0.5"
+                            className="px-3 py-1.5 sm:px-6 sm:py-2.5 rounded-lg sm:rounded-2xl font-bold transition-all text-[11px] sm:text-sm tracking-wide whitespace-nowrap bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:shadow-pink-500/30 hover:-translate-y-0.5"
                         >
                             Get Started
                         </button>
 
                         <button 
-                            className="p-2 transition-colors sm:hidden text-slate-600 hover:text-pink-500"
+                            className="p-1 sm:p-2 transition-colors sm:hidden text-slate-600 hover:text-pink-500"
                             onClick={() => setIsMobileMenuOpen(true)}
                             aria-label="Open menu"
                         >
-                            <Menu size={26} />
+                            <Menu size={24} />
                         </button>
                     </div>
                 </div>
