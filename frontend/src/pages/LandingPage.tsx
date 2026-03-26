@@ -4,7 +4,6 @@ import { useAuthStore } from '@/store';
 import { 
     Instagram, 
     Facebook, 
-    Menu, 
     Star, 
     Mail, 
     MapPin, 
@@ -21,6 +20,7 @@ import {
     ListX,
     MessageCircle
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import MobileMenuPanel from '@/components/navigation/MobileMenuPanel';
 import FAQSection from '@/components/landing/FAQSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
@@ -158,11 +158,27 @@ export default function LandingPage() {
                         </button>
 
                         <button 
-                            className="p-1 sm:p-2 transition-colors sm:hidden text-slate-600 hover:text-pink-500"
-                            onClick={() => setIsMobileMenuOpen(true)}
-                            aria-label="Open menu"
+                            className={cn(
+                                "p-2 transition-all sm:hidden flex items-center justify-center relative w-10 h-10 group",
+                                isMobileMenuOpen ? "z-[1100] text-slate-800" : "z-50 text-slate-600"
+                            )}
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                         >
-                            <Menu size={24} />
+                            <div className="w-6 h-5 relative flex flex-col justify-between items-center transition-all duration-300">
+                                <span className={cn(
+                                    "w-full h-0.5 bg-current transition-all duration-300 rounded-full",
+                                    isMobileMenuOpen ? "rotate-45 translate-y-[9px]" : ""
+                                )} />
+                                <span className={cn(
+                                    "w-full h-0.5 bg-current transition-all duration-300 rounded-full",
+                                    isMobileMenuOpen ? "opacity-0 scale-x-0" : "opacity-100"
+                                )} />
+                                <span className={cn(
+                                    "w-full h-0.5 bg-current transition-all duration-300 rounded-full",
+                                    isMobileMenuOpen ? "-rotate-45 -translate-y-[9px]" : ""
+                                )} />
+                            </div>
                         </button>
                     </div>
                 </div>
@@ -297,34 +313,53 @@ export default function LandingPage() {
                     </ScrollReveal>
                 </section>
 
-                {/* Loved By Section */}
-                <section className="py-24 relative z-10">
+                {/* Trusted By Couples Section */}
+                <section className="py-20 sm:py-24 relative z-10">
                     <ScrollReveal className="container mx-auto px-4 sm:px-6">
-                        <div className="text-center max-w-2xl mx-auto mb-16">
-                            <div className="flex items-center justify-center gap-1.5 mb-6">
-                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
-                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
-                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
-                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
-                                <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+                        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+                            <div className="flex items-center justify-center gap-1 mb-4 sm:gap-1.5 sm:mb-6">
+                                {[...Array(5)].map((_, i) => (
+                                    <Star key={i} size={20} className="text-amber-400 fill-amber-400 drop-shadow-sm sm:size-6" />
+                                ))}
                             </div>
-                            <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">Trusted By Couples</h2>
+                            <h2 className="text-3xl sm:text-5xl font-black mb-6 text-slate-800 tracking-tight">Trusted By Couples</h2>
+                            <div className="h-1.5 w-16 sm:w-24 mx-auto rounded-full bg-gradient-to-r from-pink-400 to-rose-300 opacity-60" />
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                            {[
-                                { name: 'Rajkumar & Priya', msg: "Absolutely stunning software. The QR invites made our reception flawlessly smooth, and the modern UI was a joy to use.", pic: "https://i.pravatar.cc/150?img=47" },
-                                { name: 'Rahul & Neha', msg: "The pastel UI and glass feel fits exactly the vibe we wanted for our wedding organization. Super reliable.", pic: "https://i.pravatar.cc/150?img=33" },
-                                { name: 'Sneha & Rohan', msg: "So effortless! Tracking all the gifts securely through the dashboard removed an entire layer of post-wedding stress.", pic: "https://i.pravatar.cc/150?img=44" }
-                            ].map((review, i) => (
-                                <div key={i} className="p-8 rounded-[2.5rem] border border-white/60 glass-panel flex flex-col hover:shadow-lg transition-all">
-                                    <p className="italic text-slate-600 mb-8 leading-relaxed font-medium">"{review.msg}"</p>
-                                    <div className="flex items-center gap-4 mt-auto">
-                                        <img src={review.pic} alt={review.name} className="w-14 h-14 rounded-full border-2 border-white shadow-sm object-cover" />
-                                        <h4 className="font-bold text-sm tracking-wide text-slate-800">{review.name}</h4>
+                        <div className="relative max-w-6xl mx-auto overflow-hidden rounded-[2rem] sm:rounded-[3rem]">
+                            {/* Gradient Fades for depth - blending with the section background */}
+                            <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-r from-[#fdfbfb] to-transparent z-10 pointer-events-none" />
+                            <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-l from-[#fdfbfb] to-transparent z-10 pointer-events-none" />
+
+                            <div className="flex gap-4 sm:gap-8 animate-marquee hover:[animation-play-state:paused] w-max py-6 sm:py-10 px-4">
+                                {[
+                                    { name: 'Rajkumar & Priya', msg: "Absolutely stunning software. The QR invites made our reception flawlessly smooth, and the modern UI was a joy to use.", pic: "https://i.pravatar.cc/150?img=47" },
+                                    { name: 'Rahul & Neha', msg: "The pastel UI and glass feel fits exactly the vibe we wanted for our wedding organization. Super reliable.", pic: "https://i.pravatar.cc/150?img=33" },
+                                    { name: 'Sneha & Rohan', msg: "So effortless! Tracking all the gifts securely through the dashboard removed an entire layer of post-wedding stress.", pic: "https://i.pravatar.cc/150?img=44" }
+                                ].concat([
+                                    { name: 'Rajkumar & Priya', msg: "Absolutely stunning software. The QR invites made our reception flawlessly smooth, and the modern UI was a joy to use.", pic: "https://i.pravatar.cc/150?img=47" },
+                                    { name: 'Rahul & Neha', msg: "The pastel UI and glass feel fits exactly the vibe we wanted for our wedding organization. Super reliable.", pic: "https://i.pravatar.cc/150?img=33" },
+                                    { name: 'Sneha & Rohan', msg: "So effortless! Tracking all the gifts securely through the dashboard removed an entire layer of post-wedding stress.", pic: "https://i.pravatar.cc/150?img=44" }
+                                ]).concat([
+                                    { name: 'Rajkumar & Priya', msg: "Absolutely stunning software. The QR invites made our reception flawlessly smooth, and the modern UI was a joy to use.", pic: "https://i.pravatar.cc/150?img=47" },
+                                    { name: 'Rahul & Neha', msg: "The pastel UI and glass feel fits exactly the vibe we wanted for our wedding organization. Super reliable.", pic: "https://i.pravatar.cc/150?img=33" },
+                                    { name: 'Sneha & Rohan', msg: "So effortless! Tracking all the gifts securely through the dashboard removed an entire layer of post-wedding stress.", pic: "https://i.pravatar.cc/150?img=44" }
+                                ]).map((review, i) => (
+                                    <div key={i} className="w-[280px] sm:w-[450px] p-6 sm:p-10 rounded-[2rem] border border-white/40 glass-panel flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 ease-out flex-shrink-0">
+                                        <p className="italic text-slate-600 mb-6 sm:mb-8 leading-relaxed font-medium text-sm sm:text-lg">"{review.msg}"</p>
+                                        <div className="flex items-center gap-3 sm:gap-4 mt-auto">
+                                            <div className="relative">
+                                                <div className="absolute inset-0 bg-pink-100 rounded-full animate-pulse opacity-40" />
+                                                <img src={review.pic} alt={review.name} className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-white shadow-md object-cover" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <h4 className="font-bold text-xs sm:text-base tracking-wide text-slate-800">{review.name}</h4>
+                                                <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Verified Couple</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </ScrollReveal>
                 </section>
@@ -391,22 +426,22 @@ export default function LandingPage() {
             {/* Footer */}
             <footer className="pt-24 pb-10 border-t border-slate-200/60 bg-white/40 backdrop-blur-lg relative z-10">
                 <div className="container mx-auto px-4 sm:px-6">
-                    <div className="grid md:grid-cols-4 gap-12 mb-16 pb-16 border-b border-slate-200/80">
-                        <div className="col-span-1 md:col-span-2 space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12 sm:mb-16 pb-12 sm:pb-16 border-b border-slate-200/80">
+                        <div className="col-span-2 space-y-6">
                             <Logo size="lg" />
-                            <p className="max-w-sm leading-relaxed text-sm text-slate-500 font-medium">The elegant, uncompromised solution to wedding management. Secure invitations, real-time logging, and beautiful tracking.</p>
-                            <div className="flex gap-4 pt-4">
+                            <p className="max-w-sm leading-relaxed text-[13px] sm:text-sm text-slate-500 font-medium">The elegant, uncompromised solution to wedding management. Secure invitations, real-time logging, and beautiful tracking.</p>
+                            <div className="flex gap-3 sm:gap-4 pt-2">
                                 {[Instagram, Facebook, Navigation].map((Icon, i) => (
-                                    <a key={i} href="#" className="w-12 h-12 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center transition-all hover:scale-110 hover:border-pink-300 hover:text-pink-500 text-slate-500">
-                                        <Icon size={20} />
+                                    <a key={i} href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center transition-all hover:scale-110 hover:border-pink-300 hover:text-pink-500 text-slate-500">
+                                        <Icon size={18} />
                                     </a>
                                 ))}
                             </div>
                         </div>
                         
-                        <div>
-                            <h4 className="font-extrabold text-[11px] mb-6 tracking-widest uppercase text-slate-800">Quick Links</h4>
-                            <ul className="space-y-4 text-sm font-medium text-slate-500">
+                        <div className="col-span-1">
+                            <h4 className="font-extrabold text-[10px] sm:text-[11px] mb-6 tracking-widest uppercase text-slate-800">Quick Links</h4>
+                            <ul className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium text-slate-500">
                                 {navItems.map((item) => (
                                     <li key={item.label}>
                                         <button onClick={() => scrollToSection(item.sectionId)} className="hover:text-pink-500 transition-colors">
@@ -417,12 +452,12 @@ export default function LandingPage() {
                             </ul>
                         </div>
 
-                        <div>
-                            <h4 className="font-extrabold text-[11px] mb-6 tracking-widest uppercase text-slate-800">Contact</h4>
-                            <ul className="space-y-4 text-sm font-medium text-slate-500">
-                                <li className="flex items-center gap-3 hover:text-slate-800"><MapPin size={16} className="text-pink-400"/> Coimbatore, TN</li>
-                                <li className="flex items-center gap-3 hover:text-slate-800"><Phone size={16} className="text-pink-400"/> +91 9149891771</li>
-                                <li className="flex items-center gap-3 hover:text-slate-800"><Mail size={16} className="text-pink-400"/> hi@wedtrack.in</li>
+                        <div className="col-span-1">
+                            <h4 className="font-extrabold text-[10px] sm:text-[11px] mb-6 tracking-widest uppercase text-slate-800">Contact</h4>
+                            <ul className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium text-slate-500">
+                                <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><MapPin size={14} className="text-pink-400 shrink-0"/> Coimbatore</li>
+                                <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><Phone size={14} className="text-pink-400 shrink-0"/> +91 91498...</li>
+                                <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><Mail size={14} className="text-pink-400 shrink-0"/> hi@wed...</li>
                             </ul>
                         </div>
                     </div>
