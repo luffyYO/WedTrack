@@ -72,13 +72,35 @@ export default function LandingPage() {
 
     if (showSplash) {
         return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] transition-colors duration-1000">
-                <div className="relative animate-spin-3d">
-                    <img 
-                        src="/logo.jpeg" 
-                        alt="WedTrack 3D Logo" 
-                        className="w-40 h-40 rounded-[2.5rem] object-cover shadow-[0_20px_50px_rgba(244,114,182,0.3)] border-[3px] border-white/80" 
-                    />
+            <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-colors duration-1000">
+                {/* The Cube Bouncing sequence */}
+                <div className="relative animate-drop-bounce-complex z-30 mb-2">
+                    {/* Perspective Container adjusted for edge spinning */}
+                    <div style={{ perspective: '1200px' }} className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px]">
+                        {/* 3D Cube Isometric Spin */}
+                        <div className="relative w-full h-full animate-spin-cube-edge">
+                            {['front', 'back', 'right', 'left', 'top', 'bottom'].map((face) => (
+                                <div key={face} className={`cube-face face-${face} overflow-hidden rounded-[20%] shadow-[0_5px_15px_rgba(244,114,182,0.2)] border-2 border-white bg-white`}>
+                                    <img src="/logo.jpeg" alt="WedTrack Logo" className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* The "Floor" that the cube bounces on (Fog Shadow & Bold Text) */}
+                <div className="relative z-10 animate-fade-up flex flex-col items-center mt-6" style={{ animationDelay: '0.2s' }}>
+                    {/* Dynamic shadow to anchor the bouncing cube */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-64 h-12 bg-pink-100/90 blur-[20px] rounded-full z-[-1]" />
+                    
+                    {/* Styled Premium Text */}
+                    <div className="flex flex-col items-center">
+                        <p className="text-xs sm:text-sm font-bold tracking-[0.4em] text-slate-400 uppercase mb-2">Welcome to</p>
+                        <span className="font-black tracking-tight text-5xl sm:text-7xl bg-gradient-to-r from-slate-800 to-slate-700 bg-clip-text text-transparent drop-shadow-sm pb-1">
+                            WedTracks
+                        </span>
+                        <div className="h-2 w-16 rounded-full bg-gradient-to-r from-pink-400 to-rose-300 mt-4 shadow-sm opacity-90" />
+                    </div>
                 </div>
             </div>
         );
