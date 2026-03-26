@@ -25,6 +25,7 @@ import MobileMenuPanel from '@/components/navigation/MobileMenuPanel';
 import FAQSection from '@/components/landing/FAQSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
 import ScrollReveal from '@/components/ui/ScrollReveal';
+import { TypeAnimation } from 'react-type-animation';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -166,7 +167,20 @@ export default function LandingPage() {
                             
                             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] mb-8 animate-fade-up text-slate-800" style={{animationDelay: '100ms'}}>
                                 Celebrate with <br />
-                                <span className="bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">Elegance and Order.</span>
+                                <TypeAnimation
+                                    sequence={[
+                                        'Elegance and Order.',
+                                        2500,
+                                        'Perfect Harmony.',
+                                        2500,
+                                        'Zero Stress.',
+                                        2500,
+                                    ]}
+                                    wrapper="span"
+                                    speed={50}
+                                    className="bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent inline-block"
+                                    repeat={Infinity}
+                                />
                             </h1>
                             
                             <p className="text-xl max-w-2xl mx-auto leading-relaxed mb-12 animate-fade-up text-slate-500 font-medium" style={{animationDelay: '200ms'}}>
