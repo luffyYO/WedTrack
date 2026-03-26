@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import MobileMenuPanel from '@/components/navigation/MobileMenuPanel';
 import FAQSection from '@/components/landing/FAQSection';
+import HowItWorksSection from '@/components/landing/HowItWorksSection';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -118,7 +120,7 @@ export default function LandingPage() {
                 <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
                     <Logo />
                     
-                    <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="flex items-center gap-2 sm:gap-6">
                         <button 
                             onClick={() => navigate('/login')}
                             className="hidden sm:inline-flex px-6 py-2.5 rounded-2xl font-bold transition-all text-sm tracking-wide bg-white border border-slate-200 text-slate-700 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600 shadow-sm hover:shadow"
@@ -127,7 +129,7 @@ export default function LandingPage() {
                         </button>
                         <button 
                             onClick={() => navigate('/login')}
-                            className="px-6 py-2.5 rounded-2xl font-bold transition-all text-sm tracking-wide bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:shadow-pink-500/30 hover:-translate-y-0.5"
+                            className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold transition-all text-xs sm:text-sm tracking-wide bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-lg hover:shadow-pink-500/30 hover:-translate-y-0.5"
                         >
                             Get Started
                         </button>
@@ -199,10 +201,9 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
-
                 {/* About Section */}
                 <section id="about" className="py-24 relative z-10">
-                    <div className="container mx-auto px-4 sm:px-6">
+                    <ScrollReveal className="container mx-auto px-4 sm:px-6">
                         <div className="max-w-3xl mb-16 mx-auto text-center">
                             <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">The Modern Reception</h2>
                             <div className="h-1.5 w-24 mx-auto rounded-full bg-gradient-to-r from-pink-400 to-rose-300" />
@@ -227,12 +228,16 @@ export default function LandingPage() {
                                 <p className="leading-relaxed text-slate-500 font-medium">Smart QR passes guarantee secure entry while providing a unified, real-time view of attendance and financial gifts, protecting the integrity of your celebration.</p>
                             </div>
                         </div>
-                    </div>
+                    </ScrollReveal>
                 </section>
+
+                <ScrollReveal animation="fade-up">
+                    <HowItWorksSection />
+                </ScrollReveal>
 
                 {/* Features Section */}
                 <section id="features" className="py-24 relative z-10">
-                    <div className="container mx-auto px-4 sm:px-6">
+                    <ScrollReveal className="container mx-auto px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto mb-16">
                             <h2 className="text-4xl sm:text-5xl font-black mb-6 text-slate-800">Designed for Joy</h2>
                         </div>
@@ -253,12 +258,12 @@ export default function LandingPage() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </ScrollReveal>
                 </section>
 
                 {/* Loved By Section */}
                 <section className="py-24 relative z-10">
-                    <div className="container mx-auto px-4 sm:px-6">
+                    <ScrollReveal className="container mx-auto px-4 sm:px-6">
                         <div className="text-center max-w-2xl mx-auto mb-16">
                             <div className="flex items-center justify-center gap-1.5 mb-6">
                                 <Star size={24} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
@@ -285,12 +290,12 @@ export default function LandingPage() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </ScrollReveal>
                 </section>
 
                 {/* Doubt Section */}
                 <section id="doubt" className="py-24 relative z-10">
-                    <div className="container mx-auto px-4 sm:px-6">
+                    <ScrollReveal className="container mx-auto px-4 sm:px-6">
                         <div className="max-w-5xl mx-auto rounded-[3rem] overflow-hidden flex flex-col md:flex-row border border-white/80 shadow-[0_20px_50px_rgba(244,114,182,0.1)] glass-panel">
                             <div className="p-10 sm:p-14 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r border-slate-200/60 bg-white/40">
                                 <h2 className="text-4xl font-black mb-6 text-slate-800">Need Assistance?</h2>
@@ -338,11 +343,13 @@ export default function LandingPage() {
                                 </form>
                             </div>
                         </div>
-                    </div>
+                    </ScrollReveal>
                 </section>
                 
                 {/* FAQ Section */}
-                <FAQSection />
+                <ScrollReveal>
+                    <FAQSection />
+                </ScrollReveal>
             </main>
 
             {/* Footer */}

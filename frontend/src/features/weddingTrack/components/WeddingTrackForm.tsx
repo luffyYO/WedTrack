@@ -52,12 +52,12 @@ export default function WeddingTrackForm({
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <Card className="w-full relative overflow-visible z-10">
+        <Card className="w-full relative overflow-visible z-10 border border-white/40 shadow-xl shadow-pink-900/5 group hover:shadow-2xl hover:shadow-pink-900/10 transition-all duration-500 bg-white/60">
             <FloatingHearts active={heartsActive} />
-            <div className="grid grid-cols-1 gap-5 relative z-10">
+            <div className="grid grid-cols-1 gap-6 sm:gap-8 relative z-10">
 
                 {/* Row 1: Bride & Groom side by side */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                     <Input
                         id="brideName"
                         label={FIELD_LABELS.brideName}
@@ -71,6 +71,7 @@ export default function WeddingTrackForm({
                         maxLength={50}
                         fullWidth
                         autoComplete="off"
+                        className="h-12 sm:h-14 !text-base shadow-sm focus:shadow-md transition-shadow"
                     />
                     <Input
                         id="groomName"
@@ -85,11 +86,12 @@ export default function WeddingTrackForm({
                         maxLength={50}
                         fullWidth
                         autoComplete="off"
+                        className="h-12 sm:h-14 !text-base shadow-sm focus:shadow-md transition-shadow"
                     />
                 </div>
 
                 {/* Row 2: Venue and Extra Cell side by side */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                     <Input
                         id="venue"
                         label={FIELD_LABELS.venue}
@@ -101,6 +103,7 @@ export default function WeddingTrackForm({
                         maxLength={100}
                         fullWidth
                         autoComplete="off"
+                        className="h-12 sm:h-14 !text-base shadow-sm focus:shadow-md transition-shadow"
                     />
                     <Input
                         id="extraCell"
@@ -113,21 +116,24 @@ export default function WeddingTrackForm({
                         maxLength={200}
                         fullWidth
                         autoComplete="off"
+                        className="h-12 sm:h-14 !text-base shadow-sm focus:shadow-md transition-shadow"
                     />
                 </div>
 
                 {/* Row 3: Date & Village side by side */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <DatePicker
-                        id="date"
-                        label={FIELD_LABELS.date}
-                        value={data.date}
-                        onChange={(val: string) => onChange('date', val)}
-                        error={errors.date}
-                        disabled={disabled}
-                        min={today}
-                        fullWidth
-                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+                    <div className="relative">
+                        <DatePicker
+                            id="date"
+                            label={FIELD_LABELS.date}
+                            value={data.date}
+                            onChange={(val: string) => onChange('date', val)}
+                            error={errors.date}
+                            disabled={disabled}
+                            min={today}
+                            fullWidth
+                        />
+                    </div>
                     <Input
                         id="village"
                         label={FIELD_LABELS.village}
@@ -139,6 +145,7 @@ export default function WeddingTrackForm({
                         maxLength={100}
                         fullWidth
                         autoComplete="off"
+                        className="h-12 sm:h-14 !text-base shadow-sm focus:shadow-md transition-shadow"
                     />
                 </div>
 

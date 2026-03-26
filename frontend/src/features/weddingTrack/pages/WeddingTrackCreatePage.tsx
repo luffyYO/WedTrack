@@ -133,66 +133,84 @@ export default function WeddingTrackCreatePage() {
     }
   };
 
-  // Dynamic title — render WeddingNameDisplay when both names are entered
   const { brideName, groomName } = formState.data;
-  const dynamicTitle = brideName && groomName
-    ? <WeddingNameDisplay brideName={brideName} groomName={groomName} size="md" />
-    : 'Create Wedding Track';
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <PageHeader
-        title={dynamicTitle}
-        description="Enter the wedding details to generate a unique QR track."
-        action={
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<ArrowLeft size={15} />}
-            onClick={() => navigate('/dashboard')}
-          >
-            Back
-          </Button>
-        }
-      />
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 animate-fade-up">
+      <div className="bg-white/30 backdrop-blur-xl rounded-[2.5rem] p-4 sm:p-8 lg:p-10 border border-white/60 shadow-2xl shadow-pink-900/5 relative overflow-hidden">
+        {/* Subtle decorative background blur for premium feel */}
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-pink-300/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse-glow" aria-hidden="true"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-300/20 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse-glow" aria-hidden="true" style={{animationDelay: '1s'}}></div>
+        
+        <div className="relative z-10">
+          <PageHeader
+            title="Create Wedding Track"
+            description="Enter the wedding details to generate a unique QR track."
+            action={
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<ArrowLeft size={15} />}
+                onClick={() => navigate('/dashboard')}
+                className="hover:bg-pink-50 hover:text-pink-600 transition-colors"
+              >
+                Back
+              </Button>
+            }
+          />
 
-      <WeddingBanner />
+          <div className="mt-2 sm:mt-6 flex flex-col items-center">
+            <WeddingBanner />
+            {brideName && groomName && (
+              <div className="mt-2 mb-4 w-full flex justify-center animate-fade-up">
+                <div className="px-6 py-3 sm:px-8 sm:py-4 bg-white/40 backdrop-blur-md rounded-2xl border border-pink-100/50 shadow-lg shadow-pink-500/10">
+                  <WeddingNameDisplay brideName={brideName} groomName={groomName} size="xl" className="text-pink-950" />
+                </div>
+              </div>
+            )}
+          </div>
 
-      <WeddingTrackForm
-        data={formState.data}
-        errors={formState.errors}
-        onChange={handleChange}
-        disabled={formState.isSubmitting}
-      />
+          <div className="mt-4 sm:mt-8">
+            <WeddingTrackForm
+              data={formState.data}
+              errors={formState.errors}
+              onChange={handleChange}
+              disabled={formState.isSubmitting}
+            />
+          </div>
 
-      <div className="mt-8">
-        <ImageGalleryUpload 
-          files={galleryFiles} 
-          onChange={setGalleryFiles} 
-          disabled={formState.isSubmitting}
-        />
-      </div>
+          <div className="mt-8 sm:mt-12">
+            <ImageGalleryUpload 
+              files={galleryFiles} 
+              onChange={setGalleryFiles} 
+              disabled={formState.isSubmitting}
+            />
+          </div>
 
-      {apiError && (
-        <div className="mt-4 flex items-start gap-2.5 p-3.5 rounded-[var(--radius-md)] bg-[var(--color-danger-bg)] border border-red-200">
-          <AlertCircle size={16} className="text-[var(--color-danger)] mt-0.5 shrink-0" />
-          <p className="text-body-sm text-[var(--color-danger)]">{apiError}</p>
+          {apiError && (
+            <div className="mt-6 flex items-start gap-3 p-4 rounded-xl bg-red-50/80 backdrop-blur-sm border border-red-200">
+              <AlertCircle size={18} className="text-red-500 mt-0.5 shrink-0" />
+              <p className="text-sm font-medium text-red-600">{apiError}</p>
+            </div>
+          )}
+
+          <div className="mt-10 sm:mt-14 max-w-md mx-auto relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-500 group-hover:duration-200"></div>
+            <Button
+              fullWidth
+              size="lg"
+              icon={<QrCode size={18} />}
+              isLoading={formState.isSubmitting}
+              onClick={handleGenerateQR}
+              className="relative h-14 sm:h-16 text-base sm:text-lg rounded-full font-bold shadow-xl shadow-pink-500/20 hover:shadow-pink-500/30 transition-all hover:-translate-y-0.5 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white"
+            >
+              Generate Wedding QR
+            </Button>
+            <p className="text-xs sm:text-sm text-slate-400 text-center mt-4">
+              You will be redirected to your unique QR code page.
+            </p>
+          </div>
         </div>
-      )}
-
-      <div className="mt-6">
-        <Button
-          fullWidth
-          size="lg"
-          icon={<QrCode size={17} />}
-          isLoading={formState.isSubmitting}
-          onClick={handleGenerateQR}
-        >
-          Generate Wedding QR
-        </Button>
-        <p className="text-caption text-[var(--color-text-muted)] text-center mt-2">
-          You will be redirected to your unique QR code page.
-        </p>
       </div>
     </div>
   );
