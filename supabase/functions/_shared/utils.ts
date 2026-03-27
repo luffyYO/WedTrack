@@ -25,9 +25,11 @@ export const errorResponse = (message: string, status = 400) => {
 
 export const createErrorResponse = errorResponse;
 
-// Auth Helper
-export const getAuthUser = async (supabase: SupabaseClient) => {
-  const { data: { user }, error } = await supabase.auth.getUser();
+// Auth Helper — always pass the token explicitly for reliability
+export const getAuthUser = async (supabase: SupabaseClient, token?: string) => {
+  const { data: { user }, error } = token
+    ? await supabase.auth.getUser(token)
+    : await supabase.auth.getUser();
   if (error || !user) return null;
   return user;
 };

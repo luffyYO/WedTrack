@@ -64,10 +64,17 @@ Deno.serve(async (req) => {
     const qr_activation_time = new Date(`${wedding_date}T00:00:00+05:30`).toISOString()
     const qr_expires_at = new Date(new Date(qr_activation_time).getTime() + 24 * 60 * 60 * 1000).toISOString()
     
-    // Service role client needed for DB writes
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (!serviceKey) {
+      console.error('[create-wedding] SUPABASE_SERVICE_ROLE_KEY is not set in environment variables')
+      return errorResponse('Server misconfiguration: missing service key', 500)
+    }
+
+    // adminClient uses the service role key to bypass RLS for inserts.
+    // No INSERT RLS policy exists for 'weddings', so we need this approach.
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceKey
     )
 
     const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://wedtrackss.in'
@@ -77,12 +84,12 @@ Deno.serve(async (req) => {
       user_id: user.id,
       bride_name,
       groom_name,
-      location: location || null,
+      location: location || '',
       wedding_date,
-      village: village || null,
-      extra_cell: extra_cell || null,
-      upi_id: upi_id || null,
-      event_type: event_type || null,
+      village: village || '',
+      extra_cell: extra_cell || '',
+      upi_id: upi_id || '',
+      event_type: event_type || 'wedding',
       person_name: person_name || null,
       gallery_images: gallery_images || [],
       qr_activation_time,
@@ -92,6 +99,8 @@ Deno.serve(async (req) => {
 
     console.log('[create-wedding] Inserting:', JSON.stringify(insertData))
 
+    // Use the user-authenticated supabaseClient — avoids needing the Service Role key
+    // and ensures RLS policies are correctly applied for user-specific inserts.
     const { data: wedding, error: dbError } = await adminClient
       .from('weddings')
       .insert(insertData)

@@ -83,7 +83,7 @@ client.interceptors.response.use(
                     }
 
                     // Retry the original request with the fresh token
-                    originalRequest.headers['Authorization'] = `Bearer ${session.access_token}`;
+                    originalRequest.headers.set('Authorization', `Bearer ${session.access_token}`);
                     return client(originalRequest);
                 } catch {
                     // Refresh genuinely failed — sign out and redirect

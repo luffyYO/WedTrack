@@ -118,10 +118,27 @@ export default function WeddingTrackCreatePage() {
       };
 
       console.log("FINAL GENERATION PAYLOAD:", payload);
-      const { data: res } = await weddingTrackService.create(payload as any);
+      const axiosResponse = await weddingTrackService.create(payload as any);
 
-      // Navigate to QR page — backend is now the source of truth
-      navigate(`/wedding-track/qr/${res.nanoid || res.id}`);
+      // axiosResponse.data = { success: true, data: { id, nanoid, qr_link } }
+      const wedding = axiosResponse.data?.data;
+
+      // Prefer the true nanoid. If DB returns null (schema/trigger issue),
+      // extract it from qr_link which always contains the generated short ID.
+      // Fall back to UUID only as absolute last resort.
+      const weddingId = wedding?.nanoid
+        || wedding?.qr_link?.split('/guest-form/')[1]
+        || wedding?.id;
+
+      console.log("CREATION RESPONSE:", axiosResponse.data);
+      console.log("RESOLVED NANOID:", weddingId);
+
+      if (!weddingId) {
+        throw new Error('Server returned success but no wedding ID. Please try again.');
+      }
+
+      // Navigate to QR page
+      navigate(`/wedding-track/qr/${weddingId}`);
     } catch (err: any) {
       const apiData = err.response?.data;
       // prioritize .error from backend as requested by user

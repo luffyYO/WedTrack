@@ -30,10 +30,11 @@ Deno.serve(async (req) => {
 
     console.log(`[list-weddings] Fetching weddings for user: ${user.id}`);
 
-    // With anon key + user's JWT, RLS will automatically filter to user_id = auth.uid()
+    // Explicit user_id filter — belt-and-suspenders isolation on top of RLS
     const { data: weddings, error: fetchError } = await supabaseClient
       .from("weddings")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (fetchError) {

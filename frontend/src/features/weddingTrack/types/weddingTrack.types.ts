@@ -29,10 +29,17 @@ export interface CreateWeddingTrackPayload {
     gallery_images?: string[];
 }
 
-export interface CreateWeddingTrackResponse {
+// Shape of the actual inner wedding record returned by create-wedding Edge Function
+export interface CreateWeddingTrackResult {
     id: string;
     nanoid: string;
     qr_link: string;
+}
+
+// Edge Functions wrap responses as: { success: boolean, data: T }
+export interface CreateWeddingTrackResponse {
+    success: boolean;
+    data: CreateWeddingTrackResult;
 }
 
 // ─── Form validation ──────────────────────────────────────────────────────────

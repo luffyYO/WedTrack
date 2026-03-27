@@ -1,0 +1,28 @@
+project_id = "knmqezafmenqghiheloi"
+
+[functions.create-wedding]
+verify_jwt = false
+
+[functions.list-weddings]
+verify_jwt = false
+
+[functions.get-wedding-details]
+verify_jwt = false
+
+[functions.submit-wish]
+verify_jwt = false
+
+[functions.delete-wedding]
+verify_jwt = false
+
+[functions.update-guest]
+verify_jwt = false
+
+[functions.get-guests]
+verify_jwt = false
+
+[functions.extend-wedding]
+verify_jwt = false
+
+[functions.fetch-wishes]
+verify_jwt = false

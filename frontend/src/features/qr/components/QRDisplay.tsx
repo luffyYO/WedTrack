@@ -1,7 +1,10 @@
+import { useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { cn } from '@/utils/cn';
 
 interface QRDisplayProps {
     status: 'loading' | 'success' | 'error';
+    /** The URL to encode into the QR code (e.g. https://wedtrackss.in/guest-form/abc123) */
     qrImageUrl?: string;
     weddingTitle: string;
     errorMessage?: string;
@@ -31,6 +34,8 @@ function QRSkeleton() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function QRDisplay({ status, qrImageUrl, weddingTitle, errorMessage }: QRDisplayProps) {
+    const qrRef = useRef<HTMLDivElement>(null);
+
     return (
         <div
             className={cn(
@@ -47,13 +52,21 @@ export default function QRDisplay({ status, qrImageUrl, weddingTitle, errorMessa
             {status === 'loading' && <QRSkeleton />}
 
             {status === 'success' && qrImageUrl && (
-                <img
-                    src={qrImageUrl}
-                    alt={`QR code — ${weddingTitle}`}
-                    className="w-full max-w-[260px] aspect-square rounded-[var(--radius-md)] object-contain"
-                    draggable={false}
-                    loading="lazy"
-                />
+                <div ref={qrRef} className="flex items-center justify-center w-full">
+                    <QRCodeSVG
+                        value={qrImageUrl}
+                        size={240}
+                        level="H"
+                        includeMargin={true}
+                        style={{ width: '100%', maxWidth: '260px', height: 'auto', borderRadius: '8px' }}
+                    />
+                </div>
+            )}
+
+            {status === 'success' && !qrImageUrl && (
+                <div className="flex flex-col items-center gap-2 py-8 text-center text-[var(--color-text-muted)]">
+                    <p className="text-body-sm">No QR link available yet.</p>
+                </div>
             )}
 
             {status === 'error' && (

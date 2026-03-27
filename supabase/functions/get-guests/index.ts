@@ -12,13 +12,17 @@ Deno.serve(async (req) => {
       return errorResponse('Missing wedding_id parameter', 400);
     }
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return errorResponse("Missing Authorization header", 401);
+    const token = authHeader.replace("Bearer ", "");
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const user = await getAuthUser(supabaseClient);
+    const user = await getAuthUser(supabaseClient, token);
     if (!user) return errorResponse("Unauthorized", 401);
 
     // Verify the user owns the wedding before fetching guests

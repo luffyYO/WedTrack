@@ -40,26 +40,28 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data, error } = await supabase
-      .from('weddings')
-      .select(`
-        id,
-        nanoid,
-        bride_name,
-        groom_name,
-        wedding_date,
-        location,
-        village,
-        qr_link,
-        qr_activation_time,
-        qr_expires_at,
-        qr_activated_at,
-        gallery_images,
-        event_type,
-        person_name
-      `)
-      .eq('nanoid', nanoid)
-      .limit(1)
+    const selectFields = `
+      id,
+      nanoid,
+      bride_name,
+      groom_name,
+      wedding_date,
+      location,
+      village,
+      qr_link,
+      qr_activation_time,
+      qr_expires_at,
+      qr_activated_at,
+      gallery_images,
+      event_type,
+      person_name
+    `
+
+    // Support both short nanoid AND full UUID — the QR page may navigate with either
+    const isUuid = nanoid.length === 36 && nanoid.includes('-')
+    const { data, error } = isUuid
+      ? await supabase.from('weddings').select(selectFields).eq('id', nanoid).limit(1)
+      : await supabase.from('weddings').select(selectFields).eq('nanoid', nanoid).limit(1)
 
     if (error) {
       console.error('[get-wedding-details] DB error:', JSON.stringify(error))
