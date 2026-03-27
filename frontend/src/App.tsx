@@ -38,9 +38,7 @@ export default function App() {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (import.meta.env.DEV) {
-                console.log("[Auth] State change:", _event, !!session);
-            }
+
             setSession(session);
         });
 

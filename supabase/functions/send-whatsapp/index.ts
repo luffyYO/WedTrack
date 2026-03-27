@@ -1,6 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1"
 import { corsHeaders, successResponse, errorResponse } from "../_shared/utils.ts"
 
+export const config = {
+  auth: false,
+};
 
 // Deno is natively available in Edge Functions
 
@@ -76,9 +79,9 @@ Thank you for celebrating with ${brideName} & ${groomName} 🙏
 – WedTrack`
 
     // 6. Twilio Credentials from Environment Variables
-    const twilioSid = Deno.env.get('TWILIO_ACCOUNT_SID')
-    const twilioToken = Deno.env.get('TWILIO_AUTH_TOKEN')
-    const twilioFrom = Deno.env.get('TWILIO_WHATSAPP_NUMBER')
+    const twilioSid = Deno.env.get('TWILIO_ACCOUNT_SID')?.trim()
+    const twilioToken = Deno.env.get('TWILIO_AUTH_TOKEN')?.trim()
+    const twilioFrom = Deno.env.get('TWILIO_WHATSAPP_NUMBER')?.trim()
 
     if (!twilioSid || !twilioToken || !twilioFrom) {
       console.error('[send-whatsapp] Missing Twilio environment variables')
@@ -96,9 +99,15 @@ Thank you for celebrating with ${brideName} & ${groomName} 🙏
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`
     const basicAuth = `Basic ${btoa(`${twilioSid}:${twilioToken}`)}`
 
+    // Ensure twilioFrom has whatsapp: prefix
+    let fromPhone = twilioFrom.trim()
+    if (!fromPhone.startsWith('whatsapp:')) {
+      fromPhone = `whatsapp:${fromPhone}`
+    }
+
     const formParams = new URLSearchParams()
     formParams.append('To', `whatsapp:${toPhone}`)
-    formParams.append('From', twilioFrom)
+    formParams.append('From', fromPhone)
     formParams.append('Body', messageBody)
 
     const twilioResponse = await fetch(twilioUrl, {

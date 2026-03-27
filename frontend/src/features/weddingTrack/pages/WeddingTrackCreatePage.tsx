@@ -129,10 +129,7 @@ export default function WeddingTrackCreatePage() {
         || wedding?.qr_link?.split('/guest-form/')[1]
         || wedding?.id;
 
-      if (import.meta.env.DEV) {
-        console.log("[DEV] CREATION RESPONSE:", axiosResponse.data);
-        console.log("[DEV] RESOLVED NANOID:", weddingId);
-      }
+
 
       if (!weddingId) {
         throw new Error('Server returned success but no wedding ID. Please try again.');

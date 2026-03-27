@@ -56,11 +56,7 @@ client.interceptors.request.use(
       config.headers.set('Authorization', `Bearer ${anonKey}`);
     }
 
-    // 4. Debug Logging — DEV ONLY
-    if (import.meta.env.DEV) {
-      const authType = !isPublic && _cachedToken ? 'USER' : 'ANON';
-      console.log(`🚀 API [${authType}]: ${config.method?.toUpperCase()} ${config.url}`);
-    }
+
 
     return config;
   },

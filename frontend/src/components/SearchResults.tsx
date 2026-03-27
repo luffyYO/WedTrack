@@ -57,7 +57,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                             <th className="px-4 py-3">Father's Name</th>
                             <th className="px-4 py-3 text-right">Amount & Type</th>
                             <th className="px-4 py-3 text-center">Status / Action</th>
-                            <th className="px-4 py-3">Location & Time</th>
+                            <th className="px-4 py-3">Location</th>
+                            <th className="px-4 py-3">Date & Time</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -124,16 +125,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                             )}
                                         </div>
                                     </td>
+                                    <td className="px-4 py-2.5">
+                                        <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
+                                            <MapPin size={12} className="text-black dark:text-white shrink-0" />
+                                            <span className="font-medium text-xs truncate max-w-[120px]">{guest.village || '—'}</span>
+                                        </div>
+                                    </td>
                                     <td className="px-4 py-2.5 whitespace-nowrap">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
-                                                <MapPin size={12} className="text-black dark:text-white shrink-0" />
-                                                <span className="font-medium text-xs truncate max-w-[120px]">{guest.village || '—'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-black dark:text-white font-bold text-[11px]">{formatDate(guest.created_at)}</span>
-                                                <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium">{timeStr}</span>
-                                            </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-black dark:text-white font-bold text-[11px]">{formatDate(guest.created_at)}</span>
+                                            <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-medium">{timeStr}</span>
                                         </div>
                                     </td>
                                 </tr>

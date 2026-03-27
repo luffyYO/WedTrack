@@ -195,7 +195,6 @@ export default function DashboardPage() {
 
             // Trigger WhatsApp notification asynchronously so it doesn't block the UI
             apiClient.post('send-whatsapp', { guest_id: guestId })
-                .then(() => console.log('WhatsApp sent to', guestId))
                 .catch(err => console.error('WhatsApp trigger failed:', err));
 
         } catch (err) {
