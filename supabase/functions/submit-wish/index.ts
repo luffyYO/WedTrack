@@ -20,7 +20,8 @@ Deno.serve(async (req) => {
       amount, 
       payment_type, 
       gift_side, 
-      village
+      village,
+      wish
     } = body
 
     console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${fullname}`)
@@ -77,7 +78,8 @@ Deno.serve(async (req) => {
         payment_type: payment_type || 'Cash',
         payment_status: 'pending',
         is_paid: false,
-        is_read: false
+        is_read: false,
+        wishes: wish?.trim() || null
       })
       .select('id')
       .single()

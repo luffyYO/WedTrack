@@ -22,3 +22,12 @@ WHERE fullname IS NULL AND first_name IS NOT NULL;
 UPDATE public.guests
 SET payment_status = CASE WHEN is_paid THEN 'paid' ELSE 'pending' END
 WHERE payment_status = 'pending';
+
+-- 4. Drop the legacy columns
+ALTER TABLE public.guests
+  DROP COLUMN IF EXISTS first_name,
+  DROP COLUMN IF EXISTS last_name,
+  DROP COLUMN IF EXISTS father_first_name,
+  DROP COLUMN IF EXISTS father_last_name,
+  DROP COLUMN IF EXISTS district,
+  DROP COLUMN IF EXISTS location;

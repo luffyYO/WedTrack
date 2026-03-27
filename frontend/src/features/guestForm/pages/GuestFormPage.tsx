@@ -26,7 +26,8 @@ export default function GuestFormPage() {
         amount: '',
         payment_type: 'Cash',
         phone_number: '',
-        gift_side: ''
+        gift_side: '',
+        wish: ''
     });
 
     useEffect(() => {
@@ -311,20 +312,27 @@ export default function GuestFormPage() {
                                 </div>
                             </div>
                         </div>
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Guest Alignment <span className="text-rose-400">*</span></label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <label className={`flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer font-bold text-[10px] sm:text-[11px] tracking-wide ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
+                                    <input required type="radio" name="gift_side" value="bride" checked={formData.gift_side === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
+                                    <span>BRIDE'S</span>
+                                </label>
+                                <label className={`flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer font-bold text-[10px] sm:text-[11px] tracking-wide ${formData.gift_side === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
+                                    <input required type="radio" name="gift_side" value="groom" checked={formData.gift_side === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
+                                    <span>GROOM'S</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="pt-2">
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Select Guest Alignment <span className="text-rose-400">*</span></label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                <input required type="radio" name="gift_side" value="bride" checked={formData.gift_side === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
-                                <span>BRIDE'S SIDE</span>
-                            </label>
-                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.gift_side === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                <input required type="radio" name="gift_side" value="groom" checked={formData.gift_side === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
-                                <span>GROOM'S SIDE</span>
-                            </label>
-                        </div>
+                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wishes for the Couple (Optional)</label>
+                        <textarea name="wish" value={formData.wish} onChange={handleChange} rows={2}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm resize-none" 
+                            placeholder="Write your heartfelt message here..."
+                        />
                     </div>
 
 
