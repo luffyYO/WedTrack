@@ -18,9 +18,28 @@ export default function App() {
 
     useEffect(() => {
         const checkSession = async () => {
+            // Check if URL contains auth potential
+            const hasAuthParams = window.location.hash.includes('access_token=') || 
+                                window.location.search.includes('type=recovery') ||
+                                window.location.search.includes('type=invite') ||
+                                window.location.search.includes('type=signup');
+
+            // If we have auth params, wait up to 2 seconds for Supabase to process them
+            if (hasAuthParams) {
+                console.log("Auth params detected, waiting for session recovery...");
+                let retries = 0;
+                while (retries < 20) {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        setSession(session);
+                        return;
+                    }
+                    await new Promise(r => setTimeout(r, 100));
+                    retries++;
+                }
+            }
+
             const { data: { session } } = await supabase.auth.getSession();
-            console.log("SESSION:", session);
-            console.log("USER:", session?.user);
             setSession(session);
         };
 

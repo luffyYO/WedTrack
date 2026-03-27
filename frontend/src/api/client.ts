@@ -11,13 +11,27 @@ const API_BASE_URL = `${SUPABASE_URL}/functions/v1`;
 
 const client: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 30000, // Increased timeout for Edge Functions
+    timeout: 30000, 
     headers: {
         'Content-Type': 'application/json',
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`
     },
 });
+
+/**
+ * Polls for a session until it's found or a timeout is reached.
+ * Useful for handling initial session recovery race conditions.
+ */
+async function waitForSession(timeoutMs = 1500): Promise<string | undefined> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) return session.access_token;
+        await new Promise(r => setTimeout(r, 100));
+    }
+    return undefined;
+}
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
 // Attaches the Bearer token from Supabase Session to every outgoing request.
@@ -35,8 +49,14 @@ client.interceptors.request.use(
     const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
 
     // 3. Attach User Token if available and NOT on a public endpoint
-    const { data: { session } } = await supabase.auth.getSession();
-    const userToken = session?.access_token;
+    let { data: { session } } = await supabase.auth.getSession();
+    let userToken = session?.access_token;
+
+    // 4. Session Recovery Resilience: 
+    // If no session but not a public endpoint, wait up to 1s for session initialization
+    if (!userToken && !isPublic) {
+        userToken = await waitForSession(1000);
+    }
 
     if (userToken && !isPublic) {
       config.headers['Authorization'] = `Bearer ${userToken}`;
@@ -70,12 +90,16 @@ client.interceptors.response.use(
             );
 
             if (!isPublicPage) {
-                console.warn('Unauthorized access (401) detected. Clearing session and redirecting...');
-                // Clear the invalid session from Supabase and local storage
-                supabase.auth.signOut().catch(console.error).finally(() => {
-                    localStorage.removeItem('supabase.auth.token');
-                    // Use replace to avoid back-button loops
-                    window.location.replace('/login');
+                // VERIFY if we actually have a session before redirecting
+                // If a session EXISTS but we got a 401, it's likely a transient/token issue
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    if (!session) {
+                        console.warn('Unauthorized access (401) confirmed. No session found. Redirecting...');
+                        window.location.replace('/login');
+                    } else {
+                        console.warn('Unauthorized access (401) detected BUT session exists. Attempting refresh...');
+                        // No immediate redirect, user code may retry or state will refresh
+                    }
                 });
             }
         } else {
