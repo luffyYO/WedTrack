@@ -42,6 +42,8 @@ export default function DashboardPage() {
         queryKey: ['weddings', user?.id],
         queryFn: fetchUserWeddings,
         enabled: !!user?.id,
+        staleTime: 60_000,          // serve from cache for 60s on revisit
+        gcTime: 5 * 60_000,         // keep in memory 5min after unmount
     });
 
     // ── Sync active wedding when weddings load ───────────────────────────────
@@ -70,7 +72,9 @@ export default function DashboardPage() {
     } = useQuery({
         queryKey: ['guests', selectedWeddingId],
         queryFn: () => fetchGuests(selectedWeddingId),
-        enabled: !!selectedWeddingId,
+        enabled: !!selectedWeddingId && !!user?.id,  // wait for auth so RLS works
+        staleTime: 30_000,          // serve from cache for 30s on revisit
+        gcTime: 5 * 60_000,         // keep in memory 5min after unmount
     });
 
     // ── Realtime Subscription ────────────────────────────────────────────────
@@ -144,12 +148,11 @@ export default function DashboardPage() {
             const query = debouncedSearchQuery.toLowerCase();
             if (activeFilter === 'Name') {
                 result = result.filter(g =>
-                    `${g.first_name} ${g.last_name || ''}`.toLowerCase().includes(query)
+                    (g.fullname || '').toLowerCase().includes(query)
                 );
             } else if (activeFilter === 'Location') {
                 result = result.filter(g =>
-                    (g.location || '').toLowerCase().includes(query) ||
-                    (g.district || '').toLowerCase().includes(query)
+                    (g.village || '').toLowerCase().includes(query)
                 );
             }
         }
@@ -177,13 +180,24 @@ export default function DashboardPage() {
     // ── Mutations (keep using Edge Functions for write operations) ───────────
     const confirmGuest = async (guestId: string) => {
         try {
-            await apiClient.post('update-guest', { guest_id: guestId, is_paid: true });
+            await apiClient.post('update-guest', { 
+                guest_id: guestId, 
+                is_paid: true,
+                payment_status: 'paid' 
+            });
+            
             // Optimistically update cache
             queryClient.setQueryData(
                 ['guests', selectedWeddingId],
                 (old: any[] = []) =>
-                    old.map(g => g.id === guestId ? { ...g, is_paid: true } : g)
+                    old.map(g => g.id === guestId ? { ...g, is_paid: true, payment_status: 'paid' } : g)
             );
+
+            // Trigger WhatsApp notification asynchronously so it doesn't block the UI
+            apiClient.post('send-whatsapp', { guest_id: guestId })
+                .then(() => console.log('WhatsApp sent to', guestId))
+                .catch(err => console.error('WhatsApp trigger failed:', err));
+
         } catch (err) {
             if (import.meta.env.DEV) console.error('Failed to confirm payment:', err);
             alert('Failed to confirm payment.');
@@ -363,7 +377,9 @@ export default function DashboardPage() {
                             <span className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10">Validated Revenue</span>
                             <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-br from-slate-800 to-slate-500 bg-clip-text text-transparent flex items-center justify-center gap-0.5 sm:gap-1 mt-1 relative z-10">
                                 <IndianRupee size={24} className="text-slate-600 sm:w-8 sm:h-8"/>
-                                {guestsLoading ? <span className="inline-block w-16 h-10 rounded-xl bg-slate-200/60 animate-pulse" /> : totalCollected.toLocaleString('en-IN')}
+                                <span className={`transition-opacity duration-300 ${guestsLoading ? 'opacity-30' : 'opacity-100'}`}>
+                                    {totalCollected.toLocaleString('en-IN')}
+                                </span>
                             </h3>
                             <span className="text-[9px] sm:text-[10px] text-pink-400/80 font-bold mt-1 relative z-10">SECURE TRANSACTION LEDGER</span>
                         </div>
@@ -375,7 +391,9 @@ export default function DashboardPage() {
                             </div>
                             <span className="text-white/80 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10 text-shadow-sm">Verified Contributions</span>
                             <h3 className="text-4xl sm:text-5xl lg:text-6xl font-black flex items-center justify-center gap-1.5 sm:gap-2 relative z-10 drop-shadow-md mt-1 tracking-tighter">
-                                {guestsLoading ? <span className="inline-block w-12 h-12 rounded-xl bg-white/30 animate-pulse" /> : totalVerifiedGifts}
+                                <span className={`transition-opacity duration-300 ${guestsLoading ? 'opacity-30' : 'opacity-100'}`}>
+                                    {totalVerifiedGifts}
+                                </span>
                             </h3>
                             <span className="text-[9px] sm:text-[10px] text-white/70 font-bold relative z-10 mt-1 uppercase text-shadow-sm">Confirmed Guest Entries</span>
                         </div>
@@ -384,7 +402,9 @@ export default function DashboardPage() {
                         <div className="glass-panel p-5 sm:p-6 rounded-[1.5rem] flex flex-col items-center justify-center text-center gap-1 sm:h-[140px] hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all group relative">
                             <span className="text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Total Inventory</span>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-700 mt-1 tracking-tight">
-                                {guestsLoading ? <span className="inline-block w-10 h-9 rounded-xl bg-slate-200/60 animate-pulse" /> : guests.length}
+                                <span className={`transition-opacity duration-300 ${guestsLoading ? 'opacity-30' : 'opacity-100'}`}>
+                                    {guests.length}
+                                </span>
                             </h3>
                             <span className="text-[9px] text-slate-400 font-bold mt-1">ALL PROTOCOL SUBMISSIONS</span>
                         </div>
@@ -399,7 +419,9 @@ export default function DashboardPage() {
                             )}
                             <span className="text-red-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Awaiting Action</span>
                             <h3 className="text-3xl sm:text-4xl font-black text-red-500 mt-1 drop-shadow-sm">
-                                {guestsLoading ? <span className="inline-block w-10 h-9 rounded-xl bg-red-200/60 animate-pulse" /> : pendingGifts}
+                                <span className={`transition-opacity duration-300 ${guestsLoading ? 'opacity-30' : 'opacity-100'}`}>
+                                    {pendingGifts}
+                                </span>
                             </h3>
                             <span className="text-[9px] text-red-400/80 font-bold mt-1 uppercase">Verification Required</span>
                         </div>
@@ -422,8 +444,12 @@ export default function DashboardPage() {
                             }
                         />
 
-                        {showFilters && (
-                            <div className="glass-panel p-2 rounded-[1.5rem] animate-fade-up shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-white/80">
+                        {/* CLS fix: use overflow+max-height transition instead of mount/unmount */}
+                        <div
+                            className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+                            style={{ maxHeight: showFilters ? '400px' : '0px', opacity: showFilters ? 1 : 0 }}
+                        >
+                            <div className="glass-panel p-2 rounded-[1.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-white/80">
                                 <SearchFilters
                                     activeFilter={activeFilter}
                                     onFilterChange={(f) => {
@@ -437,20 +463,24 @@ export default function DashboardPage() {
                                     selectedPaymentMethod={selectedPaymentMethod}
                                 />
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* ── Search Results / Table ── */}
                     <div className="space-y-6">
-                        {isFilterActive && (
-                            <div className="glass-panel p-6 rounded-[2rem] flex flex-wrap gap-8 items-center animate-fade-up">
+                        {/* CLS fix: always render, collapse with max-height instead of mount/unmount */}
+                        <div
+                            className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
+                            style={{ maxHeight: isFilterActive ? '120px' : '0px', opacity: isFilterActive ? 1 : 0 }}
+                        >
+                            <div className="glass-panel p-6 rounded-[2rem] flex flex-wrap gap-8 items-center">
                                 <div>
                                     <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Verified Target Gifts</span>
                                     <div className="text-4xl font-black text-slate-800 mt-1 tracking-tighter">
                                         {filteredVerifiedGiftsCount}
                                     </div>
                                 </div>
-                                <div className="hidden sm:block w-px h-14 bg-slate-200/60"></div>
+                                <div className="hidden sm:block w-px h-14 bg-slate-200/60" />
                                 <div>
                                     <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Target Verified Amount</span>
                                     <div className="text-4xl font-black text-slate-800 flex items-center gap-1 mt-1 tracking-tighter">
@@ -459,7 +489,7 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
 
                         <div className="flex items-center justify-between px-2">
                             <h3 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">

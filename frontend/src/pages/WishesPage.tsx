@@ -108,7 +108,7 @@ export default function WishesPage() {
                                 <div className="flex items-start justify-between gap-3 mb-5 relative z-10">
                                     <div>
                                         <h3 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                                            {[wish.first_name, wish.last_name].filter(Boolean).join(' ')}
+                                            {wish.fullname}
                                         </h3>
                                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest flex items-center gap-1.5">
                                             <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />

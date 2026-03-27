@@ -90,8 +90,7 @@ export const useWishStore = create<WishState & WishActions>((set, get) => ({
                     if (newGuest.wishes && newGuest.wishes.trim()) {
                         const wish: Wish = {
                             id: newGuest.id,
-                            first_name: newGuest.first_name,
-                            last_name: newGuest.last_name ?? null,
+                            fullname: newGuest.fullname,
                             wishes: newGuest.wishes,
                             created_at: newGuest.created_at,
                         };

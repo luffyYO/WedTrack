@@ -2,8 +2,7 @@ import client from './client';
 
 export interface Wish {
     id: string;           // UUID from guests.id
-    first_name: string;
-    last_name: string | null;
+    fullname: string;
     wishes: string;
     created_at: string;
 }

@@ -14,25 +14,19 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const { 
       wedding_nanoid,
-      first_name, 
-      last_name,
-      father_first_name,
-      father_last_name,
+      fullname, 
+      father_fullname,
+      phone_number,
       amount, 
       payment_type, 
-      wishes,
       gift_side, 
-      village, 
-      district,
-      location,
-      email,
-      relation
+      village
     } = body
 
-    console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${first_name} ${last_name || ''}`)
+    console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${fullname}`)
 
     if (!wedding_nanoid) return errorResponse('Missing wedding_nanoid', 400)
-    if (!first_name) return errorResponse('first_name is required', 400)
+    if (!fullname) return errorResponse('fullname is required', 400)
     if (!gift_side) return errorResponse('gift_side is required', 400)
 
     // Rate Limiting (100 req/min per IP)
@@ -73,19 +67,15 @@ Deno.serve(async (req) => {
       .from('guests')
       .insert({
         wedding_id: wedding.id,
-        first_name,
-        last_name: last_name || null,
-        father_first_name: father_first_name || null,
-        father_last_name: father_last_name || null,
+        fullname: fullname.trim(),
+        first_name: fullname.trim(), // Legacy compatibility
+        father_fullname: father_fullname?.trim() || null,
+        phone_number: phone_number?.trim() || null,
         amount: Number(amount) || 0,
-        wishes: wishes || null,
         gift_side,
-        village: village || null,
-        district: district || null,
-        location: location || null,
-        email: email || null,
-        relation: relation || null,
+        village: village?.trim() || null,
         payment_type: payment_type || 'Cash',
+        payment_status: 'pending',
         is_paid: false,
         is_read: false
       })

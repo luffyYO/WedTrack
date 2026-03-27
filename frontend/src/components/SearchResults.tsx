@@ -4,12 +4,10 @@ import { formatDate, parseSafeDate } from '@/utils/formatters';
 
 interface Guest {
     id: string;
-    first_name: string;
-    last_name?: string;
-    father_first_name: string;
-    father_last_name?: string;
+    fullname: string;
+    father_fullname?: string;
+    phone_number: string;
     village?: string;
-    district?: string;
     amount: number;
     payment_type: string;
     is_paid: boolean;
@@ -77,16 +75,21 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                             <div className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 p-1.5 rounded-lg group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all">
                                                 <User size={12} />
                                             </div>
-                                            <span className="font-bold text-black dark:text-white text-sm">{guest.first_name} {guest.last_name || ''}</span>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-black dark:text-white text-sm">{guest.fullname}</span>
+                                                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
+                                                    {guest.phone_number}
+                                                </span>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-4 py-2.5 text-neutral-500 dark:text-neutral-400 text-xs font-medium">
-                                        {guest.father_first_name} {guest.father_last_name || ''}
+                                        {guest.father_fullname || '—'}
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                                             <MapPin size={12} className="text-black dark:text-white" />
-                                            <span className="font-medium text-xs">{guest.village || guest.district || '—'}</span>
+                                            <span className="font-medium text-xs">{guest.village || '—'}</span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-2.5 text-right">

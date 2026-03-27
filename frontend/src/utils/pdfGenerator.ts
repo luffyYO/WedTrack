@@ -1,12 +1,10 @@
 import { formatDate } from './formatters';
 
 interface GuestExportData {
-  first_name: string;
-  last_name?: string;
-  father_first_name?: string;
-  father_last_name?: string;
+  fullname: string;
+  father_fullname?: string;
+  phone_number: string;
   village?: string;
-  district?: string;
   amount: number | string;
   payment_type: string;
   is_paid: boolean;
@@ -61,7 +59,7 @@ export const generateGuestListPDF = async (guests: GuestExportData[], summary: E
   const tableColumn = [
     "Guest Name", 
     "Father's Name", 
-    "Location", 
+    "Phone / Location", 
     "Amount (Rs.)", 
     "Date", 
     "Status"
@@ -71,9 +69,9 @@ export const generateGuestListPDF = async (guests: GuestExportData[], summary: E
     const formattedAmount = `${Number(guest.amount).toLocaleString('en-IN')}`;
     
     return [
-      `${guest.first_name} ${guest.last_name || ''}`,
-      `${guest.father_first_name || ''} ${guest.father_last_name || ''}`.trim() || '—',
-      guest.village || guest.district || '—',
+      guest.fullname,
+      guest.father_fullname || '—',
+      `${guest.phone_number}${guest.village ? ` / ${guest.village}` : ''}`,
       `Rs. ${formattedAmount}`,
       formatDate(guest.created_at),
       guest.is_paid ? 'Verified' : 'Pending'

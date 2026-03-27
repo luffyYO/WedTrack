@@ -20,18 +20,12 @@ export default function GuestFormPage() {
     const [heartsActive, setHeartsActive] = useState(false);
 
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
-        father_first_name: '',
-        father_last_name: '',
-        district: '',
+        fullname: '',
+        father_fullname: '',
         village: '',
-        location: '',
-        email: '',
-        relation: '',
         amount: '',
         payment_type: 'Cash',
-        wishes: '',
+        phone_number: '',
         gift_side: ''
     });
 
@@ -87,14 +81,7 @@ export default function GuestFormPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => {
-            const updated = { ...prev, [name]: value };
-            // Auto-fill father's last name if it's the same
-            if (name === 'last_name' && (prev.father_last_name === '' || prev.father_last_name === prev.last_name)) {
-                updated.father_last_name = value;
-            }
-            return updated;
-        });
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -264,15 +251,18 @@ export default function GuestFormPage() {
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name <span className="text-rose-400">*</span></label>
-                            <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} 
+                        <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Full Name <span className="text-rose-400">*</span></label>
+                            <input required type="text" name="fullname" value={formData.fullname} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
-                            <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} 
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Full Name</label>
+                            <input type="text" name="father_fullname" value={formData.father_fullname} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
@@ -280,43 +270,23 @@ export default function GuestFormPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Name</label>
-                            <input type="text" name="father_first_name" value={formData.father_first_name} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Last Name</label>
-                            <input type="text" name="father_last_name" value={formData.father_last_name} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">District</label>
-                            <input type="text" name="district" value={formData.district} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Location / Village</label>
-                            <input type="text" name="location" value={formData.location} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Village / Town</label>
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Town / Village</label>
                             <input type="text" name="village" value={formData.village} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                                 placeholder="e.g. Rampur"
                             />
                         </div>
                         <div>
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">WhatsApp No <span className="text-rose-400">*</span></label>
+                            <input required type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} 
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
+                                placeholder="+91 XXXXX XXXXX" 
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2">
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gift Amount (₹) <span className="text-rose-400">*</span></label>
                             <input required type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-lg font-bold text-slate-800 shadow-sm" 
@@ -357,13 +327,6 @@ export default function GuestFormPage() {
                         </div>
                     </div>
 
-                    <div className="pt-2">
-                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wishes & Blessings</label>
-                        <textarea rows={3} name="wishes" value={formData.wishes} onChange={handleChange} 
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all resize-none text-sm font-medium text-slate-700 shadow-sm" 
-                            placeholder="Write your heartfelt message here..." 
-                        />
-                    </div>
 
                     <div className="pt-4">
                         <button 

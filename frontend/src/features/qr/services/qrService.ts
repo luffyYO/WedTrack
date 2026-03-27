@@ -24,22 +24,23 @@ function mapToQRData(wedding: any): QRData {
 export const qrService = {
     /**
      * Fetch QR and wedding details for the authenticated QR page.
-     * Fast path: direct Supabase client (select * avoids 400 from missing column enums).
-     * Fallback: Edge Function get-wedding-details (always works).
+     * Fast path: direct Supabase query using nanoid column (authenticated user only).
+     * Fallback: Edge Function get-wedding-details (handles all edge cases).
      */
     getByTrackId: async (trackId: string): Promise<{ data: QRData }> => {
-        // Fast path — direct Supabase query (select * is safe with RLS)
+        // Fast path — direct Supabase query using authenticated session
+        // Filter by nanoid only (RLS will restrict to owner via user_id)
         const { data: wedding, error } = await supabase
             .from('weddings')
             .select('*')
-            .or(`nanoid.eq.${trackId},id.eq.${trackId}`)
+            .eq('nanoid', trackId)
             .maybeSingle();
 
         if (!error && wedding) {
             return { data: mapToQRData(wedding) };
         }
 
-        // Fallback — Edge Function (handles auth, complex queries)
+        // Fallback — Edge Function (handles unauthed state, complex queries)
         const response = await client.get(`get-wedding-details?wedding_nanoid=${trackId}`);
         const raw = response.data?.data ?? response.data;
         return { data: mapToQRData(raw) };
