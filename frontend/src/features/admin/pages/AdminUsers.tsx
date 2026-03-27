@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Loader2, User as UserIcon, Mail, BookHeart, Trash2 } from 'lucide-react';
-import adminApi from '@/features/admin/api/adminApi';
+import apiClient from '@/api/client';
 
 interface User {
   user_id: string;
   email: string;
   full_name: string;
-  first_wedding: string;
+  first_wedding: string; // mapped from created_at
+  created_at?: string;
   wedding_count: number;
 }
 
@@ -20,7 +21,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await adminApi.get('/users');
+      const res = await apiClient.get('/admin-users');
       setUsers(res.data.data || []);
     } catch (err) {
       console.error('Failed to load users', err);
@@ -37,7 +38,7 @@ export default function AdminUsers() {
     if (!window.confirm(`⚠️ DANGER: Delete user "${user.full_name}" (${user.email})? \n\nThis will permanently delete their account AND all ${user.wedding_count} weddings/guest lists. This cannot be undone.`)) return;
     
     try {
-      await adminApi.delete(`/users/${user.user_id}`);
+      await apiClient.delete(`/admin-users?id=${user.user_id}`);
       setUsers(prev => prev.filter(u => u.user_id !== user.user_id));
     } catch (err) {
       alert('Failed to delete user');
@@ -139,7 +140,7 @@ export default function AdminUsers() {
                     </td>
                     <td className="py-6 px-8">
                       <span className="text-sm font-medium" style={{ color: isDarkMode ? '#94a3b8' : '#303330' }}>
-                        {new Date(u.first_wedding).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(u.created_at as any).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                       <br/>
                       <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Join Date</span>
@@ -200,7 +201,7 @@ export default function AdminUsers() {
                   </div>
                   <div>
                     <span className="text-xs font-medium" style={{ color: isDarkMode ? '#94a3b8' : '#303330' }}>
-                      {new Date(u.first_wedding).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(u.created_at as any).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <br/>
                     <span className="text-[9px] font-bold uppercase tracking-widest opacity-40">Joined</span>

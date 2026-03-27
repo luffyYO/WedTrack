@@ -26,29 +26,25 @@ client.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
-    // Always enforce the requested anonKey headers to prevent 401s from Edge Functions
-    if (anonKey) {
-      config.headers['apikey'] = anonKey;
+    // 1. Mandatory base headers for Supabase Edge Functions
+    config.headers['apikey'] = anonKey;
+    config.headers['Content-Type'] = 'application/json';
+
+    // 2. Identify Public Endpoints
+    const publicEndpoints = ['get-wedding-details', 'submit-wish', 'fetch-wishes'];
+    const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+
+    // 3. Attach User Token if available and NOT on a public endpoint
+    const { data: { session } } = await supabase.auth.getSession();
+    const userToken = session?.access_token;
+
+    if (userToken && !isPublic) {
+      config.headers['Authorization'] = `Bearer ${userToken}`;
+    } else {
+      // Fallback to Anon Key for public functions or if no session
       config.headers['Authorization'] = `Bearer ${anonKey}`;
     }
 
-    // Still attempt to attach user token if the user is authenticated 
-    // AND the endpoint is not explicitly meant for guests
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    
-    const isPublicEndpoint = config.url?.includes('get-wedding-details') || 
-                             config.url?.includes('submit-wish') ||
-                             config.url?.includes('fetch-wishes');
-    
-    if (token && !isPublicEndpoint) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    if (config.method?.toLowerCase() === 'post') {
-      config.headers['Content-Type'] = 'application/json';
-    }
-    
     return config;
   },
   (error: AxiosError) => Promise.reject(error)

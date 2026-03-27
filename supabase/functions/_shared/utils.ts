@@ -13,6 +13,8 @@ export const successResponse = (data: any, status = 200, headers = {}) => {
   });
 };
 
+export const createSuccessResponse = successResponse;
+
 export const errorResponse = (message: string, status = 400) => {
   console.error(`[Error] ${message}`);
   return new Response(JSON.stringify({ success: false, message }), {
@@ -20,6 +22,8 @@ export const errorResponse = (message: string, status = 400) => {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 };
+
+export const createErrorResponse = errorResponse;
 
 // Auth Helper
 export const getAuthUser = async (supabase: SupabaseClient) => {

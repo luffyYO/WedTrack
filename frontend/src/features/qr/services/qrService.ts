@@ -31,5 +31,7 @@ export const qrService = {
      * POST /api/weddings/:trackId/extend
      */
     extend: (trackId: string) =>
-        client.post<{ message: string; qrExpiresAt: string }>(`/weddings/${trackId}/extend`),
+        client.post<{ message: string; qr_expires_at: string }>('/extend-wedding', {
+            wedding_nanoid: trackId
+        }),
 };
