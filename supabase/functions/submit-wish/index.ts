@@ -20,13 +20,13 @@ Deno.serve(async (req) => {
       father_last_name,
       amount, 
       payment_type, 
-      message, 
+      wishes,
       gift_side, 
       village, 
       district,
       location,
-      mobile,
-      transaction_id
+      email,
+      relation
     } = body
 
     console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${first_name} ${last_name || ''}`)
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       return errorResponse('QR form has Expired', 403)
     }
 
-    // 3. Insert guest/wish — using auto-generated UUID id
+    // 3. Insert guest — columns match actual DB schema
     const { data: guest, error: dbError } = await adminClient
       .from('guests')
       .insert({
@@ -78,13 +78,16 @@ Deno.serve(async (req) => {
         father_first_name: father_first_name || null,
         father_last_name: father_last_name || null,
         amount: Number(amount) || 0,
-        message: message || null,
+        wishes: wishes || null,
         gift_side,
         village: village || null,
         district: district || null,
         location: location || null,
-        mobile: mobile || null,
-        transaction_id: transaction_id || null
+        email: email || null,
+        relation: relation || null,
+        payment_type: payment_type || 'Cash',
+        is_paid: false,
+        is_read: false
       })
       .select('id')
       .single()

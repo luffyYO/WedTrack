@@ -21,10 +21,20 @@ Deno.serve(async (req) => {
       upi_id, 
       village, 
       extra_cell,
+      event_type,
+      person_name,
       gallery_images 
     } = body
 
-    // 1. Auth Check
+    // 1. Validate required fields early
+    if (!bride_name || !groom_name) {
+      return errorResponse('bride_name and groom_name are required', 400)
+    }
+    if (!wedding_date) {
+      return errorResponse('wedding_date is required', 400)
+    }
+
+    // 2. Auth Check
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -32,50 +42,65 @@ Deno.serve(async (req) => {
     )
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) return errorResponse('Unauthorized', 401)
+    if (authError || !user) {
+      console.error('[create-wedding] Auth failed:', authError?.message)
+      return errorResponse('Unauthorized', 401)
+    }
 
-    // 2. Rate Limiting (20 req/min)
+    // 3. Rate Limiting (20 req/min)
     const rateLimit = await checkRateLimit(`create_wedding:${user.id}`, 20, 60)
     if (!rateLimit.success) return errorResponse('Rate limit exceeded. Try again later.', 429)
 
-    // 3. Generation & DB Write
+    // 4. Generation & DB Write
     const weddingNanoId = nanoid(10)
     const qr_activation_time = new Date(`${wedding_date}T00:00:00+05:30`).toISOString()
     const qr_expires_at = new Date(new Date(qr_activation_time).getTime() + 24 * 60 * 60 * 1000).toISOString()
     
-    // Service role client needed for some system-level updates
+    // Service role client needed for DB writes
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://wedtrackss.in'
+    
+    const insertData: Record<string, any> = {
+      nanoid: weddingNanoId,
+      user_id: user.id,
+      bride_name,
+      groom_name,
+      location: location || null,
+      wedding_date,
+      village: village || null,
+      extra_cell: extra_cell || null,
+      upi_id: upi_id || null,
+      event_type: event_type || null,
+      person_name: person_name || null,
+      gallery_images: gallery_images || [],
+      qr_activation_time,
+      qr_expires_at,
+      qr_link: `${frontendUrl}/guest-form/${weddingNanoId}`
+    }
+
+    console.log('[create-wedding] Inserting:', JSON.stringify(insertData))
+
     const { data: wedding, error: dbError } = await adminClient
       .from('weddings')
-      .insert({
-        nanoid: weddingNanoId,
-        user_id: user.id,
-        bride_name,
-        groom_name,
-        wedding_date,
-        location,
-        upi_id,
-        village,
-        extra_cell,
-        gallery_images,
-        qr_activation_time,
-        qr_expires_at,
-        qr_link: `${Deno.env.get('FRONTEND_URL')}/guest-form/${weddingNanoId}`
-      })
+      .insert(insertData)
       .select('id, nanoid, qr_link')
       .single()
 
-    if (dbError) throw dbError
+    if (dbError) {
+      console.error('[create-wedding] DB insert error:', JSON.stringify(dbError))
+      return errorResponse(`Database error: ${dbError.message}`, 500)
+    }
 
     logEvent('WeddingCreated', { user_id: user.id, wedding_nanoid: weddingNanoId })
 
     return successResponse(wedding)
 
-  } catch (error) {
-    return errorResponse(error.message)
+  } catch (error: any) {
+    console.error('[create-wedding] Unexpected error:', error)
+    return errorResponse(error?.message || 'Internal server error', 500)
   }
 })

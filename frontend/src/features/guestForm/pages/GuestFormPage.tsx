@@ -24,11 +24,13 @@ export default function GuestFormPage() {
         father_first_name: '',
         father_last_name: '',
         district: '',
+        village: '',
         location: '',
-        mobile: '',
+        email: '',
+        relation: '',
         amount: '',
         payment_type: 'Cash',
-        message: '',
+        wishes: '',
         gift_side: ''
     });
 
@@ -294,10 +296,10 @@ export default function GuestFormPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mobile Number</label>
-                            <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} 
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Village / Town</label>
+                            <input type="text" name="village" value={formData.village} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                                placeholder="e.g. 9988776655"
+                                placeholder="e.g. Rampur"
                             />
                         </div>
                         <div>
@@ -343,7 +345,7 @@ export default function GuestFormPage() {
 
                     <div className="pt-2">
                         <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wishes & Blessings</label>
-                        <textarea rows={3} name="message" value={formData.message} onChange={handleChange} 
+                        <textarea rows={3} name="wishes" value={formData.wishes} onChange={handleChange} 
                             className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all resize-none text-sm font-medium text-slate-700 shadow-sm" 
                             placeholder="Write your heartfelt message here..." 
                         />
