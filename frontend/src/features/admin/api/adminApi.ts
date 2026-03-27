@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const VITE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const VITE_URL = import.meta.env.VITE_API_URL || '';
 const BASE = VITE_URL.endsWith('/api') ? VITE_URL : `${VITE_URL}/api`;
 
-const adminApi = axios.create({ baseURL: `${BASE}/admin` });
+const adminApi = axios.create({ baseURL: VITE_URL ? `${BASE}/admin` : undefined });
 
 // Attach stored token automatically
 adminApi.interceptors.request.use(config => {

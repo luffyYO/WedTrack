@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { Bell, Menu, User } from 'lucide-react';
-import { useAuthStore, useWishStore } from '@/store';
+import { useAuthStore, useWishStore, useAppStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { io as socketIO } from 'socket.io-client';
 import type { Wish } from '@/api/wishService';
@@ -14,11 +14,14 @@ interface TopBarProps {
 export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
     const user = useAuthStore((s) => s.user);
     const navigate = useNavigate();
+    const { activeWedding } = useAppStore();
     const { unreadCount, fetchWishes, addWish } = useWishStore();
 
     useEffect(() => {
-        fetchWishes();
-    }, [fetchWishes]);
+        if (activeWedding?.nanoid) {
+            fetchWishes(activeWedding.nanoid);
+        }
+    }, [fetchWishes, activeWedding?.nanoid]);
 
     useEffect(() => {
         if (!user) return;

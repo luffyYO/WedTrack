@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Loader2, Trash2, MapPin, Calendar } from 'lucide-react';
-import adminApi from '@/features/admin/api/adminApi';
+import apiClient from '@/api/client';
 
 interface Wedding {
   id: string;
@@ -21,8 +21,21 @@ export default function AdminWeddings() {
   const fetchW = async () => {
     setLoading(true);
     try {
-      const res = await adminApi.get(`/weddings?search=${search}`);
-      setWeddings(res.data.data || []);
+      // Use list-weddings Edge Function
+      const res = await apiClient.get('list-weddings');
+      let data = res.data.data || [];
+      
+      // Perform client-side search for now, or we could add search to the Edge Function
+      if (search) {
+        const s = search.toLowerCase();
+        data = data.filter((w: Wedding) => 
+          w.bride_name.toLowerCase().includes(s) || 
+          w.groom_name.toLowerCase().includes(s) || 
+          w.location.toLowerCase().includes(s)
+        );
+      }
+      
+      setWeddings(data);
     } catch (err) {
       console.error('Failed to load weddings', err);
     } finally {
@@ -38,7 +51,8 @@ export default function AdminWeddings() {
     if (!window.confirm(`Are you sure you want to delete the wedding for ${couple}? This will also delete all guests and wishes.`)) return;
     
     try {
-      await adminApi.delete(`/weddings/${id}`);
+      // Use delete-wedding Edge Function
+      await apiClient.post('delete-wedding', { wedding_id: id });
       setWeddings(prev => prev.filter(w => w.id !== id));
     } catch (err) {
       alert('Failed to delete wedding');

@@ -1,9 +1,0 @@
-Fetching users from auth.users...
-Users found:
-- ID: 333132bf-327f-449e-9951-9148473c1bba, Email: kishorekethavath10@gmail.com, Last login: Thu Mar 12 2026 09:49:28 GMT+0530 (India Standard Time)
-- ID: e7d9cf42-f163-4e51-8c8c-294d1719ff7b, Email: 2022ucs0093@iitjammu.ac.in, Last login: Thu Mar 12 2026 02:16:44 GMT+0530 (India Standard Time)
-- ID: b565c3e6-7aaf-4092-9b15-dfbd977c53fc, Email: kishorekethavath536@gmail.com, Last login: Tue Mar 10 2026 22:06:48 GMT+0530 (India Standard Time)
-- ID: d9877ee0-0b0b-451e-b33e-3643983a4e6b, Email: n.ravi2004teja@gmail.com, Last login: Thu Mar 12 2026 06:40:04 GMT+0530 (India Standard Time)
-- ID: c4772da8-a98c-4b84-9f4c-1c2fb344d3f8, Email: 2022uch0057@iitjammu.ac.in, Last login: Wed Mar 11 2026 18:43:17 GMT+0530 (India Standard Time)
-- ID: fd582c9c-b578-4857-a21a-702ac92165b9, Email: ravitejaoffline@gmail.com, Last login: Thu Mar 12 2026 07:06:51 GMT+0530 (India Standard Time)
-- ID: bcb7d7c3-aa2e-4ee4-9b17-1d844f60cbfc, Email: harshitha01032007@gmail.com, Last login: Thu Mar 12 2026 06:58:31 GMT+0530 (India Standard Time)

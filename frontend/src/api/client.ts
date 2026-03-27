@@ -2,14 +2,20 @@ import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestCo
 import type { ApiError } from '@/types';
 import { supabase } from '@/config/supabaseClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+console.log("ENV URL:", import.meta.env.VITE_SUPABASE_URL)
+console.log("ENV KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY)
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const API_BASE_URL = `${SUPABASE_URL}/functions/v1`;
 
 const client: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 15000,
+    timeout: 30000, // Increased timeout for Edge Functions
     headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
     },
 });
 
@@ -17,15 +23,35 @@ const client: AxiosInstance = axios.create({
 // Attaches the Bearer token from Supabase Session to every outgoing request.
 
 client.interceptors.request.use(
-    async (config: InternalAxiosRequestConfig) => {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error: AxiosError) => Promise.reject(error)
+  async (config: InternalAxiosRequestConfig) => {
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    // Always enforce the requested anonKey headers to prevent 401s from Edge Functions
+    if (anonKey) {
+      config.headers['apikey'] = anonKey;
+      config.headers['Authorization'] = `Bearer ${anonKey}`;
+    }
+
+    // Still attempt to attach user token if the user is authenticated 
+    // AND the endpoint is not explicitly meant for guests
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    const isPublicEndpoint = config.url?.includes('get-wedding-details') || 
+                             config.url?.includes('submit-wish') ||
+                             config.url?.includes('fetch-wishes');
+    
+    if (token && !isPublicEndpoint) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (config.method?.toLowerCase() === 'post') {
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
+    return config;
+  },
+  (error: AxiosError) => Promise.reject(error)
 );
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────

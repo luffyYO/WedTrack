@@ -70,7 +70,9 @@ export default function DashboardPage() {
     const { user } = useAuthStore();
     const { activeWedding, setActiveWedding } = useAppStore();
     const [weddings, setWeddings] = useState<any[]>([]);
-    const selectedWedding = activeWedding?.id || '';
+    const selectedWeddingId = activeWedding?.id || '';
+    const selectedWeddingNanoId = activeWedding?.nanoid || '';
+    
     const [guests, setGuests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [guestsLoading, setGuestsLoading] = useState(false);
@@ -90,14 +92,14 @@ export default function DashboardPage() {
             
             setLoading(true);
             try {
-                const { data: weddingData } = await apiClient.get('/weddings');
-                const fetchedWeddings: any[] = weddingData?.data ?? [];
+                // Use list-weddings Edge Function
+                const response = await apiClient.get('list-weddings');
+                const fetchedWeddings: any[] = response.data.data ?? [];
                 setWeddings(fetchedWeddings);
 
                 if (fetchedWeddings.length > 0 && !activeWedding) {
                     setActiveWedding(fetchedWeddings[0]);
                 } else if (fetchedWeddings.length > 0 && activeWedding) {
-                    // Update the active wedding if data changed
                     const updated = fetchedWeddings.find(w => w.id === activeWedding.id);
                     if (updated) setActiveWedding(updated);
                 }
@@ -111,22 +113,22 @@ export default function DashboardPage() {
         if (loading) {
             loadDashboard();
         }
-    }, [loading, weddings.length]);
+    }, [loading, weddings.length, activeWedding, setActiveWedding]);
 
     useEffect(() => {
-        if (!selectedWedding) return;
+        if (!selectedWeddingNanoId) return;
 
         const fetchGuests = async () => {
             setGuestsLoading(true);
             try {
-                let url = `/guests/wedding/${selectedWedding}`;
-                if (activeFilter === 'Side' && selectedPaymentMethod) {
-                    url += `?side=${selectedPaymentMethod.toLowerCase()}`;
-                }
-                const { data } = await apiClient.get(url);
-                if (data.data) {
-                    setGuests(data.data);
-                    setFilteredGuests(data.data);
+                // Use fetch-wishes Edge Function (it supports pagination, but we'll fetch core data here)
+                // Dashboard usually wants all guests initially for searching/filtering
+                // but we should eventually paginate it.
+                let url = `fetch-wishes?wedding_nanoid=${selectedWeddingNanoId}&limit=1000`;
+                const response = await apiClient.get(url);
+                if (response.data.data) {
+                    setGuests(response.data.data);
+                    setFilteredGuests(response.data.data);
                 }
             } catch (err) {
                 console.error('Failed to load guests:', err);
@@ -136,7 +138,7 @@ export default function DashboardPage() {
         };
 
         fetchGuests();
-    }, [selectedWedding, activeFilter, selectedPaymentMethod]);
+    }, [selectedWeddingNanoId]);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -151,7 +153,7 @@ export default function DashboardPage() {
                 );
             } else if (activeFilter === 'Location') {
                 result = result.filter(g =>
-                    (g.village || '').toLowerCase().includes(query) ||
+                    (g.location || '').toLowerCase().includes(query) ||
                     (g.district || '').toLowerCase().includes(query)
                 );
             }
@@ -179,7 +181,8 @@ export default function DashboardPage() {
 
     const confirmGuest = async (guestId: string) => {
         try {
-            await apiClient.put(`/guests/${guestId}/confirm`);
+            // Use update-guest Edge Function
+            await apiClient.post('update-guest', { guest_id: guestId, is_paid: true });
             setGuests(prev => prev.map(g => g.id === guestId ? { ...g, is_paid: true } : g));
         } catch (err) {
             console.error('Failed to confirm payment:', err);
@@ -190,7 +193,8 @@ export default function DashboardPage() {
     const deleteGuest = async (guestId: string) => {
         if (!window.confirm('Are you sure you want to cancel and remove this guest entry? This cannot be undone.')) return;
         try {
-            await apiClient.delete(`/guests/${guestId}`);
+            // Use delete-guest Edge Function
+            await apiClient.post('delete-guest', { guest_id: guestId });
             setGuests(prev => prev.filter(g => g.id !== guestId));
         } catch (err) {
             console.error('Failed to delete guest:', err);
@@ -199,7 +203,7 @@ export default function DashboardPage() {
     };
 
     const handleDownloadPDF = useCallback(async () => {
-        const wedding = weddings.find(w => w.id === selectedWedding);
+        const wedding = weddings.find(w => w.id === selectedWeddingId);
         if (!wedding) return;
 
         setPdfLoading(true);
@@ -217,7 +221,7 @@ export default function DashboardPage() {
             setPdfLoading(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [weddings, selectedWedding, filteredGuests]);
+    }, [weddings, selectedWeddingId, filteredGuests]);
 
     const { totalCollected, totalVerifiedGifts, pendingGifts } = useMemo(() => {
         return guests.reduce(
@@ -294,7 +298,7 @@ export default function DashboardPage() {
 
                         <div className="relative w-full sm:min-w-[340px] z-[60]">
                             {(() => {
-                                const selectedW = weddings.find(w => w.id === selectedWedding);
+                                const selectedW = weddings.find(w => w.id === selectedWeddingId);
                                 return (
                                     <div
                                         className="w-full bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white hover:border-pink-300 transition-all shadow-sm"
@@ -327,7 +331,7 @@ export default function DashboardPage() {
                                 {weddings.map(w => (
                                     <div
                                         key={w.id}
-                                        className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWedding === w.id ? 'bg-pink-50/80' : ''}`}
+                                        className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWeddingId === w.id ? 'bg-pink-50/80' : ''}`}
                                         onClick={(e) => {
                                             setActiveWedding(w);
                                             e.currentTarget.parentElement?.classList.add('hidden');

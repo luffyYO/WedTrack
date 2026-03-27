@@ -1,0 +1,2 @@
+src/components/navigation/TopBar.tsx(20,9): error TS2554: Expected 1-2 arguments, but got 0.
+src/features/weddingTrack/services/weddingTrackService.ts(2,70): error TS6196: 'WeddingTrack' is declared but never used.

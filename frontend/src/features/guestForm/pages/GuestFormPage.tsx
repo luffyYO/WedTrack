@@ -7,7 +7,7 @@ import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
 
 export default function GuestFormPage() {
-    const { weddingId } = useParams<{ weddingId: string }>();
+    const { weddingId: weddingNanoId } = useParams<{ weddingId: string }>();
     const [wedding, setWedding] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -19,35 +19,37 @@ export default function GuestFormPage() {
     const [heartsActive, setHeartsActive] = useState(false);
 
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        fatherFirstName: '',
-        fatherLastName: '',
+        first_name: '',
+        last_name: '',
+        father_first_name: '',
+        father_last_name: '',
         district: '',
-        village: '',
+        location: '',
         amount: '',
-        paymentType: 'Cash',
+        payment_type: 'Cash',
         wishes: '',
-        giftSide: ''
+        gift_side: ''
     });
 
     useEffect(() => {
         const fetchWedding = async () => {
-            if (!weddingId) return;
+            if (!weddingNanoId) return;
             try {
-                const response = await apiClient.get(`/weddings/${weddingId}/qr`);
+                // Use the new get-wedding-details Edge Function
+                const response = await apiClient.get(`get-wedding-details?wedding_nanoid=${weddingNanoId}`);
                 const data = response.data.data;
                 setWedding(data);
                 
                 const now = new Date();
-                if (data.qrStatus === 'inactive') {
+                // Map new snake_case fields
+                if (data.qr_status === 'inactive') {
                     setIsInactive(true);
-                } else if (data.qrStatus === 'expired') {
+                } else if (data.qr_status === 'expired') {
                     setIsExpired(true);
                 } else {
-                    if (data.qrActivationTime && now < new Date(data.qrActivationTime)) {
+                    if (data.qr_activation_time && now < new Date(data.qr_activation_time)) {
                         setIsInactive(true);
-                    } else if (data.qrExpiresAt && now >= new Date(data.qrExpiresAt)) {
+                    } else if (data.qr_expires_at && now >= new Date(data.qr_expires_at)) {
                         setIsExpired(true);
                     }
                 }
@@ -64,14 +66,15 @@ export default function GuestFormPage() {
         };
 
         fetchWedding();
-    }, [weddingId]);
+    }, [weddingNanoId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => {
             const updated = { ...prev, [name]: value };
-            if (name === 'lastName' && (prev.fatherLastName === '' || prev.fatherLastName === prev.lastName)) {
-                updated.fatherLastName = value;
+            // Auto-fill father's last name if it's the same
+            if (name === 'last_name' && (prev.father_last_name === '' || prev.father_last_name === prev.last_name)) {
+                updated.father_last_name = value;
             }
             return updated;
         });
@@ -83,14 +86,16 @@ export default function GuestFormPage() {
         setError('');
         
         const payload = {
-            weddingId,
-            ...formData
+            wedding_nanoid: weddingNanoId,
+            ...formData,
+            amount: Number(formData.amount)
         };
         
         try {
-            await apiClient.post('/guests/submit', payload);
+            // Use the new submit-wish Edge Function
+            await apiClient.post('submit-wish', payload);
             setSuccess(true);
-            setHeartsActive(true); // Trigger celebratory hearts on success
+            setHeartsActive(true);
         } catch (err: any) {
             console.error('Guest submission failed:', err);
             const errorMsg = err.response?.data?.message || err.message || 'Submission failed. Please try again.';
@@ -207,8 +212,8 @@ export default function GuestFormPage() {
         <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] flex py-12 px-4 items-start justify-center overflow-y-auto">
             <div className="max-w-[460px] w-full glass-panel rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-white/60 overflow-hidden animate-fade-up">
                 <AutoScrollGallery images={
-                    wedding.galleryImages?.length > 0 
-                        ? wedding.galleryImages 
+                    wedding?.gallery_images?.length > 0 
+                        ? wedding.gallery_images 
                         : [
                             'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=600&q=80',
                             'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=600&q=80',
@@ -223,8 +228,8 @@ export default function GuestFormPage() {
                         <Heart size={140} className="fill-pink-500" />
                     </div>
                     <WeddingNameDisplay 
-                        brideName={wedding.brideName} 
-                        groomName={wedding.groomName} 
+                        brideName={wedding?.bride_name} 
+                        groomName={wedding?.groom_name} 
                         size="lg" 
                         className="mb-1 relative z-10 font-bold tracking-tight drop-shadow-sm" 
                     />
@@ -232,10 +237,6 @@ export default function GuestFormPage() {
                         Secure Guest Registry
                     </p>
                 </div>
-
-                {/* ── Extracted CSS Input Class ── */}
-                {/* Because native inputs break with complex utility strings, we extract it. */}
-                {/* It uses focus rings, soft backgrounds, and minimal borders */}
 
                 <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 bg-white/40">
                     
@@ -248,13 +249,13 @@ export default function GuestFormPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">First Name <span className="text-rose-400">*</span></label>
-                            <input required type="text" name="firstName" value={formData.firstName} onChange={handleChange} 
+                            <input required type="text" name="first_name" value={formData.first_name} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
-                            <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} 
+                            <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
@@ -263,13 +264,13 @@ export default function GuestFormPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Name</label>
-                            <input type="text" name="fatherFirstName" value={formData.fatherFirstName} onChange={handleChange} 
+                            <input type="text" name="father_first_name" value={formData.father_first_name} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Last Name</label>
-                            <input type="text" name="fatherLastName" value={formData.fatherLastName} onChange={handleChange} 
+                            <input type="text" name="father_last_name" value={formData.father_last_name} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
@@ -284,7 +285,7 @@ export default function GuestFormPage() {
                         </div>
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Location / Village</label>
-                            <input type="text" name="village" value={formData.village} onChange={handleChange} 
+                            <input type="text" name="location" value={formData.location} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
                             />
                         </div>
@@ -301,7 +302,7 @@ export default function GuestFormPage() {
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Payment Method</label>
                             <div className="relative">
-                                <select name="paymentType" value={formData.paymentType} onChange={handleChange} 
+                                <select name="payment_type" value={formData.payment_type} onChange={handleChange} 
                                     className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/80 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-semibold text-slate-700 shadow-sm appearance-none"
                                 >
                                     <option value="Cash">Cash</option>
@@ -319,12 +320,12 @@ export default function GuestFormPage() {
                     <div className="pt-2">
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Select Guest Alignment <span className="text-rose-400">*</span></label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.giftSide === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                <input required type="radio" name="giftSide" value="bride" checked={formData.giftSide === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
+                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
+                                <input required type="radio" name="gift_side" value="bride" checked={formData.gift_side === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
                                 <span>BRIDE'S SIDE</span>
                             </label>
-                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.giftSide === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                <input required type="radio" name="giftSide" value="groom" checked={formData.giftSide === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
+                            <label className={`flex items-center justify-center gap-2 p-3 sm:p-4 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs sm:text-sm tracking-wide ${formData.gift_side === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
+                                <input required type="radio" name="gift_side" value="groom" checked={formData.gift_side === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
                                 <span>GROOM'S SIDE</span>
                             </label>
                         </div>

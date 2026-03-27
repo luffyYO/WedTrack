@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Sparkles, ChevronRight } from 'lucide-react';
 import { useWishStore, useAppStore } from '@/store';
 import PageHeader from '@/components/layout/PageHeader';
-import apiClient from '@/api/client';
 import { WeddingNameDisplay } from '@/components/ui';
 
 function timeAgo(dateStr: string): string {
@@ -21,55 +20,38 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function WishesPage() {
-    const { wishes, isLoading, markAllRead, unreadCount } = useWishStore();
+    const { wishes, isLoading, markAllRead, unreadCount, fetchWishes, subscribeToWishes, hasMore } = useWishStore();
     const { activeWedding } = useAppStore();
-    const [filteredWishes, setFilteredWishes] = useState<any[]>([]);
-    const [wishesLoading, setWishesLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
-
-    // Re-fetch wishes whenever activeWedding changes
-    const fetchWishes = useCallback(async (weddingId: string) => {
-        setWishesLoading(true);
-        setCurrentPage(1); // Reset page on fetch
-        try {
-            const url = weddingId
-                ? `/guests/wishes?weddingId=${encodeURIComponent(weddingId)}`
-                : '/guests/wishes'; // fallback, though activeWedding should be present
-            const { data } = await apiClient.get(url);
-            setFilteredWishes(data?.data ?? []);
-        } catch (err) {
-            console.error('Failed to load wishes:', err);
-            setFilteredWishes([]);
-        } finally {
-            setWishesLoading(false);
-        }
-    }, []);
 
     useEffect(() => {
-        if (activeWedding?.id) {
-            fetchWishes(activeWedding.id);
-        } else {
-            setFilteredWishes([]);
+        if (activeWedding?.nanoid) {
+            // Initial fetch
+            fetchWishes(activeWedding.nanoid, 1);
+            // Realtime subscription
+            const unsubscribe = subscribeToWishes(activeWedding.id);
+            return () => {
+                if (unsubscribe) unsubscribe();
+            };
         }
-    }, [activeWedding, fetchWishes]);
+    }, [activeWedding?.id, activeWedding?.nanoid]);
 
     // Automatically clear unread blinking and "New" badges when wishes are opened and populated
     useEffect(() => {
-        if (unreadCount > 0 && filteredWishes.length > 0) {
+        if (unreadCount > 0 && wishes.length > 0) {
             markAllRead();
-            // Optimistically update the UI to clear the "New" tags locally
-            setFilteredWishes(prev => prev.map(w => ({ ...w, is_read: true })));
         }
-    }, [filteredWishes, unreadCount, markAllRead]);
+    }, [wishes.length, unreadCount, markAllRead]);
 
-    const showLoading = wishesLoading || (isLoading && wishes.length === 0);
+    const handleLoadMore = () => {
+        if (activeWedding?.nanoid && hasMore && !isLoading) {
+            const nextPage = currentPage + 1;
+            setCurrentPage(nextPage);
+            fetchWishes(activeWedding.nanoid, nextPage);
+        }
+    };
 
-    const totalPages = Math.ceil(filteredWishes.length / itemsPerPage);
-    const displayedWishes = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return filteredWishes.slice(start, start + itemsPerPage);
-    }, [filteredWishes, currentPage]);
+    const showLoading = isLoading && wishes.length === 0;
 
     return (
         <div className="max-w-4xl mx-auto pb-10 animate-fade-up">
@@ -95,7 +77,7 @@ export default function WishesPage() {
                 <div className="flex justify-center py-20">
                     <div className="w-8 h-8 rounded-full border-2 border-pink-200 border-t-pink-500 animate-spin shadow-sm" />
                 </div>
-            ) : filteredWishes.length === 0 ? (
+            ) : wishes.length === 0 ? (
                 /* ── Empty state ── */
                 <div className="flex flex-col items-center justify-center gap-4 py-24 px-4 text-center mt-8 glass-panel rounded-[2.5rem] border border-dashed border-slate-300">
                     <div className="w-20 h-20 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm">
@@ -111,10 +93,10 @@ export default function WishesPage() {
                     </div>
                 </div>
             ) : (
-                /* ── Wishes Grid & Pagination ── */
+                /* ── Wishes Grid ── */
                 <div className="space-y-8 mt-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {displayedWishes.map((wish, index) => (
+                        {wishes.map((wish, index) => (
                             <div
                                 key={wish.id}
                                 className="glass-panel border border-white/80 rounded-[2.5rem] p-7 shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(244,114,182,0.1)] hover:-translate-y-1.5 transition-all duration-400 group relative overflow-hidden"
@@ -127,20 +109,12 @@ export default function WishesPage() {
                                     <div>
                                         <h3 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
                                             {[wish.first_name, wish.last_name].filter(Boolean).join(' ')}
-                                            {wish.amount && Number(wish.amount) > 0 && (
-                                                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]" aria-label="Gifted"></span>
-                                            )}
                                         </h3>
                                         <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest flex items-center gap-1.5">
                                             <span className="w-1.5 h-1.5 rounded-full bg-pink-300" />
                                             {timeAgo(wish.created_at)}
                                         </p>
                                     </div>
-                                    {!wish.is_read && (
-                                        <span className="shrink-0 text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r from-pink-500 to-rose-400 text-white shadow-md px-3 py-1.5 rounded-full">
-                                            New
-                                        </span>
-                                    )}
                                 </div>
 
                                 <div
@@ -160,30 +134,21 @@ export default function WishesPage() {
                         ))}
                     </div>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border border-white/60 rounded-[2rem] glass-panel w-full max-w-md mx-auto">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                                    aria-label="Previous Page"
-                                >
-                                    <ChevronLeft size={18} />
-                                </button>
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                                    aria-label="Next Page"
-                                >
-                                    <ChevronRight size={18} />
-                                </button>
-                            </div>
+                    {/* Load More Wishes Button */}
+                    {hasMore && (
+                        <div className="flex justify-center mt-12 pb-8">
+                            <button
+                                onClick={handleLoadMore}
+                                disabled={isLoading}
+                                className="px-10 py-4 rounded-full bg-white border border-slate-200 text-slate-700 font-bold hover:bg-pink-50 hover:text-pink-500 hover:border-pink-200 disabled:opacity-50 transition-all shadow-md flex items-center gap-3 active:scale-95"
+                            >
+                                {isLoading ? (
+                                    <div className="w-5 h-5 border-2 border-pink-500 border-t-transparent animate-spin rounded-full" />
+                                ) : (
+                                    <ChevronRight size={20} className="rotate-90 text-pink-400" />
+                                )}
+                                Load More Wishes
+                            </button>
                         </div>
                     )}
                 </div>
