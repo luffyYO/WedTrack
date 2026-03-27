@@ -1,33 +1,43 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders, createErrorResponse, createSuccessResponse, getAuthUser } from "../_shared/utils.ts";
+import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Create a per-request client using the user's Authorization header
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
     );
 
-    const user = await getAuthUser(supabaseClient);
-    if (!user) return createErrorResponse("Unauthorized", 401);
+    // Validate the session — this is what makes list-weddings user-specific
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error("[list-weddings] Auth failed:", authError?.message);
+      return errorResponse("Unauthorized", 401);
+    }
 
-    // Fetch weddings owned by this user
+    console.log(`[list-weddings] Fetching weddings for user: ${user.id}`);
+
+    // With anon key + user's JWT, RLS will automatically filter to user_id = auth.uid()
     const { data: weddings, error: fetchError } = await supabaseClient
       .from("weddings")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("[list-weddings] DB error:", JSON.stringify(fetchError));
+      return errorResponse(`Database error: ${fetchError.message}`, 500);
+    }
 
-    return createSuccessResponse(weddings, "Weddings fetched successfully", {
-      "Cache-Control": "private, max-age=10", // Fast local cache for user-specific data
-    });
+    console.log(`[list-weddings] Found ${weddings?.length ?? 0} weddings`);
+
+    return successResponse(weddings ?? []);
   } catch (error: any) {
-    return createErrorResponse(error.message);
+    console.error("[list-weddings] Unexpected error:", error?.message);
+    return errorResponse(error?.message || "Internal server error", 500);
   }
 });

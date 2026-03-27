@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, IndianRupee, Download, LayoutDashboard } from 'lucide-react';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
@@ -86,13 +86,15 @@ export default function DashboardPage() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
     const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
+    const hasFetched = useRef(false);
+
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+
         const loadDashboard = async () => {
-            if (weddings.length > 0) return;
-            
             setLoading(true);
             try {
-                // Use list-weddings Edge Function
                 const response = await apiClient.get('list-weddings');
                 const fetchedWeddings: any[] = response.data.data ?? [];
                 setWeddings(fetchedWeddings);
@@ -110,10 +112,8 @@ export default function DashboardPage() {
             }
         };
 
-        if (loading) {
-            loadDashboard();
-        }
-    }, [loading, weddings.length, activeWedding, setActiveWedding]);
+        loadDashboard();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!selectedWeddingNanoId) return;
