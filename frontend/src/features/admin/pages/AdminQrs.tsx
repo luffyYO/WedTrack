@@ -20,9 +20,9 @@ export default function AdminQrs() {
     const fetchQrs = async () => {
       setLoading(true);
       try {
-        const res = await adminApi.get(`/qrs?filter=${filter}`);
+        const res: any = await adminApi.get(`admin-qrs?filter=${filter}`);
         setQrs(res.data.data || []);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load QRs', err);
       } finally {
         setLoading(false);

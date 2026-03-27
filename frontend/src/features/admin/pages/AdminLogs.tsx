@@ -11,9 +11,9 @@ export default function AdminLogs() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await adminApi.get('/logs');
+        const res: any = await adminApi.get('admin-logs');
         setLogs(res.data.data || []);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load logs', err);
       } finally {
         setLoading(false);

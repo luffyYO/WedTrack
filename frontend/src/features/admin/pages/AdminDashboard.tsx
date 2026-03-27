@@ -29,8 +29,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    adminApi.get('/stats')
-      .then(res => setStats(res.data))
+    adminApi.get<DashboardStats>('admin-stats')
+      .then((res: any) => setStats(res.data))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);

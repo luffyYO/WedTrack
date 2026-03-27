@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, AlertCircle, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
-import adminApi from '../api/adminApi';
+import adminApi from '@/features/admin/api/adminApi';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const res = await adminApi.post('/login', { username, password });
+      const res: any = await adminApi.post('admin-auth/login', { username, password });
       
       if (res.data.requires2FA) {
         setTempToken(res.data.tempToken);
@@ -48,7 +48,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const res = await adminApi.post('/verify-2fa', { tempToken, code: otpCode });
+      const res: any = await adminApi.post('admin-auth/verify-2fa', { tempToken, code: otpCode });
       
       localStorage.setItem('adminToken', res.data.token);
       localStorage.setItem('adminUsername', res.data.username);

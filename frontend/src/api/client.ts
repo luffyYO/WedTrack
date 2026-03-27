@@ -57,7 +57,8 @@ client.interceptors.request.use(
 client.interceptors.response.use(
     (response) => response,
     (error: AxiosError<{ message?: string; code?: string }>) => {
-        if (error.response?.status === 401) {
+        // ONLY redirect to login on 401 Unauthorized
+        if (error.response && error.response.status === 401) {
             // Priority 1: Don't redirect if we are already on the login page
             if (window.location.pathname === '/login') {
                 return Promise.reject(error);
@@ -69,7 +70,7 @@ client.interceptors.response.use(
             );
 
             if (!isPublicPage) {
-                console.warn('Unauthorized access detected. Clearing session and redirecting...');
+                console.warn('Unauthorized access (401) detected. Clearing session and redirecting...');
                 // Clear the invalid session from Supabase and local storage
                 supabase.auth.signOut().catch(console.error).finally(() => {
                     localStorage.removeItem('supabase.auth.token');
@@ -77,6 +78,9 @@ client.interceptors.response.use(
                     window.location.replace('/login');
                 });
             }
+        } else {
+            // Log other errors without redirecting
+            console.error(`API Error (${error.response?.status || 'Network/CORS'}):`, error.message);
         }
 
         const apiError: ApiError = {

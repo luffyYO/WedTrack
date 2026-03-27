@@ -32,9 +32,9 @@ export default function AdminSettings() {
 
   const fetchProfile = async () => {
     try {
-      const res = await adminApi.get('/profile');
+      const res: { data: AdminProfile } = await adminApi.get('admin-auth/profile');
       setProfile(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch admin profile', err);
     }
   };
@@ -45,11 +45,11 @@ export default function AdminSettings() {
     setStatus(null);
 
     try {
-      const payload: any = {};
+      const payload: { newUsername?: string; newPassword?: string } = {};
       if (username) payload.newUsername = username;
       if (password) payload.newPassword = password;
 
-      await adminApi.put('/settings', payload);
+      await adminApi.put('admin-auth/settings', payload);
       
       setStatus({ type: 'success', msg: 'Superuser credentials updated securely.' });
       if (username) {
@@ -70,7 +70,7 @@ export default function AdminSettings() {
     setSetupLoading(true);
     setStatus(null);
     try {
-      const res = await adminApi.post('/2fa/generate');
+      const res: any = await adminApi.post('admin-auth/2fa/generate');
       setSetupData(res.data);
       setShow2FASetup(true);
     } catch (err: any) {
@@ -84,7 +84,7 @@ export default function AdminSettings() {
     e.preventDefault();
     setSetupLoading(true);
     try {
-      await adminApi.post('/2fa/enable', { code: otpCode });
+      await adminApi.post('admin-auth/2fa/enable', { code: otpCode });
       setProfile(prev => prev ? { ...prev, is2faEnabled: true } : null);
       setShow2FASetup(false);
       setOtpCode('');
