@@ -120,10 +120,10 @@ export default function WeddingTrackCreatePage() {
         galleryImages: uploadedUrls
       };
 
-      const { data: res } = await weddingTrackService.create(payload);
+      const { data: res } = await weddingTrackService.create(payload) as any;
 
       // Navigate to QR page — backend is now the source of truth
-      navigate(`/wedding-track/qr/${res.weddingId}`);
+      navigate(`/wedding-track/qr/${res.nanoid || res.id}`);
     } catch (err: any) {
       const apiData = err.response?.data;
       // prioritize .error from backend as requested by user

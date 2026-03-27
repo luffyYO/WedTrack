@@ -121,10 +121,8 @@ export default function DashboardPage() {
         const fetchGuests = async () => {
             setGuestsLoading(true);
             try {
-                // Use fetch-wishes Edge Function (it supports pagination, but we'll fetch core data here)
-                // Dashboard usually wants all guests initially for searching/filtering
-                // but we should eventually paginate it.
-                let url = `fetch-wishes?wedding_nanoid=${selectedWeddingNanoId}&limit=1000`;
+                // Use get-guests Edge Function
+                let url = `get-guests?wedding_id=${selectedWeddingId}`;
                 const response = await apiClient.get(url);
                 if (response.data.data) {
                     setGuests(response.data.data);

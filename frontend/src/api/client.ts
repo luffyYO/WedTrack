@@ -67,7 +67,7 @@ client.interceptors.response.use(
             if (!isPublicPage) {
                 // Clear the invalid session from Supabase to stop the redirect loop
                 supabase.auth.signOut().catch(console.error).finally(() => {
-                    localStorage.removeItem('wedtrack_token');
+                    localStorage.removeItem('supabase.auth.token');
                     window.location.href = '/login';
                 });
             }

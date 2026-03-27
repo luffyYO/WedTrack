@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import AppRouter from '@/routes/router';
 import { supabase } from '@/config/supabaseClient';
 import { useAuthStore } from '@/store';
-import type { Session } from '@supabase/supabase-js';
 
 /**
  * App root — thin wrapper that mounts the router.
@@ -18,24 +17,23 @@ export default function App() {
     }, []);
 
     useEffect(() => {
-        const syncUser = async (session: Session | null) => {
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log("SESSION:", session);
+            console.log("USER:", session?.user);
             setSession(session);
         };
-        // useEffect(() => {
-        //     console.log("SUPABASE URL:", import.meta.env.VITE_SUPABASE_URL);
-        //     console.log("SUPABASE KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY);
-        //     }, []);
 
         // Initial session check
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            syncUser(session);
-        });
+        checkSession();
 
         // Listen for auth changes (login, logout, token refresh)
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
-            syncUser(session);
+            console.log("AUTH STATE CHANGE - SESSION:", session);
+            console.log("AUTH STATE CHANGE - USER:", session?.user);
+            setSession(session);
         });
 
         return () => subscription.unsubscribe();
