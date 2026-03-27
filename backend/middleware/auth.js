@@ -22,7 +22,9 @@ export const authenticate = async (req, res, next) => {
 
     // Create a request-specific Supabase client that forwards the user token
     // This allows Row-Level Security (RLS) policies to see the current authenticated user
-    const reqSupabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+    // Use SERVICE_ROLE_KEY if available (dev), fallback to ANON_KEY (prod-style)
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    const reqSupabase = createClient(process.env.SUPABASE_URL, supabaseKey, {
       global: {
         headers: {
           Authorization: authHeader,

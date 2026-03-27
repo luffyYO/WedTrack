@@ -17,6 +17,7 @@ const WishesPage = lazy(() => import('@/pages/WishesPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const AuthCallbackPage = lazy(() => import('@/pages/AuthCallbackPage'));
 
 // Feature pages
 const WeddingTrackCreatePage = lazy(() => import('@/features/weddingTrack/pages/WeddingTrackCreatePage'));
@@ -83,6 +84,9 @@ const router = createBrowserRouter([
             { path: 'settings', element: <Suspense fallback={<Loader />}><AdminSettings /></Suspense> },
         ]
     },
+
+    // ── Auth Callback (Supabase OAuth PKCE) ──────────────────────────────────
+    { path: '/auth/callback', element: <Suspense fallback={<Loader />}><AuthCallbackPage /></Suspense> },
 
     // ── 404 ────────────────────────────────────────────────────────────────────
     { path: '*', element: <Suspense fallback={<Loader />}><NotFoundPage /></Suspense> },
