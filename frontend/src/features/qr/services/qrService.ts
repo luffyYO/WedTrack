@@ -7,7 +7,7 @@ export const qrService = {
      * GET /api/wedding/:trackId/qr
      */
     getByTrackId: async (trackId: string): Promise<{ data: QRData }> => {
-        const { data } = await client.get<any>(`/get-wedding-details?wedding_nanoid=${trackId}`);
+        const { data } = await client.get<any>(`get-wedding-details?wedding_nanoid=${trackId}`);
         // Map backend snake_case to frontend camelCase
         const wedding = data.data || data;
         return {
@@ -31,7 +31,7 @@ export const qrService = {
      * POST /api/weddings/:trackId/extend
      */
     extend: (trackId: string) =>
-        client.post<{ message: string; qr_expires_at: string }>('/extend-wedding', {
+        client.post<{ message: string; qr_expires_at: string }>('extend-wedding', {
             wedding_nanoid: trackId
         }),
 };

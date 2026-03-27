@@ -58,13 +58,23 @@ client.interceptors.response.use(
     (response) => response,
     (error: AxiosError<{ message?: string; code?: string }>) => {
         if (error.response?.status === 401) {
-            // Don't redirect on public pages (guest form, QR view)
-            const isPublicPage = window.location.pathname.startsWith('/guest-form');
+            // Priority 1: Don't redirect if we are already on the login page
+            if (window.location.pathname === '/login') {
+                return Promise.reject(error);
+            }
+
+            // Priority 2: Don't redirect on public pages (guest form, etc.)
+            const isPublicPage = ['/guest-form', '/wedding/'].some(path => 
+                window.location.pathname.startsWith(path)
+            );
+
             if (!isPublicPage) {
-                // Clear the invalid session from Supabase to stop the redirect loop
+                console.warn('Unauthorized access detected. Clearing session and redirecting...');
+                // Clear the invalid session from Supabase and local storage
                 supabase.auth.signOut().catch(console.error).finally(() => {
                     localStorage.removeItem('supabase.auth.token');
-                    window.location.href = '/login';
+                    // Use replace to avoid back-button loops
+                    window.location.replace('/login');
                 });
             }
         }

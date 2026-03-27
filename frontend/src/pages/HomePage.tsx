@@ -54,7 +54,7 @@ export default function HomePage() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const { data } = await apiClient.get('/weddings');
+                const { data } = await apiClient.get('list-weddings');
                 if (data.data) {
                     setWeddings(data.data);
                 }
