@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Heart } from 'lucide-react';
 import apiClient from '@/api/client';
+import { supabase } from '@/config/supabaseClient';
 import { WeddingNameDisplay } from '@/components/ui';
 import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
@@ -38,13 +39,26 @@ export default function GuestFormPage() {
         const fetchWedding = async () => {
             if (!weddingNanoId) return;
             try {
-                // Use the new get-wedding-details Edge Function
-                const response = await apiClient.get(`get-wedding-details?wedding_nanoid=${weddingNanoId}`);
-                const data = response.data.data;
+                // Try direct Supabase query first (fast path — no Edge Function latency)
+                // Requires the public anon read policy on weddings table.
+                const { data: directData, error: directError } = await supabase
+                    .from('weddings')
+                    .select('*')
+                    .eq('nanoid', weddingNanoId)
+                    .maybeSingle();
+
+                let data: any;
+                if (directError || !directData) {
+                    // Fallback: use Edge Function (works before public RLS policy is applied)
+                    const response = await apiClient.get(`get-wedding-details?wedding_nanoid=${weddingNanoId}`);
+                    data = response.data.data;
+                } else {
+                    data = directData;
+                }
+
                 setWedding(data);
-                
+
                 const now = new Date();
-                // Map new snake_case fields
                 if (data.qr_status === 'inactive') {
                     setIsInactive(true);
                 } else if (data.qr_status === 'expired') {
@@ -57,9 +71,9 @@ export default function GuestFormPage() {
                     }
                 }
             } catch (err: any) {
-                console.error('Fetch wedding failed:', err);
+                if (import.meta.env.DEV) console.error('Fetch wedding failed:', err);
                 const isNetworkError = err.message?.toLowerCase().includes('network error') || !err.response;
-                setError(isNetworkError 
+                setError(isNetworkError
                     ? 'Network Connection Issue: Cannot reach the server.'
                     : (err.response?.data?.message || err.message || 'Failed to load event details.')
                 );

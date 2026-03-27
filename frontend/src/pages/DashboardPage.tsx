@@ -1,67 +1,19 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, IndianRupee, Download, LayoutDashboard } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import apiClient from '@/api/client';
+import { supabase } from '@/config/supabaseClient';
 import { useAuthStore, useAppStore } from '@/store';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
 import { WeddingNameDisplay } from '@/components/ui';
 import { useDebounce } from '@/hooks/useDebounce';
-
-// ─── Skeleton Components ──────────────────────────────────────────────────────
-
-function SkeletonBox({ className = '' }: { className?: string }) {
-    return (
-        <div
-            className={`animate-pulse bg-slate-200/60 rounded-xl ${className}`}
-            aria-hidden="true"
-        />
-    );
-}
-
-function DashboardSkeleton() {
-    return (
-        <div className="mt-6 space-y-8 max-w-[900px] mx-auto" aria-label="Loading dashboard…">
-            <div className="glass-panel p-5 rounded-[1.5rem] flex items-center gap-4">
-                <SkeletonBox className="h-4 w-28" />
-                <SkeletonBox className="h-10 flex-1 rounded-xl" />
-            </div>
-
-            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 max-w-[750px] mx-auto">
-                {[...Array(4)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="glass-panel p-4 sm:p-6 rounded-[1.5rem] flex flex-col items-center justify-center gap-2 h-[105px] sm:h-[150px]"
-                    >
-                        <SkeletonBox className="h-3 w-24" />
-                        <SkeletonBox className="h-8 w-20" />
-                        <SkeletonBox className="h-2 w-16" />
-                    </div>
-                ))}
-            </div>
-
-            <SkeletonBox className="h-12 w-full rounded-[1.5rem]" />
-
-            <div className="space-y-4">
-                <SkeletonBox className="h-4 w-40" />
-                {[...Array(5)].map((_, i) => (
-                    <div key={i} className="glass-panel rounded-[1.5rem] p-5 flex gap-4 items-center">
-                        <SkeletonBox className="h-10 w-10 rounded-full shrink-0" />
-                        <div className="flex-1 space-y-2.5">
-                            <SkeletonBox className="h-3 w-1/3" />
-                            <SkeletonBox className="h-2 w-1/4" />
-                        </div>
-                        <SkeletonBox className="h-8 w-20 rounded-[1rem]" />
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
+import { fetchUserWeddings, fetchGuests } from '@/lib/queries';
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 
@@ -69,13 +21,10 @@ export default function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const { activeWedding, setActiveWedding } = useAppStore();
-    const [weddings, setWeddings] = useState<any[]>([]);
+    const queryClient = useQueryClient();
+
     const selectedWeddingId = activeWedding?.id || '';
-    const selectedWeddingNanoId = activeWedding?.nanoid || '';
-    
-    const [guests, setGuests] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [guestsLoading, setGuestsLoading] = useState(false);
+
     const [pdfLoading, setPdfLoading] = useState(false);
 
     // Search & Filter State
@@ -84,63 +33,111 @@ export default function DashboardPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [selectedAmountRange, setSelectedAmountRange] = useState<number | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
-    const [filteredGuests, setFilteredGuests] = useState<any[]>([]);
 
-    const hasFetched = useRef(false);
+    // ── TanStack Query: Weddings ─────────────────────────────────────────────
+    const {
+        data: weddings = [],
+        isLoading: loading,
+    } = useQuery({
+        queryKey: ['weddings', user?.id],
+        queryFn: fetchUserWeddings,
+        enabled: !!user?.id,
+    });
 
+    // ── Sync active wedding when weddings load ───────────────────────────────
+    const hasSyncedWedding = useRef(false);
     useEffect(() => {
-        if (hasFetched.current) return;
-        hasFetched.current = true;
+        if (weddings.length === 0 || hasSyncedWedding.current) return;
+        hasSyncedWedding.current = true;
 
-        const loadDashboard = async () => {
-            setLoading(true);
-            try {
-                const response = await apiClient.get('list-weddings');
-                const fetchedWeddings: any[] = response.data.data ?? [];
-                setWeddings(fetchedWeddings);
+        if (!activeWedding) {
+            setActiveWedding(weddings[0]);
+        } else {
+            const updated = weddings.find((w: any) => w.id === activeWedding.id);
+            if (updated) setActiveWedding(updated);
+        }
+    }, [weddings, activeWedding, setActiveWedding]);
 
-                if (fetchedWeddings.length > 0 && !activeWedding) {
-                    setActiveWedding(fetchedWeddings[0]);
-                } else if (fetchedWeddings.length > 0 && activeWedding) {
-                    const updated = fetchedWeddings.find(w => w.id === activeWedding.id);
-                    if (updated) setActiveWedding(updated);
-                }
-            } catch (err) {
-                console.error('Failed to load dashboard:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadDashboard();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+    // Reset sync flag when user re-navigates (weddings list could change)
     useEffect(() => {
-        if (!selectedWeddingNanoId) return;
+        hasSyncedWedding.current = false;
+    }, [user?.id]);
 
-        const fetchGuests = async () => {
-            setGuestsLoading(true);
-            try {
-                // Use get-guests Edge Function
-                let url = `get-guests?wedding_id=${selectedWeddingId}`;
-                const response = await apiClient.get(url);
-                if (response.data.data) {
-                    setGuests(response.data.data);
-                    setFilteredGuests(response.data.data);
+    // ── TanStack Query: Guests ───────────────────────────────────────────────
+    const {
+        data: guests = [],
+        isLoading: guestsLoading,
+    } = useQuery({
+        queryKey: ['guests', selectedWeddingId],
+        queryFn: () => fetchGuests(selectedWeddingId),
+        enabled: !!selectedWeddingId,
+    });
+
+    // ── Realtime Subscription ────────────────────────────────────────────────
+    useEffect(() => {
+        if (!selectedWeddingId) return;
+
+        const channel = supabase
+            .channel(`dashboard-guests:${selectedWeddingId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'guests',
+                    filter: `wedding_id=eq.${selectedWeddingId}`,
+                },
+                (payload) => {
+                    // Instantly prepend new guest — no refetch required
+                    queryClient.setQueryData(
+                        ['guests', selectedWeddingId],
+                        (old: any[] = []) => [payload.new, ...old]
+                    );
                 }
-            } catch (err) {
-                console.error('Failed to load guests:', err);
-            } finally {
-                setGuestsLoading(false);
-            }
-        };
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'guests',
+                    filter: `wedding_id=eq.${selectedWeddingId}`,
+                },
+                (payload) => {
+                    // Update changed guest in-place — no refetch
+                    queryClient.setQueryData(
+                        ['guests', selectedWeddingId],
+                        (old: any[] = []) =>
+                            old.map((g) => (g.id === payload.new.id ? payload.new : g))
+                    );
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'guests',
+                    filter: `wedding_id=eq.${selectedWeddingId}`,
+                },
+                (payload) => {
+                    queryClient.setQueryData(
+                        ['guests', selectedWeddingId],
+                        (old: any[] = []) => old.filter((g) => g.id !== payload.old.id)
+                    );
+                }
+            )
+            .subscribe();
 
-        fetchGuests();
-    }, [selectedWeddingNanoId]);
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [selectedWeddingId, queryClient]);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    useEffect(() => {
+    // ── Client-side filtering (no re-fetch on filter change) ────────────────
+    const filteredGuests = useMemo(() => {
         let result = [...guests];
 
         if (debouncedSearchQuery) {
@@ -174,16 +171,21 @@ export default function DashboardPage() {
             }
         }
 
-        setFilteredGuests(result);
-    }, [debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod, guests]);
+        return result;
+    }, [guests, debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod]);
 
+    // ── Mutations (keep using Edge Functions for write operations) ───────────
     const confirmGuest = async (guestId: string) => {
         try {
-            // Use update-guest Edge Function
             await apiClient.post('update-guest', { guest_id: guestId, is_paid: true });
-            setGuests(prev => prev.map(g => g.id === guestId ? { ...g, is_paid: true } : g));
+            // Optimistically update cache
+            queryClient.setQueryData(
+                ['guests', selectedWeddingId],
+                (old: any[] = []) =>
+                    old.map(g => g.id === guestId ? { ...g, is_paid: true } : g)
+            );
         } catch (err) {
-            console.error('Failed to confirm payment:', err);
+            if (import.meta.env.DEV) console.error('Failed to confirm payment:', err);
             alert('Failed to confirm payment.');
         }
     };
@@ -191,17 +193,20 @@ export default function DashboardPage() {
     const deleteGuest = async (guestId: string) => {
         if (!window.confirm('Are you sure you want to cancel and remove this guest entry? This cannot be undone.')) return;
         try {
-            // Use delete-guest Edge Function
             await apiClient.post('delete-guest', { guest_id: guestId });
-            setGuests(prev => prev.filter(g => g.id !== guestId));
+            // Remove from cache immediately
+            queryClient.setQueryData(
+                ['guests', selectedWeddingId],
+                (old: any[] = []) => old.filter(g => g.id !== guestId)
+            );
         } catch (err) {
-            console.error('Failed to delete guest:', err);
+            if (import.meta.env.DEV) console.error('Failed to delete guest:', err);
             alert('Failed to remove guest entry.');
         }
     };
 
     const handleDownloadPDF = useCallback(async () => {
-        const wedding = weddings.find(w => w.id === selectedWeddingId);
+        const wedding = weddings.find((w: any) => w.id === selectedWeddingId);
         if (!wedding) return;
 
         setPdfLoading(true);
@@ -213,7 +218,7 @@ export default function DashboardPage() {
             };
             await generateGuestListPDF(filteredGuests, summary);
         } catch (err) {
-            console.error('PDF generation failed:', err);
+            if (import.meta.env.DEV) console.error('PDF generation failed:', err);
             alert('Failed to generate PDF. Please try again.');
         } finally {
             setPdfLoading(false);
@@ -272,20 +277,18 @@ export default function DashboardPage() {
                 }
             />
 
-            {loading ? (
-                <DashboardSkeleton />
-            ) : weddings.length === 0 ? (
-                <div className="mt-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center glass-panel rounded-[2.5rem] border border-dashed border-slate-300 p-10">
-                    <div className="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-400">
-                        <Users size={28} />
-                    </div>
-                    <p className="text-slate-800 font-bold text-xl tracking-tight">
-                        No events tracked yet.
-                    </p>
-                    <p className="text-slate-500 max-w-sm mb-4">Start organizing your guest list and contributions by creating a new wedding record.</p>
-                    <Button onClick={() => navigate('/wedding-track/new')} className="shadow-sm">Create New Wedding Track</Button>
+        {weddings.length === 0 && !loading ? (
+            <div className="mt-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center glass-panel rounded-[2.5rem] border border-dashed border-slate-300 p-10">
+                <div className="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-400">
+                    <Users size={28} />
                 </div>
-            ) : (
+                <p className="text-slate-800 font-bold text-xl tracking-tight">
+                    No events tracked yet.
+                </p>
+                <p className="text-slate-500 max-w-sm mb-4">Start organizing your guest list and contributions by creating a new wedding record.</p>
+                <Button onClick={() => navigate('/wedding-track/new')} className="shadow-sm">Create New Wedding Track</Button>
+            </div>
+        ) : (
                 <div className="mt-8 space-y-8 max-w-[950px] mx-auto">
                     {/* ── Wedding Selector ── */}
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 group">
@@ -296,7 +299,7 @@ export default function DashboardPage() {
 
                         <div className="relative w-full sm:min-w-[340px] z-[60]">
                             {(() => {
-                                const selectedW = weddings.find(w => w.id === selectedWeddingId);
+                                const selectedW = weddings.find((w: any) => w.id === selectedWeddingId);
                                 return (
                                     <div
                                         className="w-full bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white hover:border-pink-300 transition-all shadow-sm"
@@ -306,7 +309,9 @@ export default function DashboardPage() {
                                         }}
                                     >
                                         <div className="overflow-hidden">
-                                            {selectedW ? (
+                                            {loading ? (
+                                                <div className="animate-pulse bg-slate-200/60 h-5 w-40 rounded-md" />
+                                            ) : selectedW ? (
                                                 <div className="flex items-center gap-1.5 truncate">
                                                     <WeddingNameDisplay
                                                         brideName={selectedW.bride_name}
@@ -326,7 +331,7 @@ export default function DashboardPage() {
 
                             {/* Dropdown Options */}
                             <div className="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-[60] py-2 animate-fade-up duration-200">
-                                {weddings.map(w => (
+                                {weddings.map((w: any) => (
                                     <div
                                         key={w.id}
                                         className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWeddingId === w.id ? 'bg-pink-50/80' : ''}`}
@@ -358,7 +363,7 @@ export default function DashboardPage() {
                             <span className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10">Validated Revenue</span>
                             <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-br from-slate-800 to-slate-500 bg-clip-text text-transparent flex items-center justify-center gap-0.5 sm:gap-1 mt-1 relative z-10">
                                 <IndianRupee size={24} className="text-slate-600 sm:w-8 sm:h-8"/>
-                                {totalCollected.toLocaleString('en-IN')}
+                                {guestsLoading ? <span className="inline-block w-16 h-10 rounded-xl bg-slate-200/60 animate-pulse" /> : totalCollected.toLocaleString('en-IN')}
                             </h3>
                             <span className="text-[9px] sm:text-[10px] text-pink-400/80 font-bold mt-1 relative z-10">SECURE TRANSACTION LEDGER</span>
                         </div>
@@ -370,7 +375,7 @@ export default function DashboardPage() {
                             </div>
                             <span className="text-white/80 text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] relative z-10 text-shadow-sm">Verified Contributions</span>
                             <h3 className="text-4xl sm:text-5xl lg:text-6xl font-black flex items-center justify-center gap-1.5 sm:gap-2 relative z-10 drop-shadow-md mt-1 tracking-tighter">
-                                {totalVerifiedGifts}
+                                {guestsLoading ? <span className="inline-block w-12 h-12 rounded-xl bg-white/30 animate-pulse" /> : totalVerifiedGifts}
                             </h3>
                             <span className="text-[9px] sm:text-[10px] text-white/70 font-bold relative z-10 mt-1 uppercase text-shadow-sm">Confirmed Guest Entries</span>
                         </div>
@@ -379,7 +384,7 @@ export default function DashboardPage() {
                         <div className="glass-panel p-5 sm:p-6 rounded-[1.5rem] flex flex-col items-center justify-center text-center gap-1 sm:h-[140px] hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all group relative">
                             <span className="text-slate-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Total Inventory</span>
                             <h3 className="text-3xl sm:text-4xl font-black text-slate-700 mt-1 tracking-tight">
-                                {guests.length}
+                                {guestsLoading ? <span className="inline-block w-10 h-9 rounded-xl bg-slate-200/60 animate-pulse" /> : guests.length}
                             </h3>
                             <span className="text-[9px] text-slate-400 font-bold mt-1">ALL PROTOCOL SUBMISSIONS</span>
                         </div>
@@ -394,7 +399,7 @@ export default function DashboardPage() {
                             )}
                             <span className="text-red-400 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em]">Awaiting Action</span>
                             <h3 className="text-3xl sm:text-4xl font-black text-red-500 mt-1 drop-shadow-sm">
-                                {pendingGifts}
+                                {guestsLoading ? <span className="inline-block w-10 h-9 rounded-xl bg-red-200/60 animate-pulse" /> : pendingGifts}
                             </h3>
                             <span className="text-[9px] text-red-400/80 font-bold mt-1 uppercase">Verification Required</span>
                         </div>

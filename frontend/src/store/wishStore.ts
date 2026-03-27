@@ -100,7 +100,9 @@ export const useWishStore = create<WishState & WishActions>((set, get) => ({
                 }
             )
             .subscribe((status) => {
-                console.log(`[wishStore] Realtime subscription status: ${status}`);
+                if (import.meta.env.DEV) {
+                    console.log(`[wishStore] Realtime subscription status: ${status}`);
+                }
             });
 
         return () => {

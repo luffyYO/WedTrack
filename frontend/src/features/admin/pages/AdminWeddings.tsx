@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Search, Loader2, Trash2, MapPin, Calendar } from 'lucide-react';
 import apiClient from '@/api/client';
+import { supabase } from '@/config/supabaseClient';
 
 interface Wedding {
   id: string;
@@ -18,45 +19,57 @@ export default function AdminWeddings() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const fetchW = async () => {
-    setLoading(true);
-    try {
-      // Use list-weddings Edge Function
-      const res = await apiClient.get('list-weddings');
-      let data = res.data.data || [];
-      
-      // Perform client-side search for now, or we could add search to the Edge Function
-      if (search) {
-        const s = search.toLowerCase();
-        data = data.filter((w: Wedding) => 
-          w.bride_name.toLowerCase().includes(s) || 
-          w.groom_name.toLowerCase().includes(s) || 
-          w.location.toLowerCase().includes(s)
-        );
-      }
-      
-      setWeddings(data);
-    } catch (err) {
-      console.error('Failed to load weddings', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch once on mount — all filtering is done client-side
   useEffect(() => {
+    const fetchW = async () => {
+      setLoading(true);
+      try {
+        // Direct Supabase query — replaces list-weddings Edge Function call
+        // Admin panel uses service-role context via Edge Function for full access;
+        // here we use the admin's own auth which covers all weddings via RLS bypass
+        // if the admin has a superuser policy, otherwise fall back to Edge Function.
+        const { data, error } = await supabase
+          .from('weddings')
+          .select('id, bride_name, groom_name, location, wedding_date, qr_status')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          // Fallback to Edge Function if direct query fails (e.g. RLS blocks admin)
+          const res = await apiClient.get('list-weddings');
+          setWeddings(res.data.data || []);
+        } else {
+          setWeddings(data ?? []);
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('Failed to load weddings', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchW();
-  }, [search]);
+  }, []); // ← fetch ONCE, not on every search change
+
+  // Client-side search — no network call
+  const filteredWeddings = useMemo(() => {
+    if (!search.trim()) return weddings;
+    const s = search.toLowerCase();
+    return weddings.filter(w =>
+      w.bride_name.toLowerCase().includes(s) ||
+      w.groom_name.toLowerCase().includes(s) ||
+      w.location.toLowerCase().includes(s)
+    );
+  }, [weddings, search]);
 
   const handleDelete = async (id: string, couple: string) => {
     if (!window.confirm(`Are you sure you want to delete the wedding for ${couple}? This will also delete all guests and wishes.`)) return;
     
     try {
-      // Use delete-wedding Edge Function
       await apiClient.post('delete-wedding', { wedding_id: id });
       setWeddings(prev => prev.filter(w => w.id !== id));
     } catch (err) {
       alert('Failed to delete wedding');
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
     }
   };
 
@@ -102,10 +115,10 @@ export default function AdminWeddings() {
             <tbody className="divide-y divide-slate-100/10">
               {loading ? (
                 <tr><td colSpan={5} className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-pink-500" /></td></tr>
-              ) : weddings.length === 0 ? (
+              ) : filteredWeddings.length === 0 ? (
                 <tr><td colSpan={5} className="py-12 text-center text-slate-400">No weddings found.</td></tr>
               ) : (
-                weddings.map(w => (
+                filteredWeddings.map(w => (
                   <tr key={w.id} className={`transition-colors ${isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50/50'}`}>
                     <td className="py-4 px-6 font-bold text-pink-500 whitespace-nowrap">{w.bride_name} & {w.groom_name}</td>
                     <td className="py-4 px-6 text-sm">{w.location}</td>
@@ -131,10 +144,10 @@ export default function AdminWeddings() {
       <div className="md:hidden space-y-3">
         {loading ? (
           <div className="py-16 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-pink-500" /></div>
-        ) : weddings.length === 0 ? (
+        ) : filteredWeddings.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-sm">No weddings found.</div>
         ) : (
-          weddings.map(w => (
+          filteredWeddings.map(w => (
             <div 
               key={w.id} 
               className={`rounded-2xl p-4 border transition-all ${isDarkMode ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-200'}`}

@@ -1,0 +1,70 @@
+import { supabase } from '@/config/supabaseClient';
+
+// ─── Wedding Queries ──────────────────────────────────────────────────────────
+
+/**
+ * Fetch all weddings owned by the authenticated user.
+ * Replaces: GET /functions/v1/list-weddings
+ * RLS: weddings.user_id = auth.uid()
+ */
+export async function fetchUserWeddings(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('weddings')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+/**
+ * Fetch a single wedding by its nanoid — for the authenticated user (QR page, dashboard).
+ * Replaces: GET /functions/v1/get-wedding-details (authenticated version)
+ * RLS: weddings.user_id = auth.uid()
+ */
+export async function fetchWeddingByNanoId(nanoid: string): Promise<any | null> {
+  const { data, error } = await supabase
+    .from('weddings')
+    .select('*')
+    .eq('nanoid', nanoid)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * Fetch wedding details for the PUBLIC guest form (no auth required).
+ * Uses anon key — requires a public SELECT policy on weddings for nanoid lookups.
+ * Replaces: GET /functions/v1/get-wedding-details (public version)
+ */
+export async function fetchPublicWeddingByNanoId(nanoid: string): Promise<any | null> {
+  const { data, error } = await supabase
+    .from('weddings')
+    .select('*')
+    .eq('nanoid', nanoid)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// ─── Guest Queries ────────────────────────────────────────────────────────────
+
+/**
+ * Fetch all guests for a specific wedding (authenticated owner only).
+ * Replaces: GET /functions/v1/get-guests?wedding_id=...
+ * RLS: guests table requires wedding owner (auth.uid() matches weddings.user_id)
+ */
+export async function fetchGuests(weddingId: string): Promise<any[]> {
+  if (!weddingId) return [];
+
+  const { data, error } = await supabase
+    .from('guests')
+    .select('*')
+    .eq('wedding_id', weddingId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}

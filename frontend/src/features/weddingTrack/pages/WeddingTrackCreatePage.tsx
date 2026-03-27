@@ -117,7 +117,6 @@ export default function WeddingTrackCreatePage() {
         gallery_images: uploadedUrls
       };
 
-      console.log("FINAL GENERATION PAYLOAD:", payload);
       const axiosResponse = await weddingTrackService.create(payload as any);
 
       // axiosResponse.data = { success: true, data: { id, nanoid, qr_link } }
@@ -130,8 +129,10 @@ export default function WeddingTrackCreatePage() {
         || wedding?.qr_link?.split('/guest-form/')[1]
         || wedding?.id;
 
-      console.log("CREATION RESPONSE:", axiosResponse.data);
-      console.log("RESOLVED NANOID:", weddingId);
+      if (import.meta.env.DEV) {
+        console.log("[DEV] CREATION RESPONSE:", axiosResponse.data);
+        console.log("[DEV] RESOLVED NANOID:", weddingId);
+      }
 
       if (!weddingId) {
         throw new Error('Server returned success but no wedding ID. Please try again.');

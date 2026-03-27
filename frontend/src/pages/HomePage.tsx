@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutDashboard, HeartHandshake, QrCode, Star, Sparkles, Navigation } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { WeddingNameDisplay } from '@/components/ui';
-import apiClient from '@/api/client';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
+import { fetchUserWeddings } from '@/lib/queries';
 
 // ─── QR Status Dot ───────────────────────────────────────────────────────────
 
@@ -48,24 +48,14 @@ function QrStatusDot({ activationTime, expiryTime }: { activationTime: string | 
 export default function HomePage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
-    const [weddings, setWeddings] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const { data } = await apiClient.get('list-weddings');
-                if (data.data) {
-                    setWeddings(data.data);
-                }
-            } catch (err) {
-                console.error("Failed to load home page stats:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchStats();
-    }, []);
+    // TanStack Query — shares cache with DashboardPage (same queryKey)
+    // If the user navigated from dashboard, this is INSTANT (zero network call)
+    const { data: weddings = [], isLoading: loading } = useQuery({
+        queryKey: ['weddings', user?.id],
+        queryFn: fetchUserWeddings,
+        enabled: !!user?.id,
+    });
 
     return (
         <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
@@ -200,7 +190,7 @@ export default function HomePage() {
                                     variant="secondary"
                                     size="sm"
                                     icon={<QrCode size={16} />}
-                                    onClick={() => navigate(`/wedding-track/qr/${w.id}`)}
+                                    onClick={() => navigate(`/wedding-track/qr/${w.nanoid || w.id}`)}
                                 >
                                     Manage Details
                                 </Button>

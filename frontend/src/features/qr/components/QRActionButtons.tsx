@@ -169,11 +169,19 @@ export default function QRActionButtons({
 
     return (
         <>
-            {/* Hidden canvas kept in DOM for accessibility/screen-reader QR detection — only when URL is ready */}
-            <div ref={hiddenCanvasRef} style={{ position: 'absolute', top: -9999, left: -9999, pointerEvents: 'none' }}>
-                {(qrImageUrl || shareLink) ? (
-                    <QRCodeCanvas value={(qrImageUrl || shareLink).trim() || 'https://wedtrackss.in'} size={460} level="H" />
-                ) : null}
+            {/* Hidden canvas for image generation — strictly guarded to prevent library crashes */}
+            <div ref={hiddenCanvasRef} style={{ position: 'absolute', top: -9999, left: -9999, visibility: 'hidden', pointerEvents: 'none' }} aria-hidden="true">
+                {typeof (qrImageUrl || shareLink) === 'string' && (qrImageUrl || shareLink).trim() !== '' ? (
+                    <QRCodeCanvas 
+                        value={(qrImageUrl || shareLink).trim()} 
+                        size={460} 
+                        level="H" 
+                        includeMargin={false}
+                    />
+                ) : (
+                    // Fallback to avoid empty value crash
+                    <QRCodeCanvas value="https://wedtrack.in" size={460} level="H" />
+                )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-[340px] mx-auto">

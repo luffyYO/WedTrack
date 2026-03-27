@@ -11,7 +11,9 @@ export const weddingTrackService = {
      * Edge Function: create-wedding
      */
     create: (data: CreateWeddingTrackPayload) => {
-        console.log("SENDING WEDDING CREATION PAYLOAD:", data);
+        if (import.meta.env.DEV) {
+            console.log('[DEV] SENDING WEDDING CREATION PAYLOAD:', data);
+        }
         return client.post<CreateWeddingTrackResponse>('create-wedding', data);
     },
 
