@@ -35,13 +35,21 @@ Deno.serve(async (req) => {
     }
 
     // 2. Auth Check
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      console.error('[create-wedding] Missing Authorization header')
+      return errorResponse('Missing Authorization header', 401)
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
     if (authError || !user) {
       console.error('[create-wedding] Auth failed:', authError?.message)
       return errorResponse('Unauthorized', 401)

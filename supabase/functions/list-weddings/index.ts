@@ -13,8 +13,16 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get("Authorization")! } } }
     );
 
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("[list-weddings] Missing Authorization header");
+      return errorResponse("Missing Authorization header", 401);
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    
     // Validate the session — this is what makes list-weddings user-specific
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       console.error("[list-weddings] Auth failed:", authError?.message);
       return errorResponse("Unauthorized", 401);

@@ -11,8 +11,7 @@ const client: AxiosInstance = axios.create({
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        apikey: SUPABASE_ANON_KEY
     },
 });
 
@@ -27,30 +26,32 @@ client.interceptors.request.use(
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     // 1. Mandatory base headers for Supabase Edge Functions
-    config.headers['apikey'] = anonKey;
-    config.headers['Content-Type'] = 'application/json';
+    config.headers.set('apikey', anonKey);
+    config.headers.set('Content-Type', 'application/json');
 
     // 2. Identify Public vs. Protected Endpoints
     const isPublic = PUBLIC_ENDPOINTS.some(endpoint => config.url?.includes(endpoint));
 
     // 3. Attach User Token for protected endpoints
+    let authType = 'ANON';
     if (!isPublic) {
         const { data: { session } } = await supabase.auth.getSession();
         const userToken = session?.access_token;
 
         if (userToken) {
-            config.headers['Authorization'] = `Bearer ${userToken}`;
+            config.headers.set('Authorization', `Bearer ${userToken}`);
+            authType = 'USER';
         } else {
             // Fall back to anon key — Edge Function will return 401 which is correct
-            config.headers['Authorization'] = `Bearer ${anonKey}`;
+            config.headers.set('Authorization', `Bearer ${anonKey}`);
         }
     } else {
-        config.headers['Authorization'] = `Bearer ${anonKey}`;
+        config.headers.set('Authorization', `Bearer ${anonKey}`);
     }
 
     // 4. Debug Logging — DEV ONLY
     if (import.meta.env.DEV) {
-        console.log(`🚀 API: ${config.method?.toUpperCase()} ${config.url}`);
+        console.log(`🚀 API [${authType}]: ${config.method?.toUpperCase()} ${config.url}`);
     }
 
     return config;
