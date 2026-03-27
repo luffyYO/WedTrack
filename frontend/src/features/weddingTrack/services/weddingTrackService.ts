@@ -10,8 +10,10 @@ export const weddingTrackService = {
      * Create a new wedding track.
      * Edge Function: create-wedding
      */
-    create: (data: CreateWeddingTrackPayload) =>
-        client.post<CreateWeddingTrackResponse>('create-wedding', data),
+    create: (data: CreateWeddingTrackPayload) => {
+        console.log("SENDING WEDDING CREATION PAYLOAD:", data);
+        return client.post<CreateWeddingTrackResponse>('create-wedding', data);
+    },
 
     /**
      * Fetch all wedding tracks for the authenticated user.

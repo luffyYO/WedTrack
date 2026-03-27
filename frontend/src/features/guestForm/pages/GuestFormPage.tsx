@@ -25,9 +25,10 @@ export default function GuestFormPage() {
         father_last_name: '',
         district: '',
         location: '',
+        mobile: '',
         amount: '',
         payment_type: 'Cash',
-        wishes: '',
+        message: '',
         gift_side: ''
     });
 
@@ -293,12 +294,21 @@ export default function GuestFormPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Mobile Number</label>
+                            <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} 
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
+                                placeholder="e.g. 9988776655"
+                            />
+                        </div>
+                        <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gift Amount (₹) <span className="text-rose-400">*</span></label>
                             <input required type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} 
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-lg font-bold text-slate-800 shadow-sm" 
                                 placeholder="0" 
                             />
                         </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Payment Method</label>
                             <div className="relative">
@@ -333,7 +343,7 @@ export default function GuestFormPage() {
 
                     <div className="pt-2">
                         <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wishes & Blessings</label>
-                        <textarea rows={3} name="wishes" value={formData.wishes} onChange={handleChange} 
+                        <textarea rows={3} name="message" value={formData.message} onChange={handleChange} 
                             className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all resize-none text-sm font-medium text-slate-700 shadow-sm" 
                             placeholder="Write your heartfelt message here..." 
                         />

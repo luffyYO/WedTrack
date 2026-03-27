@@ -13,7 +13,16 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
     console.log(`[create-wedding] Request body: ${JSON.stringify(body)}`)
-    const { bride_name, groom_name, wedding_date, location, upi_id, village, extra_cell } = body
+    const { 
+      bride_name, 
+      groom_name, 
+      wedding_date, 
+      location, 
+      upi_id, 
+      village, 
+      extra_cell,
+      gallery_images 
+    } = body
 
     // 1. Auth Check
     const supabaseClient = createClient(
@@ -52,11 +61,12 @@ Deno.serve(async (req) => {
         upi_id,
         village,
         extra_cell,
+        gallery_images,
         qr_activation_time,
         qr_expires_at,
         qr_link: `${Deno.env.get('FRONTEND_URL')}/guest-form/${weddingNanoId}`
       })
-      .select('nanoid, qr_link')
+      .select('id, nanoid, qr_link')
       .single()
 
     if (dbError) throw dbError

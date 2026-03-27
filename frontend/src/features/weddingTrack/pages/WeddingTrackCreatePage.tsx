@@ -100,27 +100,25 @@ export default function WeddingTrackCreatePage() {
     setFormState((prev) => ({ ...prev, isSubmitting: true }));
     setApiError(null);
 
-    // Trim all fields before sending
-    const trimmedData = {
-      ...formState.data,
-      brideName: formState.data.brideName.trim(),
-      groomName: formState.data.groomName.trim(),
-      venue: formState.data.venue.trim(),
-      village: formState.data.village.trim(),
-    };
-
     try {
       let uploadedUrls: string[] = [];
       if (galleryFiles.length > 0) {
         uploadedUrls = await uploadWeddingGallery(galleryFiles);
       }
 
+      // Map frontend CamelCase to backend snake_case (matches DB schema from screenshot)
       const payload = {
-        ...trimmedData,
-        galleryImages: uploadedUrls
+        bride_name: formState.data.brideName.trim(),
+        groom_name: formState.data.groomName.trim(),
+        location: formState.data.venue.trim(),
+        wedding_date: formState.data.date,
+        village: formState.data.village.trim(),
+        extra_cell: formState.data.extraCell?.trim(),
+        gallery_images: uploadedUrls
       };
 
-      const { data: res } = await weddingTrackService.create(payload) as any;
+      console.log("FINAL GENERATION PAYLOAD:", payload);
+      const { data: res } = await weddingTrackService.create(payload as any);
 
       // Navigate to QR page — backend is now the source of truth
       navigate(`/wedding-track/qr/${res.nanoid || res.id}`);

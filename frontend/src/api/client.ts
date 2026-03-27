@@ -19,6 +19,19 @@ const client: AxiosInstance = axios.create({
     },
 });
 
+// Avoid multiple simultaneous refresh calls
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+    refreshSubscribers.push(cb);
+};
+
+const onTokenRefreshed = (token: string) => {
+    refreshSubscribers.map((cb) => cb(token));
+    refreshSubscribers = [];
+};
+
 /**
  * Polls for a session until it's found or a timeout is reached.
  * Useful for handling initial session recovery race conditions.
@@ -65,6 +78,14 @@ client.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${anonKey}`;
     }
 
+    // 5. Debug Logging
+    if (import.meta.env.DEV || window.location.hostname !== 'localhost') {
+        console.group(`🚀 API REQUEST: ${config.method?.toUpperCase()} ${config.url}`);
+        console.log("PAYLOAD:", config.data);
+        console.log("HEADERS:", { ...config.headers, Authorization: 'REDACTED' });
+        console.groupEnd();
+    }
+
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
@@ -75,40 +96,74 @@ client.interceptors.request.use(
 // Normalises all errors into a consistent ApiError shape.
 
 client.interceptors.response.use(
-    (response) => response,
-    (error: AxiosError<{ message?: string; code?: string }>) => {
-        // ONLY redirect to login on 401 Unauthorized
-        if (error.response && error.response.status === 401) {
-            // Priority 1: Don't redirect if we are already on the login page
-            if (window.location.pathname === '/login') {
-                return Promise.reject(error);
-            }
+    (response) => {
+        // Debug Logging for successful responses
+        if (import.meta.env.DEV || window.location.hostname !== 'localhost') {
+            console.group(`✅ API RESPONSE: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+            console.log("STATUS:", response.status);
+            console.log("DATA:", response.data);
+            console.groupEnd();
+        }
+        return response;
+    },
+    async (error: AxiosError<{ message?: string; code?: string; error?: string }>) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-            // Priority 2: Don't redirect on public pages (guest form, etc.)
-            const isPublicPage = ['/guest-form', '/wedding/'].some(path => 
-                window.location.pathname.startsWith(path)
-            );
+        // 1. Handle 401 Unauthorized with automatic retry
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            // Don't refresh on login or public routes
+            const isLogin = window.location.pathname === '/login';
+            const publicEndpoints = ['get-wedding-details', 'submit-wish', 'fetch-wishes'];
+            const isPublic = publicEndpoints.some(endpoint => originalRequest.url?.includes(endpoint));
 
-            if (!isPublicPage) {
-                // VERIFY if we actually have a session before redirecting
-                // If a session EXISTS but we got a 401, it's likely a transient/token issue
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (!session) {
-                        console.warn('Unauthorized access (401) confirmed. No session found. Redirecting...');
-                        window.location.replace('/login');
-                    } else {
-                        console.warn('Unauthorized access (401) detected BUT session exists. Attempting refresh...');
-                        // No immediate redirect, user code may retry or state will refresh
+            if (!isLogin && !isPublic) {
+                if (isRefreshing) {
+                    return new Promise((resolve) => {
+                        subscribeTokenRefresh((token: string) => {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            resolve(client(originalRequest));
+                        });
+                    });
+                }
+
+                originalRequest._retry = true;
+                isRefreshing = true;
+
+                try {
+                    console.warn('Unauthorized (401) - Attempting token refresh...');
+                    const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+                    
+                    if (refreshError || !session) {
+                        throw new Error('Session refresh failed');
                     }
-                });
+
+                    const newToken = session.access_token;
+                    onTokenRefreshed(newToken);
+                    isRefreshing = false;
+
+                    // Retry original request with new token
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    return client(originalRequest);
+                } catch (refreshErr) {
+                    isRefreshing = false;
+                    console.error('Refresh failed. Redirecting to login.');
+                    supabase.auth.signOut().finally(() => {
+                        window.location.replace('/login');
+                    });
+                    return Promise.reject(refreshErr);
+                }
             }
-        } else {
-            // Log other errors without redirecting
-            console.error(`API Error (${error.response?.status || 'Network/CORS'}):`, error.message);
         }
 
+        // 2. Normalize and Log other errors
+        console.error(`❌ API ERROR:`, {
+            status: error.response?.status,
+            message: error.message,
+            data: error.response?.data
+        });
+
         const apiError: ApiError = {
-            message: error.response?.data?.message ?? error.message ?? 'An unexpected error occurred',
+            message: error.response?.data?.error ?? error.response?.data?.message ?? error.message ?? 'An unexpected error occurred',
             code: error.response?.data?.code,
             statusCode: error.response?.status ?? 0,
         };

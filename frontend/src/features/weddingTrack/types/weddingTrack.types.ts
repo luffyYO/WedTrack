@@ -13,18 +13,26 @@ export interface WeddingTrackFormData {
 
 export interface WeddingTrack extends WeddingTrackFormData {
     id: string;
-    qrCode?: string;  // Base64 data URI of the QR image
-    qrLink?: string;  // Public URL encoded in the QR
+    nanoid: string;
+    qrLink?: string;  
+    gallery_images?: string[];
     createdAt: string;
-    updatedAt: string;
 }
 
-export type CreateWeddingTrackPayload = WeddingTrackFormData;
+export interface CreateWeddingTrackPayload {
+    bride_name: string;
+    groom_name: string;
+    location: string;
+    wedding_date: string;
+    village: string;
+    extra_cell?: string;
+    gallery_images?: string[];
+}
 
 export interface CreateWeddingTrackResponse {
-    weddingId: string;
-    qrLink: string;
-    qrCode: string; // Base64 PNG data URI
+    id: string;
+    nanoid: string;
+    qr_link: string;
 }
 
 // ─── Form validation ──────────────────────────────────────────────────────────

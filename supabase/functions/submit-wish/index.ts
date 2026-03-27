@@ -20,14 +20,16 @@ Deno.serve(async (req) => {
       father_last_name,
       amount, 
       payment_type, 
-      wishes, 
+      message, 
       gift_side, 
       village, 
       district,
-      location
+      location,
+      mobile,
+      transaction_id
     } = body
 
-    console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, first_name: ${first_name}`)
+    console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${first_name} ${last_name || ''}`)
 
     if (!wedding_nanoid) return errorResponse('Missing wedding_nanoid', 400)
     if (!first_name) return errorResponse('first_name is required', 400)
@@ -76,12 +78,13 @@ Deno.serve(async (req) => {
         father_first_name: father_first_name || null,
         father_last_name: father_last_name || null,
         amount: Number(amount) || 0,
-        payment_type: payment_type || 'Cash',
-        wishes: wishes || null,
+        message: message || null,
         gift_side,
         village: village || null,
         district: district || null,
         location: location || null,
+        mobile: mobile || null,
+        transaction_id: transaction_id || null
       })
       .select('id')
       .single()
