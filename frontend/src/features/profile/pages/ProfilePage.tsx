@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import type { UserProfile, ProfileFormState } from '../types/profile.types';
 
 export default function ProfilePage() {
-    const { user, logout } = useAuthStore();
+    const { user, logout, setUser } = useAuthStore();
     const navigate = useNavigate();
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -84,7 +84,7 @@ export default function ProfilePage() {
 
         try {
             // Push edits directly to Supabase User Metadata
-            const { error } = await supabase.auth.updateUser({
+            const { data, error } = await supabase.auth.updateUser({
                 data: {
                     full_name: formState.data.fullName,
                     phone: formState.data.phone,
@@ -99,6 +99,10 @@ export default function ProfilePage() {
             });
 
             if (error) throw error;
+
+            if (data?.user) {
+                setUser(data.user);
+            }
 
             setProfile(formState.data);
             setFormState((prev) => ({

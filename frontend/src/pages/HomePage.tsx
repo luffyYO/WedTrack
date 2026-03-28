@@ -68,7 +68,11 @@ export default function HomePage() {
         <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
             <PageHeader
                 title="Platform Overview"
-                description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}!`}
+                description={
+                    <>
+                        Welcome back, <span className="font-bold text-slate-900 capitalize">{user?.user_metadata?.first_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>!
+                    </>
+                }
                 action={
                     <div className="mt-4 sm:mt-0 w-full sm:w-auto">
                         <Button

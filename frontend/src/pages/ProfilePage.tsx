@@ -3,9 +3,10 @@ import { User, Mail, Phone, Bell, Shield, LogOut, CheckCircle2, ChevronRight, Ca
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store';
+import { supabase } from '@/config/supabaseClient';
 
 export default function ProfilePage() {
-    const { user, logout } = useAuthStore();
+    const { user, logout, setUser } = useAuthStore();
     
     // Local state for the form
     const [firstName, setFirstName] = useState(user?.user_metadata?.first_name || '');
@@ -23,15 +24,31 @@ export default function ProfilePage() {
         }
     }, [user]);
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        // Simulate an API call
-        setTimeout(() => {
+        
+        try {
+            const { data, error } = await supabase.auth.updateUser({
+                data: { 
+                    first_name: firstName,
+                    last_name: lastName
+                }
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                setUser(data.user);
+                setIsSaved(true);
+                setTimeout(() => setIsSaved(false), 3000);
+            }
+        } catch (error: any) {
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile: ' + (error.message || 'Unknown error'));
+        } finally {
             setIsSaving(false);
-            setIsSaved(true);
-            setTimeout(() => setIsSaved(false), 3000);
-        }, 800);
+        }
     };
 
     return (
@@ -61,7 +78,7 @@ export default function ProfilePage() {
                         </div>
                         
                         <h2 className="text-2xl font-bold text-slate-800 tracking-tight z-10">
-                            {firstName || lastName ? `${firstName} ${lastName}` : 'Guest User'}
+                            {firstName || lastName ? `${firstName} ${lastName}` : (user?.email?.split('@')[0] || 'User')}
                         </h2>
                         <p className="text-[13px] text-slate-500 font-medium mt-1 mb-6 flex items-center justify-center gap-1.5 z-10">
                             <Mail size={14} />

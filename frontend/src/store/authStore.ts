@@ -12,6 +12,7 @@ interface AuthActions {
     setSession: (session: Session | null) => void;
     setLoading: (loading: boolean) => void;
     logout: () => void;
+    setUser: (user: User | null) => void;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set) => ({
@@ -33,4 +34,6 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     setLoading: (isLoading) => set({ isLoading }),
 
     logout: () => set({ user: null, session: null, isAuthenticated: false }),
+
+    setUser: (user) => set({ user, isAuthenticated: !!user }),
 }));

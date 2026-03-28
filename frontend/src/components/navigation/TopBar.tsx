@@ -26,7 +26,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
         navigate('/wishes');
     }, [navigate]);
 
-    const userFirstName = user?.user_metadata?.first_name || user?.user_metadata?.name || 'User';
+    const userFirstName = user?.user_metadata?.first_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
     return (
         <header
