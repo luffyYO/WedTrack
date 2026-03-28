@@ -4,7 +4,6 @@ import { useAuthStore } from '@/store';
 import { 
     Instagram, 
     Linkedin,
-    Facebook, 
     Star, 
     Mail, 
     MapPin, 
@@ -16,7 +15,6 @@ import {
     LayoutDashboard, 
     Bell, 
     Send,
-    Navigation,
     HeartHandshake,
     ListX,
     MessageCircle

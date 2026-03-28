@@ -27,7 +27,45 @@ export const generateGuestListPDF = async (guests: GuestExportData[], summary: E
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const today = formatDate(new Date().toISOString());
+
+  const addDesignEdges = () => {
+    // Outer elegant gold line
+    doc.setDrawColor(212, 175, 55); // #D4AF37
+    doc.setLineWidth(0.6);
+    doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+
+    // Inner stitched (dashed) indigo line
+    doc.setDrawColor(79, 70, 229); // #4F46E5
+    doc.setLineWidth(0.3);
+    if (typeof (doc as any).setLineDashPattern === 'function') {
+      (doc as any).setLineDashPattern([2, 2], 0);
+    }
+    doc.rect(11, 11, pageWidth - 22, pageHeight - 22);
+    if (typeof (doc as any).setLineDashPattern === 'function') {
+      (doc as any).setLineDashPattern([], 0); // Restore default
+    }
+    
+    // Thicker Corner Accents for a premium invitation look
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(1.2);
+    const cornerSize = 8;
+    // Top-Left
+    doc.line(8, 8 + cornerSize, 8, 8);
+    doc.line(8, 8, 8 + cornerSize, 8);
+    // Top-Right
+    doc.line(pageWidth - 8, 8 + cornerSize, pageWidth - 8, 8);
+    doc.line(pageWidth - 8, 8, pageWidth - 8 - cornerSize, 8);
+    // Bottom-Left
+    doc.line(8, pageHeight - 8 - cornerSize, 8, pageHeight - 8);
+    doc.line(8, pageHeight - 8, 8 + cornerSize, pageHeight - 8);
+    // Bottom-Right
+    doc.line(pageWidth - 8, pageHeight - 8 - cornerSize, pageWidth - 8, pageHeight - 8);
+    doc.line(pageWidth - 8, pageHeight - 8, pageWidth - 8 - cornerSize, pageHeight - 8);
+  };
+
+  addDesignEdges(); // Draw immediately on Page 1
 
   // 1. Title & Branding (Centered)
   doc.setFontSize(22);
@@ -104,8 +142,10 @@ export const generateGuestListPDF = async (guests: GuestExportData[], summary: E
     alternateRowStyles: {
       fillColor: [250, 250, 252]
     },
-    margin: { top: 25, bottom: 25 },
+    margin: { top: 25, bottom: 25, left: 18, right: 18 }, // Moved inside borders a bit more
     didDrawPage: (data: { pageNumber: number }) => {
+      addDesignEdges();
+
       if (data.pageNumber > 1) {
         doc.setFontSize(9);
         doc.setTextColor(150, 150, 150);

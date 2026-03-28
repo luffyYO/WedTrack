@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { SearchX, MapPin, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { SearchX, MapPin, User } from 'lucide-react';
 import { formatDate, parseSafeDate } from '@/utils/formatters';
 
 interface Guest {
@@ -22,12 +22,18 @@ interface SearchResultsProps {
 }
 
 const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDelete }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-
-    // Reset to page 1 when search results change
-    useEffect(() => {
-        setCurrentPage(1);
+    // Single page rendering with dynamic sorting
+    const sortedResults = useMemo(() => {
+        return [...results].sort((a, b) => {
+            // Pending entries (!is_paid) before verified entries (is_paid)
+            if (a.is_paid !== b.is_paid) {
+                return a.is_paid ? 1 : -1;
+            }
+            // Sort by time: newest first within each group
+            const timeA = new Date(a.created_at).getTime();
+            const timeB = new Date(b.created_at).getTime();
+            return timeB - timeA;
+        });
     }, [results]);
 
     if (results.length === 0) {
@@ -44,8 +50,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
         );
     }
 
-    const totalPages = Math.ceil(results.length / itemsPerPage);
-    const paginatedResults = results.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    // Table rendering directly without slicing
 
     return (
         <div className="bg-white dark:bg-black rounded-[2rem] shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -55,14 +60,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                         <tr>
                             <th className="px-4 py-3">Guest Name</th>
                             <th className="px-4 py-3">Father's Name</th>
-                            <th className="px-4 py-3 text-right">Amount & Type</th>
+                            <th className="px-4 py-3 text-right">Amount and Type</th>
                             <th className="px-4 py-3 text-center">Status / Action</th>
                             <th className="px-4 py-3">Location</th>
-                            <th className="px-4 py-3">Date & Time</th>
+                            <th className="px-4 py-3">Date and Time</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                        {paginatedResults.map((guest) => {
+                        {sortedResults.map((guest) => {
                             const entryDate = parseSafeDate(guest.created_at);
                             const timeStr = entryDate && !isNaN(entryDate.getTime()) 
                                 ? entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
@@ -143,33 +148,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                     </tbody>
                 </table>
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-                    <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className="p-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-pink-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
-                            aria-label="Previous Page"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className="p-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-pink-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
-                            aria-label="Next Page"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

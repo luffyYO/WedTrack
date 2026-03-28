@@ -189,47 +189,43 @@ export default function DashboardPage() {
         return result;
     }, [guests, debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod]);
 
-    // ── Mutations ──────────────────────────────────────────────
+    // ── Mutations (keep using Edge Functions for write operations) ───────────
     const confirmGuest = async (guestId: string) => {
-        // Optimistically update cache INSTANTLY
-        queryClient.setQueryData(
-            ['guests', selectedWeddingId],
-            (old: any[] = []) =>
-                old.map(g => g.id === guestId ? { ...g, is_paid: true, payment_status: 'paid' } : g)
-        );
-
         try {
             await apiClient.post('update-guest', { 
                 guest_id: guestId, 
                 is_paid: true,
                 payment_status: 'paid' 
             });
+            
+            // Optimistically update cache
+            queryClient.setQueryData(
+                ['guests', selectedWeddingId],
+                (old: any[] = []) =>
+                    old.map(g => g.id === guestId ? { ...g, is_paid: true, payment_status: 'paid' } : g)
+            );
 
-            // Trigger WhatsApp notification asynchronously
+            // Trigger WhatsApp notification asynchronously so it doesn't block the UI
             apiClient.post('send-whatsapp', { guest_id: guestId })
                 .catch(err => console.error('WhatsApp trigger failed:', err));
 
         } catch (err) {
             if (import.meta.env.DEV) console.error('Failed to confirm payment:', err);
-            queryClient.invalidateQueries({ queryKey: ['guests', selectedWeddingId] }); // Revert on fail
             alert('Failed to confirm payment.');
         }
     };
 
     const deleteGuest = async (guestId: string) => {
         if (!window.confirm('Are you sure you want to cancel and remove this guest entry? This cannot be undone.')) return;
-        
-        // Optimistically remove from cache INSTANTLY
-        queryClient.setQueryData(
-            ['guests', selectedWeddingId],
-            (old: any[] = []) => old.filter(g => g.id !== guestId)
-        );
-
         try {
             await apiClient.post('delete-guest', { guest_id: guestId });
+            // Remove from cache immediately
+            queryClient.setQueryData(
+                ['guests', selectedWeddingId],
+                (old: any[] = []) => old.filter(g => g.id !== guestId)
+            );
         } catch (err) {
             if (import.meta.env.DEV) console.error('Failed to delete guest:', err);
-            queryClient.invalidateQueries({ queryKey: ['guests', selectedWeddingId] }); // Revert on fail
             alert('Failed to remove guest entry.');
         }
     };
@@ -238,16 +234,14 @@ export default function DashboardPage() {
         const wedding = weddings.find((w: any) => w.id === selectedWeddingId);
         if (!wedding) return;
 
-        const verifiedGuests = filteredGuests.filter((g: any) => g.is_paid);
-
         setPdfLoading(true);
         try {
             const summary = {
                 weddingName: `${wedding.bride_name} & ${wedding.groom_name}`,
-                totalGifts: verifiedGuests.length,
-                totalAmount: verifiedGuests.reduce((sum, g) => sum + Number(g.amount || 0), 0),
+                totalGifts: totalVerifiedGifts,
+                totalAmount: totalCollected,
             };
-            await generateGuestListPDF(verifiedGuests, summary);
+            await generateGuestListPDF(filteredGuests, summary);
         } catch (err) {
             if (import.meta.env.DEV) console.error('PDF generation failed:', err);
             alert('Failed to generate PDF. Please try again.');
