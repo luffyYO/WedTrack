@@ -33,7 +33,7 @@ const client: AxiosInstance = axios.create({
 });
 
 // Public endpoints that don't require a user JWT
-const PUBLIC_ENDPOINTS = ['get-wedding-details', 'submit-wish', 'fetch-wishes', 'parse-voice'];
+const PUBLIC_ENDPOINTS = ['get-wedding-details', 'submit-wish', 'fetch-wishes'];
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
 // Uses cached token — NO async getSession() call per request.
