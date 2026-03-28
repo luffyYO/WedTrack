@@ -23,7 +23,7 @@ export default function DashboardPage() {
     const { activeWedding, setActiveWedding } = useAppStore();
     const queryClient = useQueryClient();
 
-    const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+    const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id);
     const selectedWeddingId = activeWedding?.id && isUUID(activeWedding.id) ? activeWedding.id : '';
 
     const [pdfLoading, setPdfLoading] = useState(false);
@@ -82,6 +82,11 @@ export default function DashboardPage() {
     useEffect(() => {
         if (!selectedWeddingId) return;
 
+        if (!isUUID(selectedWeddingId)) {
+            console.warn(`[Realtime Config] CRITICAL: Attempted to subscribe with an invalid UUID (${selectedWeddingId}). Aborting connection to prevent payload errors.`);
+            return;
+        }
+
         const channel = supabase
             .channel(`dashboard-guests:${selectedWeddingId}`)
             .on(
@@ -132,7 +137,13 @@ export default function DashboardPage() {
                     );
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log(`[Realtime Config] Successfully subscribed to dashboard-guests:${selectedWeddingId}`);
+                } else {
+                    console.warn(`[Realtime Config] Subscription error/failure: ${status}`);
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);

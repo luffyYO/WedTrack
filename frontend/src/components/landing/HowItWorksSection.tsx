@@ -143,10 +143,18 @@ export default function HowItWorksSection() {
                                                     : "opacity-0 -translate-x-12"
                                         )}
                                     >
+                                        {/* Dynamic blurred backdrop to fill empty space */}
                                         <img 
                                             src={step.img}
                                             alt={step.title}
-                                            className="w-full h-full object-cover object-top"
+                                            className="absolute inset-0 w-full h-full object-cover opacity-60 blur-2xl scale-110"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                        {/* Actual fully visible image */}
+                                        <img 
+                                            src={step.img}
+                                            alt={step.title}
+                                            className="absolute inset-0 w-full h-full object-contain object-top drop-shadow-2xl"
                                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                         />
                                     </div>

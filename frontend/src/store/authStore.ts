@@ -39,6 +39,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         useAppStore.getState().clearActiveWedding();
         useWishStore.getState().reset();
         queryClient.clear();
+        
+        // MANTADORY: Full application reset
+        localStorage.clear();
+        sessionStorage.clear();
+        
         set({ user: null, session: null, isAuthenticated: false });
     },
 

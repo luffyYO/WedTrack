@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store';
 import { 
     Instagram, 
+    Linkedin,
     Facebook, 
     Star, 
     Mail, 
@@ -431,8 +432,11 @@ export default function LandingPage() {
                             <Logo size="lg" />
                             <p className="max-w-sm leading-relaxed text-[13px] sm:text-sm text-slate-500 font-medium">The elegant, uncompromised solution to wedding management. Secure invitations, real-time logging, and beautiful tracking.</p>
                             <div className="flex gap-3 sm:gap-4 pt-2">
-                                {[Instagram, Facebook, Navigation].map((Icon, i) => (
-                                    <a key={i} href="#" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center transition-all hover:scale-110 hover:border-pink-300 hover:text-pink-500 text-slate-500">
+                                {[
+                                    { Icon: Instagram, href: "https://www.instagram.com/wedtrackss/" },
+                                    { Icon: Linkedin, href: "https://www.linkedin.com/in/wedtrack" }
+                                ].map(({Icon, href}, i) => (
+                                    <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center transition-all hover:scale-110 hover:border-pink-300 hover:text-pink-500 text-slate-500">
                                         <Icon size={18} />
                                     </a>
                                 ))}
