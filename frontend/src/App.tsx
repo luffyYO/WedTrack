@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import AppRouter from '@/routes/router';
 import { supabase } from '@/config/supabaseClient';
 import { useAuthStore } from '@/store';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * App root — thin wrapper that mounts the router.
@@ -9,6 +10,7 @@ import { useAuthStore } from '@/store';
  */
 export default function App() {
     const setSession = useAuthStore((state) => state.setSession);
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         document.documentElement.classList.remove('dark');
@@ -37,13 +39,19 @@ export default function App() {
         // Listen for auth changes (login, logout, token refresh)
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-
+        } = supabase.auth.onAuthStateChange((event, session) => {
             setSession(session);
+
+            // ── Cache isolation: clear ALL cached queries on sign-out ──────────
+            // Prevents previous user's data (weddings, guests) from leaking to
+            // the next user who logs in on the same browser session.
+            if (event === 'SIGNED_OUT') {
+                queryClient.clear();
+            }
         });
 
         return () => subscription.unsubscribe();
-    }, [setSession]);
+    }, [setSession, queryClient]);
 
     return <AppRouter />;
 }

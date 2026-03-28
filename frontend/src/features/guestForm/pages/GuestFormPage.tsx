@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Heart } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Heart, Mic } from 'lucide-react';
 import apiClient from '@/api/client';
 import { supabase } from '@/config/supabaseClient';
 import { WeddingNameDisplay } from '@/components/ui';
 import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
+import { useVoiceInput, type SupportedLanguage } from '../hooks/useVoiceInput';
+import VoiceButton from '../components/VoiceButton';
+import VoiceConfirmCard from '../components/VoiceConfirmCard';
 
 export default function GuestFormPage() {
     const { weddingId: weddingNanoId } = useParams<{ weddingId: string }>();
@@ -29,6 +32,37 @@ export default function GuestFormPage() {
         gift_side: '',
         wish: ''
     });
+
+    // ── Voice Input ──────────────────────────────────────────────────────────
+    const [voiceLang, setVoiceLang] = useState<SupportedLanguage>('en-IN');
+    const {
+        status: voiceStatus,
+        transcript,
+        parsedData,
+        errorMsg: voiceError,
+        isSupported: voiceSupported,
+        startListening,
+        stopListening,
+        reset: resetVoice,
+    } = useVoiceInput(voiceLang);
+
+    const [showVoiceSection, setShowVoiceSection] = useState(false);
+
+    // Map parsed voice data → form fields (only populate non-empty values)
+    const handleVoiceConfirm = (data: typeof parsedData) => {
+        if (!data) return;
+        setFormData(prev => ({
+            ...prev,
+            ...(data.name        ? { fullname:       data.name }        : {}),
+            ...(data.father_name ? { father_fullname: data.father_name } : {}),
+            ...(data.village     ? { village:         data.village }     : {}),
+            ...(data.amount > 0  ? { amount:          String(data.amount) } : {}),
+            ...(data.message     ? { wish:            data.message }     : {}),
+            ...(data.phone       ? { phone_number:    data.phone }       : {}),
+        }));
+        resetVoice();
+        setShowVoiceSection(false);
+    };
 
     useEffect(() => {
         const fetchWedding = async () => {
@@ -243,6 +277,16 @@ export default function GuestFormPage() {
                     </p>
                 </div>
 
+                {/* ── Voice Confirm Overlay ──────────────────────────────── */}
+                {parsedData && voiceStatus === 'done' && (
+                    <VoiceConfirmCard
+                        parsedData={parsedData}
+                        transcript={transcript}
+                        onConfirm={handleVoiceConfirm}
+                        onEdit={() => { resetVoice(); setShowVoiceSection(false); }}
+                    />
+                )}
+
                 <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 bg-white/40">
                     
                     {error && (
@@ -250,6 +294,65 @@ export default function GuestFormPage() {
                             <AlertCircle size={18} className="shrink-0 mt-0.5" /> <span>{error}</span>
                         </div>
                     )}
+
+                    {/* ── Voice Input Section ──────────────────────────────── */}
+                    <div className="rounded-2xl border border-slate-200/60 bg-white/50 overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setShowVoiceSection(v => !v)}
+                            className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-pink-50/40 transition-colors"
+                        >
+                            <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                <Mic size={15} className="text-white" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[13px] font-bold text-slate-700">Fill with Voice</p>
+                                <p className="text-[11px] text-slate-400">Speak in Telugu, Hindi, or English</p>
+                            </div>
+                            <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showVoiceSection ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5.25 7.5L10 12.25l4.75-4.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                            </svg>
+                        </button>
+
+                        {showVoiceSection && (
+                            <div className="px-4 pb-5 pt-2 border-t border-slate-100 flex flex-col items-center gap-4">
+                                {/* Voice error message */}
+                                {voiceError && (
+                                    <div className="w-full bg-amber-50 text-amber-600 px-3 py-2 rounded-xl text-[12px] font-medium border border-amber-100 flex items-center gap-2">
+                                        <AlertCircle size={14} />
+                                        {voiceError}
+                                    </div>
+                                )}
+
+                                {/* Live transcript preview while listening */}
+                                {voiceStatus === 'listening' && transcript && (
+                                    <div className="w-full bg-rose-50 rounded-xl px-3 py-2 text-[13px] text-rose-700 italic border border-rose-100">
+                                        "{transcript}"
+                                    </div>
+                                )}
+
+                                <VoiceButton
+                                    status={voiceStatus}
+                                    isSupported={voiceSupported}
+                                    onStart={startListening}
+                                    onStop={stopListening}
+                                    language={voiceLang}
+                                    onLanguageChange={setVoiceLang}
+                                />
+
+                                {/* Reset button if there was an error or it's done */}
+                                {(voiceStatus === 'error' || voiceStatus === 'done') && (
+                                    <button
+                                        type="button"
+                                        onClick={resetVoice}
+                                        className="text-[11px] font-bold text-slate-400 hover:text-pink-500 uppercase tracking-wider transition-colors"
+                                    >
+                                        ↺ Try Again
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">

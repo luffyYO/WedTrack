@@ -4,13 +4,16 @@ import { supabase } from '@/config/supabaseClient';
 
 /**
  * Fetch all weddings owned by the authenticated user.
- * Replaces: GET /functions/v1/list-weddings
- * RLS: weddings.user_id = auth.uid()
+ * Called via TanStack Query as: queryFn: () => fetchUserWeddings(user.id)
+ * Defense-in-depth: explicit .eq('user_id', userId) + RLS both enforce isolation.
  */
-export async function fetchUserWeddings(): Promise<any[]> {
+export async function fetchUserWeddings(userId: string): Promise<any[]> {
+  if (!userId) return [];
+
   const { data, error } = await supabase
     .from('weddings')
     .select('*')
+    .eq('user_id', userId)           // ← explicit filter — never returns other users' data
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);

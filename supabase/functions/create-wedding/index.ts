@@ -61,8 +61,11 @@ Deno.serve(async (req) => {
 
     // 4. Generation & DB Write
     const weddingNanoId = nanoid(10)
-    const qr_activation_time = new Date(`${wedding_date}T00:00:00+05:30`).toISOString()
-    const qr_expires_at = new Date(new Date(qr_activation_time).getTime() + 24 * 60 * 60 * 1000).toISOString()
+    // QR is active from the moment of creation and expires exactly 24 hours later.
+    // Example: generated at 2:00 PM → active 2 PM today → expires 2 PM tomorrow.
+    const now = new Date()
+    const qr_activation_time = now.toISOString()
+    const qr_expires_at = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
     
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     if (!serviceKey) {

@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
 import { WeddingNameDisplay } from '@/components/ui';
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useAppStore } from '@/store';
 import { fetchUserWeddings } from '@/lib/queries';
 
 // ─── QR Status Dot ───────────────────────────────────────────────────────────
@@ -48,14 +48,21 @@ function QrStatusDot({ activationTime, expiryTime }: { activationTime: string | 
 export default function HomePage() {
     const navigate = useNavigate();
     const { user } = useAuthStore();
+    const { setActiveWedding } = useAppStore();
 
     // TanStack Query — shares cache with DashboardPage (same queryKey)
     // If the user navigated from dashboard, this is INSTANT (zero network call)
     const { data: weddings = [], isLoading: loading } = useQuery({
         queryKey: ['weddings', user?.id],
-        queryFn: fetchUserWeddings,
+        queryFn: () => fetchUserWeddings(user!.id),
         enabled: !!user?.id,
     });
+
+    // Click a wedding card → set as active and open its dashboard
+    const handleCardClick = (wedding: any) => {
+        setActiveWedding(wedding);
+        navigate('/dashboard');
+    };
 
     return (
         <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
@@ -63,15 +70,7 @@ export default function HomePage() {
                 title="Platform Overview"
                 description={`Welcome back, ${user?.user_metadata?.first_name || 'Admin'}!`}
                 action={
-                    <div className="mt-4 sm:mt-0 w-full sm:w-auto flex flex-col sm:flex-row gap-3">
-                        <Button
-                            variant="secondary"
-                            size="md"
-                            icon={<LayoutDashboard size={16} />}
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            Open Dashboard
-                        </Button>
+                    <div className="mt-4 sm:mt-0 w-full sm:w-auto">
                         <Button
                             variant="primary"
                             size="md"
@@ -155,7 +154,7 @@ export default function HomePage() {
                         {weddings.map((w, index) => (
                             <div 
                                 key={w.id} 
-                                className="relative glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between group overflow-hidden hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1.5 transition-all duration-400"
+                                className="relative glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between group overflow-hidden hover:shadow-[0_16px_36px_rgba(0,0,0,0.07)] hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-pink-100/60"
                                 style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 <QrStatusDot
@@ -185,17 +184,29 @@ export default function HomePage() {
                                         </p>
                                     )}
                                 </div>
-                                <Button 
-                                    className="mt-4 w-full shadow-sm relative z-10" 
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={<QrCode size={16} />}
-                                    onClick={() => navigate(`/wedding-track/qr/${w.nanoid || w.id}`)}
-                                >
-                                    Manage Details
-                                </Button>
+
+                                {/* ── Two action buttons ── */}
+                                <div className="mt-4 grid grid-cols-2 gap-2 relative z-10">
+                                    {/* QR Display */}
+                                    <button
+                                        onClick={() => navigate(`/wedding-track/qr/${w.nanoid || w.id}`)}
+                                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-white/60 border border-slate-200/70 text-[11px] font-bold text-slate-600 hover:bg-pink-50 hover:border-pink-300 hover:text-pink-600 transition-all duration-200 shadow-sm"
+                                    >
+                                        <QrCode size={13} />
+                                        <span>Manage QR</span>
+                                    </button>
+                                    {/* Dashboard */}
+                                    <button
+                                        onClick={() => handleCardClick(w)}
+                                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-400 text-[11px] font-bold text-white hover:from-pink-600 hover:to-rose-500 transition-all duration-200 shadow-sm shadow-pink-300/30"
+                                    >
+                                        <LayoutDashboard size={13} />
+                                        <span>Dashboard</span>
+                                    </button>
+                                </div>
+
                                 {/* Hover Gradient effect */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-pink-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-pink-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none" />
                             </div>
                         ))}
                     </div>
