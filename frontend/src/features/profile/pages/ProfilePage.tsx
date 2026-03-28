@@ -7,13 +7,14 @@ import { Save, AlertCircle } from 'lucide-react';
 import ProfileHeader from '../components/ProfileHeader';
 import ProfileBasicInfo from '../components/ProfileBasicInfo';
 
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, useAppStore } from '@/store';
 import { supabase } from '@/config/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import type { UserProfile, ProfileFormState } from '../types/profile.types';
 
 export default function ProfilePage() {
     const { user, logout, setUser } = useAuthStore();
+    const { clearActiveWedding } = useAppStore();
     const navigate = useNavigate();
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -93,6 +94,8 @@ export default function ProfilePage() {
                     venue: formState.data.venue,
                     village: formState.data.village,
                     country: formState.data.country,
+                    brideName: formState.data.brideName,
+                    groomName: formState.data.groomName,
                     guestCapacityEstimate: formState.data.guestCapacityEstimate,
                     preferredLanguage: formState.data.preferredLanguage
                 }
@@ -128,6 +131,7 @@ export default function ProfilePage() {
     const handleSignOut = async () => {
         setIsLoading(true);
         await supabase.auth.signOut();
+        clearActiveWedding();
         logout();
         navigate('/');
     };

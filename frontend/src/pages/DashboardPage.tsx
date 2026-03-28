@@ -23,7 +23,8 @@ export default function DashboardPage() {
     const { activeWedding, setActiveWedding } = useAppStore();
     const queryClient = useQueryClient();
 
-    const selectedWeddingId = activeWedding?.id || '';
+    const isUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+    const selectedWeddingId = activeWedding?.id && isUUID(activeWedding.id) ? activeWedding.id : '';
 
     const [pdfLoading, setPdfLoading] = useState(false);
 

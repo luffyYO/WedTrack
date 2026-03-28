@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Session, User } from '@supabase/supabase-js';
-
+import { useAppStore } from './appStore';
+import { useWishStore } from './wishStore';
+import { queryClient } from '@/lib/queryClient';
 interface AuthState {
     user: User | null;
     session: Session | null;
@@ -33,7 +35,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
     setLoading: (isLoading) => set({ isLoading }),
 
-    logout: () => set({ user: null, session: null, isAuthenticated: false }),
+    logout: () => {
+        useAppStore.getState().clearActiveWedding();
+        useWishStore.getState().reset();
+        queryClient.clear();
+        set({ user: null, session: null, isAuthenticated: false });
+    },
 
     setUser: (user) => set({ user, isAuthenticated: !!user }),
 }));
