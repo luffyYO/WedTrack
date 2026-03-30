@@ -65,7 +65,7 @@ export default function HomePage() {
     };
 
     return (
-        <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
+        <div className="w-full pb-10 px-4 sm:px-6">
             <PageHeader
                 title="Platform Overview"
                 description={
@@ -155,10 +155,12 @@ export default function HomePage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {weddings.map((w, index) => (
+                        {weddings.map((w, index) => {
+                            if (w.payment_status !== 'paid') return null;
+                            return (
                             <div 
                                 key={w.id} 
-                                className="relative glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between group overflow-hidden hover:shadow-[0_16px_36px_rgba(0,0,0,0.07)] hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-pink-100/60"
+                                className="relative glass-panel rounded-2xl p-4 sm:p-5 flex flex-col justify-between group overflow-hidden hover:shadow-[0_16px_36px_rgba(0,0,0,0.07)] hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-pink-100/60 animate-fade-up opacity-0"
                                 style={{ animationDelay: `${index * 100}ms` }}
                             >
                                 <QrStatusDot
@@ -212,7 +214,7 @@ export default function HomePage() {
                                 {/* Hover Gradient effect */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-pink-50/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none" />
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
                 </div>

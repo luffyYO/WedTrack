@@ -14,6 +14,8 @@ export async function fetchUserWeddings(userId: string): Promise<any[]> {
     .from('weddings')
     .select('*')
     .eq('user_id', userId)           // ← explicit filter — never returns other users' data
+    .eq('payment_status', 'paid')    // ← only show paid weddings
+    .not('qr_link', 'is', null)      // ← ensure QR is generated
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -30,6 +32,7 @@ export async function fetchWeddingByNanoId(nanoid: string): Promise<any | null> 
     .from('weddings')
     .select('*')
     .eq('nanoid', nanoid)
+    .eq('payment_status', 'paid')
     .single();
 
   if (error) throw new Error(error.message);
@@ -46,6 +49,7 @@ export async function fetchPublicWeddingByNanoId(nanoid: string): Promise<any | 
     .from('weddings')
     .select('*')
     .eq('nanoid', nanoid)
+    .eq('payment_status', 'paid')
     .maybeSingle();
 
   if (error) throw new Error(error.message);

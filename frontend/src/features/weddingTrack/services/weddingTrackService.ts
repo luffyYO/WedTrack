@@ -34,4 +34,11 @@ export const weddingTrackService = {
      */
     delete: (id: string) =>
         client.post('delete-wedding', { wedding_id: id }),
+
+    /**
+     * Verify Cashfree payment.
+     * Edge Function: verify-payment
+     */
+    verifyPayment: (orderId: string) =>
+        client.post('verify-payment', { order_id: orderId }),
 };

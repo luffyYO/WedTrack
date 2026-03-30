@@ -27,13 +27,15 @@ export interface CreateWeddingTrackPayload {
     village: string;
     extra_cell?: string;
     gallery_images?: string[];
+    selected_plan?: string;
+    amount?: number;
 }
 
 // Shape of the actual inner wedding record returned by create-wedding Edge Function
 export interface CreateWeddingTrackResult {
     id: string;
-    nanoid: string;
-    qr_link: string;
+    payment_session_id: string;
+    order_id: string;
 }
 
 // Edge Functions wrap responses as: { success: boolean, data: T }

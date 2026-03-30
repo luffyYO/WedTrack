@@ -20,6 +20,7 @@ const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 
 // Feature pages
 const WeddingTrackCreatePage = lazy(() => import('@/features/weddingTrack/pages/WeddingTrackCreatePage'));
+const WeddingTrackVerifyPage = lazy(() => import('@/features/weddingTrack/pages/WeddingTrackVerifyPage'));
 const WeddingQRPage = lazy(() => import('@/features/qr/pages/WeddingQRPage'));
 const GuestFormPage = lazy(() => import('@/features/guestForm/pages/GuestFormPage'));
 
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
                     { path: '/profile', element: <Suspense fallback={<Loader />}><ProfilePage /></Suspense> },
                     { path: '/settings', element: <Suspense fallback={<Loader />}><SettingsPage /></Suspense> },
                     { path: '/wedding-track/new', element: <Suspense fallback={<Loader />}><WeddingTrackCreatePage /></Suspense> },
+                    { path: '/wedding-track/verify', element: <Suspense fallback={<Loader />}><WeddingTrackVerifyPage /></Suspense> },
                     { path: '/wedding-track/qr/:trackId', element: <Suspense fallback={<Loader />}><WeddingQRPage /></Suspense> },
                 ],
             },

@@ -33,13 +33,13 @@ const client: AxiosInstance = axios.create({
 });
 
 // Public endpoints that don't require a user JWT
-const PUBLIC_ENDPOINTS = ['get-wedding-details', 'submit-wish', 'fetch-wishes'];
+const PUBLIC_ENDPOINTS = ['get-wedding-details', 'submit-wish', 'fetch-wishes', 'verify-payment'];
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
 // Uses cached token — NO async getSession() call per request.
 
 client.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
     // 1. Mandatory base headers for Supabase Edge Functions
@@ -49,9 +49,22 @@ client.interceptors.request.use(
     // 2. Identify Public vs. Protected Endpoints
     const isPublic = PUBLIC_ENDPOINTS.some(endpoint => config.url?.includes(endpoint));
 
-    // 3. Attach token — SYNCHRONOUS, no await
-    if (!isPublic && _cachedToken) {
-      config.headers.set('Authorization', `Bearer ${_cachedToken}`);
+    // 3. Attach token
+    if (!isPublic) {
+      let tokenToUse = _cachedToken;
+      // Race condition on full-page redirect: _cachedToken might not be populated yet.
+      if (!tokenToUse) {
+        const { data: { session } } = await supabase.auth.getSession();
+        tokenToUse = session?.access_token ?? null;
+        if (tokenToUse) _cachedToken = tokenToUse; // populate cache
+      }
+
+      if (tokenToUse) {
+        config.headers.set('Authorization', `Bearer ${tokenToUse}`);
+      } else {
+        // Fallback for unauthenticated but protected endpoint hit (shouldn't happen for logged in users)
+        config.headers.set('Authorization', `Bearer ${anonKey}`);
+      }
     } else {
       config.headers.set('Authorization', `Bearer ${anonKey}`);
     }

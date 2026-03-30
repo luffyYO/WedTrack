@@ -16,6 +16,8 @@ import type {
   WeddingTrackFormErrors,
   WeddingTrackFormState,
 } from '../types/weddingTrack.types';
+import { load } from '@cashfreepayments/cashfree-js';
+import PricingModal from '../components/PricingModal';
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 
@@ -69,6 +71,7 @@ export default function WeddingTrackCreatePage() {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
 
   // ── Field change ────────────────────────────────────────────────────────────
   const handleChange = useCallback((field: keyof WeddingTrackFormData, value: string) => {
@@ -79,7 +82,7 @@ export default function WeddingTrackCreatePage() {
     }));
   }, []);
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Step 1: Validate & Choose Plan ──────────────────────────────────────────
   const handleGenerateQR = async () => {
     const errors = validate(formState.data);
     
@@ -97,6 +100,12 @@ export default function WeddingTrackCreatePage() {
       return;
     }
 
+    // If valid, show pricing
+    setIsPricingOpen(true);
+  };
+
+  // ── Step 2: Finalize & Pay ──────────────────────────────────────────────────
+  const handlePlanSelect = async (plan: 'basic' | 'pro', amount: number) => {
     setFormState((prev) => ({ ...prev, isSubmitting: true }));
     setApiError(null);
 
@@ -106,7 +115,6 @@ export default function WeddingTrackCreatePage() {
         uploadedUrls = await uploadWeddingGallery(galleryFiles);
       }
 
-      // Map frontend CamelCase to backend snake_case (matches DB schema from screenshot)
       const payload = {
         bride_name: formState.data.brideName.trim(),
         groom_name: formState.data.groomName.trim(),
@@ -114,35 +122,39 @@ export default function WeddingTrackCreatePage() {
         wedding_date: formState.data.date,
         village: formState.data.village.trim(),
         extra_cell: formState.data.extraCell?.trim(),
-        gallery_images: uploadedUrls
+        gallery_images: uploadedUrls,
+        selected_plan: plan,
+        amount: amount
       };
 
       const axiosResponse = await weddingTrackService.create(payload as any);
+      const sessionData = axiosResponse.data?.data;
 
-      // axiosResponse.data = { success: true, data: { id, nanoid, qr_link } }
-      const wedding = axiosResponse.data?.data;
-
-      // Prefer the true nanoid. If DB returns null (schema/trigger issue),
-      // extract it from qr_link which always contains the generated short ID.
-      // Fall back to UUID only as absolute last resort.
-      const weddingId = wedding?.nanoid
-        || wedding?.qr_link?.split('/guest-form/')[1]
-        || wedding?.id;
-
-
-
-      if (!weddingId) {
-        throw new Error('Server returned success but no wedding ID. Please try again.');
+      if (!sessionData?.payment_session_id || !sessionData?.order_id) {
+        throw new Error('Server did not return a valid payment session.');
       }
 
-      // Navigate to QR page
-      navigate(`/wedding-track/qr/${weddingId}`);
+      const cashfree = await load({
+        mode: import.meta.env.VITE_CASHFREE_ENV === 'PROD' ? 'production' : 'sandbox'
+      });
+
+      setIsPricingOpen(false); // Close pricing modal before opening checkout
+
+      cashfree.checkout({
+        paymentSessionId: sessionData.payment_session_id,
+        redirectTarget: "_modal",
+      }).then((result: any) => {
+        if (result.error) {
+          setApiError(result.error.message || 'Payment was cancelled or failed.');
+          setFormState((prev) => ({ ...prev, isSubmitting: false }));
+        } else if (result.paymentDetails) {
+          navigate(`/wedding-track/verify?order_id=${sessionData.order_id}`);
+        }
+      });
     } catch (err: any) {
-      const apiData = err.response?.data;
-      // prioritize .error from backend as requested by user
-      const message = apiData?.error || apiData?.message || apiData?.details || 'Failed to create wedding track. Please enter valid details';
-      setApiError(message);
+      setApiError(err.message || 'Failed to initiate payment.');
       setFormState((prev) => ({ ...prev, isSubmitting: false }));
+      setIsPricingOpen(false);
     }
   };
 
@@ -219,10 +231,17 @@ export default function WeddingTrackCreatePage() {
             >
               Generate Wedding QR
             </Button>
-            <p className="text-xs sm:text-sm text-slate-400 text-center mt-4">
-              You will be redirected to your unique QR code page.
+            <p className="text-xs sm:text-sm text-slate-400 text-center mt-4 italic font-medium">
+              Choose a plan to continue with your wedding track.
             </p>
           </div>
+
+          <PricingModal 
+            isOpen={isPricingOpen}
+            onClose={() => setIsPricingOpen(false)}
+            onSelectPlan={handlePlanSelect}
+            isSubmitting={formState.isSubmitting}
+          />
         </div>
       </div>
     </div>

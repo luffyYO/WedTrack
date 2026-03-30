@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, IndianRupee, Download, LayoutDashboard } from 'lucide-react';
+import { Plus, Users, IndianRupee, Download, LayoutDashboard, Link2, Copy, Check } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { generateGuestListPDF } from '@/utils/pdfGenerator';
 import PageHeader from '@/components/layout/PageHeader';
@@ -27,6 +27,7 @@ export default function DashboardPage() {
     const selectedWeddingId = activeWedding?.id && isUUID(activeWedding.id) ? activeWedding.id : '';
 
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
 
     // Search & Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -186,6 +187,13 @@ export default function DashboardPage() {
             }
         }
 
+        // Side filter — Bride Side / Groom Side
+        if (activeFilter === 'Side' && selectedPaymentMethod) {
+            result = result.filter(g =>
+                (g.gift_side || '').toLowerCase() === selectedPaymentMethod.toLowerCase()
+            );
+        }
+
         return result;
     }, [guests, debouncedSearchQuery, activeFilter, selectedAmountRange, selectedPaymentMethod]);
 
@@ -272,10 +280,11 @@ export default function DashboardPage() {
         );
     }, [guests]);
 
-    const isFilterActive = debouncedSearchQuery.trim().length > 0 || selectedAmountRange !== null || selectedPaymentMethod !== null;
 
+
+
+    // Always compute from filteredGuests — no isFilterActive guard so mobile always sees the correct values
     const { filteredVerifiedGiftsCount, filteredVerifiedAmount } = useMemo(() => {
-        if (!isFilterActive) return { filteredVerifiedGiftsCount: 0, filteredVerifiedAmount: 0 };
         return filteredGuests.reduce(
             (acc, g) => {
                 if (g.is_paid) {
@@ -286,10 +295,11 @@ export default function DashboardPage() {
             },
             { filteredVerifiedGiftsCount: 0, filteredVerifiedAmount: 0 }
         );
-    }, [filteredGuests, isFilterActive]);
+    }, [filteredGuests]);
 
     return (
-        <div className="w-full pb-10 px-4 sm:px-6 animate-fade-up">
+        <div className="w-full pb-10">
+            <div className="px-4 sm:px-6">
             <PageHeader
                 title="Management Dashboard"
                 description={
@@ -311,9 +321,139 @@ export default function DashboardPage() {
                     </div>
                 }
             />
+            </div>
+
+            {/* ── Invite Link Banner ── */}
+            {activeWedding?.nanoid && (() => {
+                const inviteUrl = `${window.location.origin}/guest-form/${activeWedding.nanoid}`;
+                const handleCopy = () => {
+                    navigator.clipboard.writeText(inviteUrl).then(() => {
+                        setLinkCopied(true);
+                        setTimeout(() => setLinkCopied(false), 2000);
+                    });
+                };
+                const handleWhatsApp = () => {
+                    const weddingName = activeWedding?.bride_name && activeWedding?.groom_name
+                        ? `${activeWedding.bride_name} & ${activeWedding.groom_name}'s`
+                        : 'Our';
+                    const msg = `💍 ${weddingName} Wedding
+
+You're invited! Please register your gift/contribution using this link:
+${inviteUrl}
+
+Powered by WedTrack 🌸`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                };
+                return (
+                    <div
+                        style={{
+                            margin: '12px 0 0',
+                            background: '#ffffff',
+                            borderRadius: '1.1rem',
+                            boxShadow: '0 2px 16px -4px rgba(25,28,30,0.07)',
+                            padding: '10px 14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        {/* Icon + Label */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            <div style={{
+                                background: '#fce7f3',
+                                borderRadius: '8px',
+                                padding: '5px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}>
+                                <Link2 size={13} style={{ color: '#be185d' }} />
+                            </div>
+                            <span style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: '#87717a',
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                                whiteSpace: 'nowrap',
+                            }}>Guest Link</span>
+                        </div>
+
+                        {/* URL pill */}
+                        <div style={{
+                            flex: 1,
+                            minWidth: 0,
+                            background: '#f7f9fb',
+                            borderRadius: '8px',
+                            padding: '5px 10px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#544249',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontFamily: 'monospace',
+                            letterSpacing: '0.01em',
+                        }}>
+                            {inviteUrl}
+                        </div>
+
+                        {/* Copy button */}
+                        <button
+                            onClick={handleCopy}
+                            title="Copy invite link"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '5px 10px',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(218,192,201,0.4)',
+                                background: linkCopied ? '#f0fdf4' : '#ffffff',
+                                color: linkCopied ? '#15803d' : '#544249',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            {linkCopied
+                                ? <><Check size={12} /><span>Copied!</span></>
+                                : <><Copy size={12} /><span className="hidden sm:inline">Copy</span></>}
+                        </button>
+
+                        {/* WhatsApp share */}
+                        <button
+                            onClick={handleWhatsApp}
+                            title="Share on WhatsApp"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '5px 10px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#25D366',
+                                color: '#ffffff',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                            </svg>
+                            <span className="hidden sm:inline">Share</span>
+                        </button>
+                    </div>
+                );
+            })()}
 
         {weddings.length === 0 && !loading ? (
-            <div className="mt-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center glass-panel rounded-[2.5rem] border border-dashed border-slate-300 p-10">
+            <div className="mt-8 mx-4 sm:mx-6 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center glass-panel rounded-[2.5rem] border border-dashed border-slate-300 p-10">
                 <div className="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-400">
                     <Users size={28} />
                 </div>
@@ -324,9 +464,9 @@ export default function DashboardPage() {
                 <Button onClick={() => navigate('/wedding-track/new')} className="shadow-sm">Create New Wedding Track</Button>
             </div>
         ) : (
-                <div className="mt-8 space-y-8 max-w-[950px] mx-auto">
+                <div className="mt-8 space-y-8">
                     {/* ── Wedding Selector ── */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 group">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 group mx-4 sm:mx-6">
                         <div className="flex items-center gap-2 text-slate-400">
                             <LayoutDashboard size={18} className="group-hover:text-pink-400 transition-colors" />
                             <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Active Channel:</span>
@@ -389,7 +529,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Stats Overview ── */}
-                    <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-[850px] mx-auto z-10 relative">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-[850px] mx-auto z-10 relative px-4 sm:px-6">
                         {/* Total Collected */}
                         <div className="glass-panel p-3 sm:p-7 rounded-[1.5rem] sm:rounded-[2rem] flex flex-col items-center justify-center text-center gap-1 sm:gap-1.5 h-[120px] sm:h-[160px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all group overflow-hidden relative">
                             <div className="absolute -left-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.06] group-hover:rotate-12 transition-all duration-500">
@@ -449,7 +589,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* ── Search & Filtering ── */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 max-w-[850px] mx-auto px-4 sm:px-6">
                         <SearchBar
                             value={searchQuery}
                             onChange={setSearchQuery}
@@ -487,58 +627,140 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* ── Search Results / Table ── */}
-                    <div className="space-y-6">
-                        {/* CLS fix: always render, collapse with max-height instead of mount/unmount */}
-                        <div
-                            className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
-                            style={{ maxHeight: isFilterActive ? '120px' : '0px', opacity: isFilterActive ? 1 : 0 }}
-                        >
-                            <div className="glass-panel p-6 rounded-[2rem] flex flex-wrap gap-8 items-center">
-                                <div>
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Verified Target Gifts</span>
-                                    <div className="text-4xl font-black text-slate-800 mt-1 tracking-tighter">
-                                        {filteredVerifiedGiftsCount}
+                    {/* ── Search Results / Table — Full Width ── */}
+                    <div className="space-y-4 w-full">
+                        {/* ── Summary Bar (Ethereal Union design) ── */}
+                        <div className="px-4 sm:px-6">
+                            {/* Outer card: white surface lifted from page bg */}
+                            <div
+                                style={{
+                                    background: '#ffffff',
+                                    borderRadius: '1.25rem',
+                                    boxShadow: '0 4px 24px -4px rgba(25,28,30,0.06)',
+                                    padding: '14px 16px 12px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '10px',
+                                }}
+                            >
+                                {/* Row 1: Section heading + count badge + download */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                                        <span style={{
+                                            fontSize: '15px',
+                                            fontWeight: 700,
+                                            color: '#191c1e',
+                                            letterSpacing: '-0.01em',
+                                            lineHeight: 1.3,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }}>
+                                            {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Active Results'
+                                                : activeFilter === 'Side' && selectedPaymentMethod ? `${selectedPaymentMethod === 'bride' ? 'Bride' : 'Groom'} Side`
+                                                : 'Recent Submissions'}
+                                        </span>
+                                        {/* Count pill */}
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            background: '#f2f4f6',
+                                            color: '#544249',
+                                            fontSize: '11px',
+                                            fontWeight: 800,
+                                            padding: '2px 8px',
+                                            borderRadius: '9999px',
+                                            letterSpacing: '0.02em',
+                                            flexShrink: 0,
+                                        }}>
+                                            {filteredGuests.length}
+                                        </span>
                                     </div>
+
+                                    {/* Download button */}
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        disabled={filteredGuests.length === 0 || pdfLoading}
+                                        title={pdfLoading ? 'Generating PDF…' : 'Export verified guest PDF'}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            padding: '6px 10px',
+                                            borderRadius: '0.75rem',
+                                            border: '1px solid rgba(218,192,201,0.35)',
+                                            background: '#ffffff',
+                                            color: '#544249',
+                                            fontSize: '11px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            flexShrink: 0,
+                                            opacity: (filteredGuests.length === 0 || pdfLoading) ? 0.4 : 1,
+                                            transition: 'all 0.15s',
+                                        }}
+                                    >
+                                        {pdfLoading
+                                            ? <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-pink-500 rounded-full animate-spin" />
+                                            : <Download size={13} />}
+                                        <span className="hidden sm:inline">Export PDF</span>
+                                    </button>
                                 </div>
-                                <div className="hidden sm:block w-px h-14 bg-slate-200/60" />
-                                <div>
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Target Verified Amount</span>
-                                    <div className="text-4xl font-black text-slate-800 flex items-center gap-1 mt-1 tracking-tighter">
-                                        <IndianRupee size={28} className="text-slate-600" />
-                                        {filteredVerifiedAmount.toLocaleString('en-IN')}
+
+                                {/* Tonal separator — background shift instead of border line */}
+                                <div style={{ height: '1px', background: '#f2f4f6', margin: '0 -2px' }} />
+
+                                {/* Row 2: Verified amount — always visible */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
+                                    <span style={{
+                                        fontSize: '9px',
+                                        fontWeight: 800,
+                                        color: '#87717a',
+                                        letterSpacing: '0.1em',
+                                        textTransform: 'uppercase',
+                                        flexShrink: 0,
+                                    }}>Verified</span>
+
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '1px',
+                                        fontWeight: 800,
+                                        color: '#191c1e',
+                                        fontSize: '15px',
+                                        letterSpacing: '-0.02em',
+                                        flex: 1,
+                                    }}>
+                                        <IndianRupee size={13} style={{ color: '#544249', flexShrink: 0 }} />
+                                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                            {filteredVerifiedAmount.toLocaleString('en-IN')}
+                                        </span>
                                     </div>
+
+                                    {/* Emerald verified count pill */}
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '3px',
+                                        background: '#6ffbbe',
+                                        color: '#002113',
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        padding: '3px 8px',
+                                        borderRadius: '9999px',
+                                        flexShrink: 0,
+                                        letterSpacing: '0.02em',
+                                    }}>
+                                        {filteredVerifiedGiftsCount}
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                                            <path d="M2 5l2 2 4-4" stroke="#002113" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between px-2">
-                            <h3 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                                {searchQuery || (activeFilter === 'Amount' && selectedAmountRange) ? 'Active Results' : 'Recent Submissions'}
-                                <span className="bg-white/60 text-slate-500 text-xs px-2.5 py-1 rounded-full shadow-sm border border-slate-200/50">
-                                    {filteredGuests.length}
-                                </span>
-                            </h3>
-
-                            <button
-                                onClick={handleDownloadPDF}
-                                disabled={filteredGuests.length === 0 || pdfLoading}
-                                title={pdfLoading ? 'Generating PDF…' : 'Download Guest List PDF'}
-                                className="px-4 py-2 rounded-xl border border-slate-200/60 bg-white/60 backdrop-blur-md shadow-sm text-slate-600 hover:text-pink-500 hover:border-pink-200 hover:bg-white transition-all disabled:opacity-40 disabled:cursor-not-allowed group flex items-center gap-2"
-                            >
-                                {pdfLoading ? (
-                                    <div className="w-4 h-4 border-2 border-slate-300 border-t-pink-500 rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        <Download size={16} className="group-hover:-translate-y-0.5 transition-transform" />
-                                        <span className="text-sm font-semibold hidden sm:inline">Export PDF</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
                         {guestsLoading ? (
-                            <div className="glass-panel overflow-hidden rounded-[2rem] border border-white/60 p-6 space-y-6">
+                            <div className="glass-panel overflow-hidden rounded-2xl border border-white/60 p-6 space-y-6 mx-4 sm:mx-6">
                                 {[...Array(5)].map((_, i) => (
                                     <div key={i} className="flex gap-4 items-center">
                                         <div className="animate-pulse bg-slate-200/60 h-10 w-10 rounded-xl shrink-0" />
@@ -551,11 +773,11 @@ export default function DashboardPage() {
                                 ))}
                             </div>
                         ) : guests.length === 0 ? (
-                            <div className="p-16 text-center glass-panel rounded-[2rem] text-slate-400 font-medium">
+                            <div className="p-16 text-center glass-panel rounded-[2rem] text-slate-400 font-medium mx-4 sm:mx-6">
                                 No guests have registered for this event yet.
                             </div>
                         ) : (
-                            <div className="glass-panel overflow-hidden rounded-[2rem] border border-white/60">
+                            <div className="overflow-hidden rounded-2xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.06)] mx-2 sm:mx-4">
                                 <SearchResults
                                     results={filteredGuests}
                                     onConfirm={confirmGuest}

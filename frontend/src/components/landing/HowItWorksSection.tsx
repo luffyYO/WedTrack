@@ -124,11 +124,11 @@ export default function HowItWorksSection() {
                         onTouchEnd={onTouchEnd}
                     >
                         {/* iPhone Frame */}
-                        <div className="relative w-[210px] h-[430px] sm:w-[280px] sm:h-[580px] rounded-[2.5rem] sm:rounded-[3rem] bg-slate-900 border-[6px] sm:border-[10px] border-slate-800 shadow-[10px_10px_30px_rgba(0,0,0,0.15)] sm:shadow-[20px_20px_60px_rgba(0,0,0,0.15),_inset_0_0_15px_rgba(255,255,255,0.1)] overflow-hidden shrink-0 group">
+                        <div className="relative w-[180px] h-[380px] sm:w-[220px] sm:h-[460px] lg:w-[240px] lg:h-[500px] rounded-[2rem] sm:rounded-[2.5rem] bg-slate-900 border-[6px] sm:border-[8px] border-slate-800 shadow-[10px_10px_30px_rgba(0,0,0,0.15)] sm:shadow-[15px_15px_50px_rgba(0,0,0,0.15),_inset_0_0_15px_rgba(255,255,255,0.1)] overflow-hidden shrink-0 group">
                             
-                            <div className="absolute inset-0 rounded-[2rem] sm:rounded-[2.5rem] bg-black overflow-hidden m-[2px]">
+                            <div className="absolute inset-0 rounded-[1.8rem] sm:rounded-[2.2rem] bg-black overflow-hidden m-[2px]">
                                 {/* Dynamic Island */}
-                                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 sm:w-24 h-5 sm:h-7 bg-black rounded-full z-30 shadow-[0_0_10px_rgba(0,0,0,0.5)]"></div>
+                                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-14 sm:w-20 h-4 sm:h-6 bg-black rounded-full z-30 shadow-[0_0_10px_rgba(0,0,0,0.5)]"></div>
                                 
                                 {/* Screen Crossfade */}
                                 {STEPS.map((step, idx) => (
@@ -158,10 +158,10 @@ export default function HowItWorksSection() {
                             </div>
                             
                             {/* Decorative Volume Buttons */}
-                            <div className="absolute top-[80px] -left-[12px] w-[4px] h-[26px] bg-slate-700 rounded-l-md"></div>
-                            <div className="absolute top-[120px] -left-[12px] w-[4px] h-[40px] bg-slate-700 rounded-l-md"></div>
-                            <div className="absolute top-[170px] -left-[12px] w-[4px] h-[40px] bg-slate-700 rounded-l-md"></div>
-                            <div className="absolute top-[130px] -right-[12px] w-[4px] h-[60px] bg-slate-700 rounded-r-md"></div>
+                            <div className="absolute top-[60px] sm:top-[80px] -left-[8px] sm:-left-[12px] w-[3px] sm:w-[4px] h-[20px] sm:h-[26px] bg-slate-700 rounded-l-md"></div>
+                            <div className="absolute top-[90px] sm:top-[120px] -left-[8px] sm:-left-[12px] w-[3px] sm:w-[4px] h-[30px] sm:h-[40px] bg-slate-700 rounded-l-md"></div>
+                            <div className="absolute top-[130px] sm:top-[170px] -left-[8px] sm:-left-[12px] w-[3px] sm:w-[4px] h-[30px] sm:h-[40px] bg-slate-700 rounded-l-md"></div>
+                            <div className="absolute top-[100px] sm:top-[130px] -right-[8px] sm:-right-[12px] w-[3px] sm:w-[4px] h-[45px] sm:h-[60px] bg-slate-700 rounded-r-md"></div>
                         </div>
                     </div>
 

@@ -25,6 +25,7 @@ import FAQSection from '@/components/landing/FAQSection';
 import HowItWorksSection from '@/components/landing/HowItWorksSection';
 import ScrollReveal from '@/components/ui/ScrollReveal';
 import { TypeAnimation } from 'react-type-animation';
+import StatsSection from '@/components/landing/StatsSection';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -252,6 +253,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
+                <StatsSection />
                 {/* About Section */}
                 <section id="about" className="py-24 relative z-10">
                     <ScrollReveal className="container mx-auto px-4 sm:px-6">
@@ -377,7 +379,7 @@ export default function LandingPage() {
                                     </div>
                                     <div className="flex items-center gap-5">
                                         <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-500"><Mail size={18} /></div>
-                                        <span>hi@wedtrack.in</span>
+                                        <span>wedtrack8@gmail.com</span>
                                     </div>
                                 </div>
                             </div>
@@ -459,7 +461,7 @@ export default function LandingPage() {
                             <ul className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium text-slate-500">
                                 <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><MapPin size={14} className="text-pink-400 shrink-0"/> Coimbatore</li>
                                 <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><Phone size={14} className="text-pink-400 shrink-0"/> +91 91498...</li>
-                                <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><Mail size={14} className="text-pink-400 shrink-0"/> hi@wed...</li>
+                                <li className="flex items-center gap-2 sm:gap-3 hover:text-slate-800"><Mail size={14} className="text-pink-400 shrink-0"/> wedtrack8@gmail.com</li>
                             </ul>
                         </div>
                     </div>
