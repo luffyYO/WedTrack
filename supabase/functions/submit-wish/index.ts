@@ -28,6 +28,9 @@ Deno.serve(async (req) => {
 
     if (!wedding_nanoid) return errorResponse('Missing wedding_nanoid', 400)
     if (!fullname) return errorResponse('fullname is required', 400)
+    if (!father_fullname) return errorResponse('father_fullname is required', 400)
+    if (!phone_number) return errorResponse('phone_number is required', 400)
+    if (!village) return errorResponse('village/town is required', 400)
     if (!gift_side) return errorResponse('gift_side is required', 400)
 
     // Rate Limiting (100 req/min per IP)
@@ -43,8 +46,9 @@ Deno.serve(async (req) => {
     // 1. Resolve nanoid → wedding UUID + validate timing
     const { data: weddingRows, error: wError } = await adminClient
       .from('weddings')
-      .select('id, qr_activation_time, qr_expires_at')
+      .select('id, qr_activation_time, qr_expires_at, payment_status')
       .eq('nanoid', wedding_nanoid.trim())
+      .eq('payment_status', 'paid')
       .limit(1)
 
     console.log('[submit-wish] wedding lookup error:', JSON.stringify(wError))
@@ -69,7 +73,6 @@ Deno.serve(async (req) => {
       .insert({
         wedding_id: wedding.id,
         fullname: fullname.trim(),
-        first_name: fullname.trim(), // Legacy compatibility
         father_fullname: father_fullname?.trim() || null,
         phone_number: phone_number?.trim() || null,
         amount: Number(amount) || 0,

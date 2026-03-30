@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
       .from('weddings')
       .select('id')
       .eq('nanoid', wedding_nanoid)
+      .eq('payment_status', 'paid')
       .limit(1)
 
     if (wError) {
@@ -62,7 +63,7 @@ Deno.serve(async (req) => {
     // Only returns guests who left a wish (non-null, non-empty)
     const { data: wishes, error: dError, count } = await adminClient
       .from('guests')
-      .select('id, first_name, last_name, wishes, created_at', { count: 'exact' })
+      .select('id, fullname, wishes, created_at', { count: 'exact' })
       .eq('wedding_id', weddingId)
       .not('wishes', 'is', null)
       .neq('wishes', '')

@@ -1,0 +1,22 @@
+
+  
+   ID                                   | NAME                | SLUG                | STATUS | VERSION | UPDATED_AT (UTC)    
+  --------------------------------------|---------------------|---------------------|--------|---------|---------------------
+   b9b4db6c-05ed-4ba4-b3d7-0ab133ae2fe6 | admin-users         | admin-users         | ACTIVE | 8       | 2026-03-30 03:09:27 
+   c9cc080d-109c-427f-9d29-8ca2c7cc2766 | db-setup            | db-setup            | ACTIVE | 8       | 2026-03-30 03:09:27 
+   52be892e-2e05-408c-adfd-56182a36fd55 | delete-wedding      | delete-wedding      | ACTIVE | 8       | 2026-03-30 03:09:27 
+   875f3782-f02b-4cc4-8d80-5e77f1fe5cc5 | get-guests          | get-guests          | ACTIVE | 8       | 2026-03-30 03:09:27 
+   dca695e1-a4f8-449f-a713-5186af3e4eb1 | get-wedding-details | get-wedding-details | ACTIVE | 8       | 2026-03-30 03:09:27 
+   21ed5843-8685-4b65-ba8a-d8e104148486 | list-weddings       | list-weddings       | ACTIVE | 9       | 2026-03-30 03:09:27 
+   bb4fe0bd-bcf4-4bde-82df-2cd2f8a46799 | redis-validation    | redis-validation    | ACTIVE | 8       | 2026-03-30 03:09:27 
+   20d38060-b940-4ab0-bf44-8d136d653210 | create-wedding      | create-wedding      | ACTIVE | 12      | 2026-03-30 03:16:15 
+   7b81f731-76ce-487c-b9aa-efe5355eb9bc | delete-guest        | delete-guest        | ACTIVE | 8       | 2026-03-30 03:09:27 
+   377cc2a3-b271-4a21-8816-00cea84dafa8 | extend-wedding      | extend-wedding      | ACTIVE | 8       | 2026-03-30 03:09:27 
+   692e5766-550a-4acf-9524-6b7f7158c3fc | fetch-wishes        | fetch-wishes        | ACTIVE | 9       | 2026-03-30 03:09:27 
+   c4f361b6-47ad-422a-9627-006107bc8bce | mark-wishes-read    | mark-wishes-read    | ACTIVE | 8       | 2026-03-30 03:09:27 
+   cc824fb4-392d-4d01-bb60-6b22db831edb | send-whatsapp       | send-whatsapp       | ACTIVE | 9       | 2026-03-30 03:09:27 
+   d00eb7c8-1a26-4f38-bdea-1158d72b04db | submit-wish         | submit-wish         | ACTIVE | 10      | 2026-03-30 03:09:27 
+   81ddac83-69cf-41c9-a9be-3296d5797f87 | update-guest        | update-guest        | ACTIVE | 8       | 2026-03-30 03:09:27 
+   34bd1eab-3b1f-43a8-bbed-8546914c50a1 | verify-payment      | verify-payment      | ACTIVE | 7       | 2026-03-30 03:09:27 
+   2f70eb10-a525-4c4d-acc1-5437f64a8443 | cashfree-webhook    | cashfree-webhook    | ACTIVE | 7       | 2026-03-30 03:09:27 
+

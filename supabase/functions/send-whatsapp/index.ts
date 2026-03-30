@@ -38,8 +38,6 @@ Deno.serve(async (req) => {
         payment_status, 
         message_sent_at,
         is_paid,
-        first_name,
-        last_name,
         weddings (
           bride_name,
           groom_name
@@ -68,7 +66,7 @@ Deno.serve(async (req) => {
     }
 
     // Fallback name if fullname isn't fully migrated yet
-    const guestName = guest.fullname || [guest.first_name, guest.last_name].filter(Boolean).join(' ') || 'Guest'
+    const guestName = guest.fullname || 'Guest'
     const brideName = guest.weddings?.bride_name || 'the Bride'
     const groomName = guest.weddings?.groom_name || 'the Groom'
 

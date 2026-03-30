@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
       extra_cell,
       event_type,
       person_name,
-      gallery_images 
+      gallery_images,
+      selected_plan,
+      amount
     } = body
 
     // 1. Validate required fields early
@@ -33,6 +35,10 @@ Deno.serve(async (req) => {
     if (!wedding_date) {
       return errorResponse('wedding_date is required', 400)
     }
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return errorResponse('Valid amount is required', 400)
+    }
+    const finalAmount = Number(amount)
 
     // 2. Auth Check
     const authHeader = req.headers.get('Authorization')
@@ -61,29 +67,82 @@ Deno.serve(async (req) => {
 
     // 4. Generation & DB Write
     const weddingNanoId = nanoid(10)
-    // QR is active from the moment of creation and expires exactly 24 hours later.
-    // Example: generated at 2:00 PM → active 2 PM today → expires 2 PM tomorrow.
+    // Calculate QR activation and expiration based on wedding date (all UTC)
     const now = new Date()
-    const qr_activation_time = now.toISOString()
-    const qr_expires_at = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    
+    // Parse wedding_date as YYYY-MM-DD in UTC to avoid timezone shifts
+    const [wy, wm, wd] = String(wedding_date).split('-').map(Number)
+    const weddingDayUTC = Date.UTC(wy, wm - 1, wd) // midnight UTC on wedding day
+    
+    // Today at midnight UTC for comparison
+    const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    
+    let qr_activation_time: string
+    let qr_expires_at: string
+    
+    if (weddingDayUTC > todayUTC) {
+      // Future wedding: QR is on hold — activates at midnight UTC on the wedding date
+      qr_activation_time = new Date(weddingDayUTC).toISOString()
+      qr_expires_at = new Date(weddingDayUTC + 24 * 60 * 60 * 1000).toISOString()
+    } else {
+      // Today or past: QR activates immediately and expires exactly 24 hours from now
+      qr_activation_time = now.toISOString()
+      qr_expires_at = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    }
     
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (!serviceKey) {
-      console.error('[create-wedding] SUPABASE_SERVICE_ROLE_KEY is not set in environment variables')
-      return errorResponse('Server misconfiguration: missing service key', 500)
-    }
-
-    // adminClient uses the service role key to bypass RLS for inserts.
-    // No INSERT RLS policy exists for 'weddings', so we need this approach.
-    const adminClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      serviceKey
-    )
+    if (!serviceKey) return errorResponse('Server misconfiguration: missing service key', 500)
+    const adminClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', serviceKey)
 
     const frontendUrl = Deno.env.get('FRONTEND_URL') || 'https://wedtrackss.in'
-    
+
+    // Cashfree PG Setup
+    const isProd = Deno.env.get('CASHFREE_ENV') === 'PROD'
+    const cfEndpoint = isProd ? 'https://api.cashfree.com/pg/orders' : 'https://sandbox.cashfree.com/pg/orders'
+    const cfAppId = Deno.env.get('CASHFREE_APP_ID')
+    const cfSecret = Deno.env.get('CASHFREE_SECRET_KEY')
+
+    if (!cfAppId || !cfSecret) {
+      console.error('[create-wedding] Cashfree keys missing')
+      return errorResponse('Payment gateway not configured', 500)
+    }
+
+    const orderId = `wt_${Date.now()}_${user.id.substring(0,8)}`
+
+    const cfPayload = {
+      order_amount: finalAmount,
+      order_currency: "INR",
+      order_id: orderId,
+      customer_details: {
+        customer_id: user.id,
+        customer_phone: "9999999999", // Placeholder unless you have user phone
+        customer_name: user?.user_metadata?.full_name || "User"
+      },
+      order_meta: {
+        return_url: `${frontendUrl.replace('http://localhost', 'https://localhost')}/wedding-track/verify?order_id=${orderId}`
+      }
+    }
+
+    const cfRes = await fetch(cfEndpoint, {
+      method: 'POST',
+      headers: {
+        'x-client-id': cfAppId,
+        'x-client-secret': cfSecret,
+        'x-api-version': '2023-08-01',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(cfPayload)
+    })
+
+    const cfData = await cfRes.json()
+    if (!cfRes.ok) {
+      console.error('[create-wedding] Cashfree order failed:', cfData)
+      return errorResponse(`Cashfree Error: ${cfData.message || cfData.type || 'Failed to initiate payment'}`, 500)
+    }
+
+    // Insert as DRAFT
     const insertData: Record<string, any> = {
-      nanoid: weddingNanoId,
       user_id: user.id,
       bride_name,
       groom_name,
@@ -97,17 +156,20 @@ Deno.serve(async (req) => {
       gallery_images: gallery_images || [],
       qr_activation_time,
       qr_expires_at,
-      qr_link: `${frontendUrl}/guest-form/${weddingNanoId}`
+
+      // --- Payment Status Tracking ---
+      payment_status: 'unpaid',
+      cf_order_id: orderId,
+      payment_amount: finalAmount,
+      selected_plan: selected_plan || 'basic'
     }
 
-    console.log('[create-wedding] Inserting:', JSON.stringify(insertData))
+    console.log('[create-wedding] Inserting Draft:', JSON.stringify(insertData))
 
-    // Use the user-authenticated supabaseClient — avoids needing the Service Role key
-    // and ensures RLS policies are correctly applied for user-specific inserts.
     const { data: wedding, error: dbError } = await adminClient
       .from('weddings')
       .insert(insertData)
-      .select('id, nanoid, qr_link')
+      .select('id, cf_order_id')
       .single()
 
     if (dbError) {
@@ -115,9 +177,14 @@ Deno.serve(async (req) => {
       return errorResponse(`Database error: ${dbError.message}`, 500)
     }
 
-    logEvent('WeddingCreated', { user_id: user.id, wedding_nanoid: weddingNanoId })
+    logEvent('WeddingDraftCreated', { user_id: user.id, order_id: orderId })
 
-    return successResponse(wedding)
+    // Return the payment session details to the frontend
+    return successResponse({
+      id: wedding.id,
+      payment_session_id: cfData.payment_session_id,
+      order_id: orderId
+    })
 
   } catch (error: any) {
     console.error('[create-wedding] Unexpected error:', error)

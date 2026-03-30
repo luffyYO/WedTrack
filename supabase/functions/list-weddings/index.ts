@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       .from("weddings")
       .select("*")
       .eq("user_id", user.id)
+      .eq("payment_status", "paid")
       .order("created_at", { ascending: false });
 
     if (fetchError) {

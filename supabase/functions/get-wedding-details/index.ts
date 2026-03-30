@@ -54,14 +54,15 @@ Deno.serve(async (req) => {
       qr_activated_at,
       gallery_images,
       event_type,
-      person_name
+      person_name,
+      payment_status
     `
 
     // Support both short nanoid AND full UUID — the QR page may navigate with either
     const isUuid = nanoid.length === 36 && nanoid.includes('-')
     const { data, error } = isUuid
-      ? await supabase.from('weddings').select(selectFields).eq('id', nanoid).limit(1)
-      : await supabase.from('weddings').select(selectFields).eq('nanoid', nanoid).limit(1)
+      ? await supabase.from('weddings').select(selectFields).eq('id', nanoid).eq('payment_status', 'paid').limit(1)
+      : await supabase.from('weddings').select(selectFields).eq('nanoid', nanoid).eq('payment_status', 'paid').limit(1)
 
     if (error) {
       console.error('[get-wedding-details] DB error:', JSON.stringify(error))
