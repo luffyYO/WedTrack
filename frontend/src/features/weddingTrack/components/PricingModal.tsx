@@ -25,7 +25,7 @@ const PLANS: PricingPlan[] = [
         title: 'Basic',
         originalPrice: 499,
         discountBadge: '80% OFF',
-        finalPrice: 1,
+        finalPrice: 99,
         features: [
             'Unlimited guest list',
             '1 QR code',
