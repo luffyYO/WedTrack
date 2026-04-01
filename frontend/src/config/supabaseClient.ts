@@ -16,4 +16,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     detectSessionInUrl: true,
     storageKey: 'supabase.auth.token',
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });

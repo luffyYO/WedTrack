@@ -53,7 +53,7 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, isSubmitti
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex justify-center items-start md:items-center overflow-y-auto p-4 sm:p-6 scrollbar-hide animate-in fade-in duration-300">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
@@ -61,35 +61,35 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, isSubmitti
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/50 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-4xl bg-white/98 backdrop-blur-3xl md:rounded-[2.5rem] rounded-[2rem] shadow-2xl overflow-hidden animate-in md:zoom-in-95 slide-in-from-bottom duration-500 flex flex-col md:max-h-[90vh] min-h-max md:h-auto my-auto md:my-0">
                 
-                {/* Close Button */}
+                {/* Close Button - Moved for better mobile reach */}
                 <button 
                     onClick={onClose}
                     disabled={isSubmitting}
-                    className="absolute right-6 top-6 p-2 rounded-full hover:bg-slate-100 transition-colors z-10 text-slate-400 hover:text-slate-600"
+                    className="absolute right-4 top-4 p-2 rounded-full bg-slate-100/50 hover:bg-slate-100 transition-colors z-20 text-slate-400 hover:text-slate-600 md:right-8 md:top-8"
                 >
                     <X size={20} />
                 </button>
 
-                <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight mb-3">
-                            Choose Your Track Plan
+                <div className="p-4 sm:p-10 overflow-y-visible">
+                    <div className="text-center mb-8 sm:mb-12 pt-4 md:pt-0">
+                        <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-2 sm:mb-4">
+                            Premium Access
                         </h2>
                         <p className="text-slate-500 text-sm sm:text-base font-medium max-w-md mx-auto leading-relaxed">
                             Select a premium plan to generate your secure wedding QR and start tracking tracks.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                         {PLANS.map((plan) => (
                             <div 
                                 key={plan.id}
-                                className={`relative group p-6 sm:p-8 rounded-[2rem] transition-all duration-500 flex flex-col ${
+                                className={`relative group p-6 sm:p-10 rounded-[2rem] md:rounded-[2.5rem] transition-all duration-700 flex flex-col border-0 ${
                                     plan.isPopular 
-                                    ? 'bg-gradient-to-b from-white to-pink-50/30 border-2 border-pink-200 shadow-xl shadow-pink-500/10 scale-100 hover:scale-[1.02]' 
-                                    : 'bg-white/50 border border-slate-200 hover:border-pink-200 hover:shadow-lg hover:shadow-slate-200/50 hover:scale-[1.01]'
+                                    ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/40' 
+                                    : 'bg-slate-50 text-slate-900'
                                 }`}
                             >
                                 {plan.tag && (
@@ -108,19 +108,25 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, isSubmitti
                                             {plan.discountBadge}
                                         </span>
                                     </div>
-                                    <div className="mt-2 flex items-baseline gap-1">
-                                        <span className="text-4xl font-black text-slate-800 tracking-tighter">₹{plan.finalPrice}</span>
-                                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">/ one-time</span>
+                                    <div className="mt-4 flex items-baseline gap-1.5">
+                                        <span className={`text-5xl font-black tracking-tighter ${plan.isPopular ? 'text-white' : 'text-slate-900'}`}>
+                                            ₹{plan.finalPrice}
+                                        </span>
+                                        <span className={`${plan.isPopular ? 'text-slate-400' : 'text-slate-400'} text-[10px] font-black uppercase tracking-[0.2em]`}>
+                                            / one-time
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4 mb-10 flex-grow">
                                     {plan.features.map((feature, idx) => (
-                                        <div key={idx} className="flex items-start gap-3">
-                                            <div className={`mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${plan.isPopular ? 'bg-pink-100 text-pink-500' : 'bg-slate-100 text-slate-400'}`}>
-                                                <Check size={12} strokeWidth={3} />
+                                        <div key={idx} className="flex items-start gap-4">
+                                            <div className={`mt-0.5 shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${plan.isPopular ? 'bg-white/10 text-pink-400' : 'bg-slate-200 text-slate-400'}`}>
+                                                <Check size={14} strokeWidth={4} />
                                             </div>
-                                            <span className="text-sm font-medium text-slate-600 leading-tight">{feature}</span>
+                                            <span className={`text-sm font-semibold leading-tight ${plan.isPopular ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {feature}
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -130,10 +136,10 @@ export default function PricingModal({ isOpen, onClose, onSelectPlan, isSubmitti
                                     size="lg"
                                     onClick={() => onSelectPlan(plan.id, plan.finalPrice)}
                                     isLoading={isSubmitting}
-                                    className={`h-14 rounded-2xl font-bold text-sm tracking-wide transition-all duration-300 shadow-lg ${
+                                    className={`h-16 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all duration-500 shadow-lg active:scale-[0.98] ${
                                         plan.isPopular 
-                                        ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white hover:from-pink-600 hover:to-rose-500 shadow-pink-500/25 active:scale-95' 
-                                        : 'bg-slate-900 text-white hover:bg-slate-800 shadow-slate-900/10 active:scale-95'
+                                        ? 'bg-white text-slate-900 hover:bg-slate-100' 
+                                        : 'bg-slate-900 text-white hover:bg-slate-800'
                                     }`}
                                 >
                                     Pay ₹{plan.finalPrice}

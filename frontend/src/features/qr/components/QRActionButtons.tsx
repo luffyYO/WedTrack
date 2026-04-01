@@ -180,7 +180,7 @@ export default function QRActionButtons({
                     />
                 ) : (
                     // Fallback to avoid empty value crash
-                    <QRCodeCanvas value="https://wedtrack.in" size={460} level="H" />
+                    <QRCodeCanvas value={window.location.origin} size={460} level="H" />
                 )}
             </div>
 

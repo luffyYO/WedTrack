@@ -6,6 +6,7 @@ import { supabase } from '@/config/supabaseClient';
 import { WeddingNameDisplay } from '@/components/ui';
 import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
+import { requestForToken } from '@/config/firebaseConfig';
 
 export default function GuestFormPage() {
     const { weddingId: weddingNanoId } = useParams<{ weddingId: string }>();
@@ -18,6 +19,10 @@ export default function GuestFormPage() {
     const [isInactive, setIsInactive] = useState(false);
 
     const [heartsActive, setHeartsActive] = useState(false);
+    const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+        typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    );
+    const [fcmToken, setFcmToken] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         fullname: '',
@@ -78,6 +83,19 @@ export default function GuestFormPage() {
         };
 
         fetchWedding();
+        
+        // Sync UI with actual browser permission on mount
+        if (typeof Notification !== 'undefined') {
+            const currentPermission = Notification.permission as NotificationPermission;
+            setNotificationPermission(currentPermission);
+
+            // Auto-fetch token if permission is already granted
+            if (currentPermission === 'granted') {
+                requestForToken().then(token => {
+                    if (token) setFcmToken(token);
+                }).catch(console.error);
+            }
+        }
     }, [weddingNanoId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -85,15 +103,35 @@ export default function GuestFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleEnableNotifications = async () => {
+        try {
+            const token = await requestForToken();
+            // Update permission state from the real browser value (requestForToken
+            // calls Notification.requestPermission() internally)
+            if (typeof Notification !== 'undefined') {
+                setNotificationPermission(Notification.permission as NotificationPermission);
+            }
+            if (token) {
+                setFcmToken(token);
+            }
+        } catch (err) {
+            console.error('[FCM] Failed to enable notifications:', err);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         setError('');
         
+        // Use pre-captured token or try one last time
+        const finalToken = fcmToken || await requestForToken();
+        
         const payload = {
             wedding_nanoid: weddingNanoId,
             ...formData,
-            amount: Number(formData.amount)
+            amount: Number(formData.amount),
+            fcm_token: finalToken
         };
         
         try {
@@ -211,11 +249,14 @@ export default function GuestFormPage() {
                 </div>
             </div>
         );
-    }
+    }    return (
+        <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#feeef1] flex items-start justify-center overflow-y-auto sm:py-12 px-0 sm:px-4">
+            <div className="w-full sm:max-w-[480px] bg-white/80 backdrop-blur-xl sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] sm:border border-white/60 overflow-hidden animate-fade-in relative min-h-screen sm:min-h-0">
+                
+                {/* ── Visual Backdrop ── */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-pink-100/50 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-50/50 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] flex py-12 px-4 items-start justify-center overflow-y-auto">
-            <div className="max-w-[460px] w-full glass-panel rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-white/60 overflow-hidden animate-fade-up">
                 <AutoScrollGallery images={
                     wedding?.gallery_images?.length > 0 
                         ? wedding.gallery_images 
@@ -228,122 +269,161 @@ export default function GuestFormPage() {
                 } />
 
                 {/* ── Soft Premium Header ── */}
-                <div className="h-44 bg-gradient-to-br from-pink-100 to-rose-50 flex flex-col items-center justify-center text-slate-800 p-8 text-center relative overflow-hidden border-b border-white">
-                    <div className="absolute -right-8 -bottom-8 opacity-[0.05] pointer-events-none">
-                        <Heart size={140} className="fill-pink-500" />
+                <div className="h-48 bg-gradient-to-b from-transparent to-pink-50/30 flex flex-col items-center justify-center text-slate-800 p-8 text-center relative overflow-hidden">
+                    <div className="absolute -right-8 -bottom-8 opacity-[0.03] pointer-events-none">
+                        <Heart size={160} className="fill-rose-500" />
                     </div>
                     <WeddingNameDisplay 
                         brideName={wedding?.bride_name} 
                         groomName={wedding?.groom_name} 
                         size="lg" 
-                        className="mb-1 relative z-10 font-bold tracking-tight drop-shadow-sm" 
+                        className="mb-1 relative z-10 font-bold tracking-tight text-slate-900" 
                     />
-                    <p className="opacity-50 text-[10px] font-black tracking-[0.25em] uppercase mt-3 relative z-10 text-slate-600">
-                        Secure Guest Registry
-                    </p>
+                    <div className="flex items-center gap-2 mt-4 relative z-10">
+                        <div className="h-[1px] w-4 bg-rose-200" />
+                        <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-rose-400">
+                            Secure Guest Registry
+                        </p>
+                        <div className="h-[1px] w-4 bg-rose-200" />
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 bg-white/40">
+                <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-7 relative z-10">
                     
                     {error && (
-                        <div className="bg-rose-50 text-rose-600 p-4 rounded-xl flex items-start gap-3 text-sm border border-rose-100 font-medium">
+                        <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl flex items-start gap-3 text-sm border border-rose-100/50 font-medium animate-shake">
                             <AlertCircle size={18} className="shrink-0 mt-0.5" /> <span>{error}</span>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Full Name <span className="text-rose-400">*</span></label>
-                            <input required type="text" name="fullname" value={formData.fullname} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
-                        </div>
-                    </div>
+                    <div className="space-y-5">
+                        <div className="grid grid-cols-1 gap-5">
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name <span className="text-rose-400">*</span></label>
+                                <input required type="text" name="fullname" value={formData.fullname} onChange={handleChange} 
+                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm"
+                                    placeholder="Enter your name"
+                                />
+                            </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Father's Full Name <span className="text-rose-400">*</span></label>
-                            <input required type="text" name="father_fullname" value={formData.father_fullname} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                            />
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Father's Full Name <span className="text-rose-400">*</span></label>
+                                <input required type="text" name="father_fullname" value={formData.father_fullname} onChange={handleChange} 
+                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm"
+                                    placeholder="Enter your father's name"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Town / Village <span className="text-rose-400">*</span></label>
+                                <input required type="text" name="village" value={formData.village} onChange={handleChange} 
+                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
+                                    placeholder="City or Village"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">WhatsApp No <span className="text-rose-400">*</span></label>
+                                <input required type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} 
+                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
+                                    placeholder="+91 XXXXX XXXXX" 
+                                />
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Town / Village <span className="text-rose-400">*</span></label>
-                            <input required type="text" name="village" value={formData.village} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                                placeholder="e.g. Rampur"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">WhatsApp No <span className="text-rose-400">*</span></label>
-                            <input required type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                                placeholder="+91 XXXXX XXXXX" 
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Gift Amount (₹) <span className="text-rose-400">*</span></label>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Gift Amount (₹) <span className="text-rose-400">*</span></label>
                             <input required type="number" min="1" name="amount" value={formData.amount} onChange={handleChange} 
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-lg font-bold text-slate-800 shadow-sm" 
+                                className="w-full px-5 py-4 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-xl font-black text-slate-800 shadow-sm" 
                                 placeholder="0" 
                             />
                         </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Payment Method</label>
-                            <div className="relative">
-                                <select name="payment_type" value={formData.payment_type} onChange={handleChange} 
-                                    className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/80 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-semibold text-slate-700 shadow-sm appearance-none"
-                                >
-                                    <option value="Cash">Cash</option>
-                                    <option value="GPay">GPay</option>
-                                    <option value="PhonePe">PhonePe</option>
-                                    <option value="PayTM">PayTM</option>
-                                </select>
-                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Method</label>
+                                <div className="relative">
+                                    <select name="payment_type" value={formData.payment_type} onChange={handleChange} 
+                                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/80 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-bold text-slate-700 shadow-sm appearance-none cursor-pointer"
+                                    >
+                                        <option value="Cash">Cash</option>
+                                        <option value="GPay">GPay</option>
+                                        <option value="PhonePe">PhonePe</option>
+                                        <option value="PayTM">PayTM</option>
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Guest Alignment <span className="text-rose-400">*</span></label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <label className={`flex items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer font-black text-[10px] tracking-[0.1em] ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-100 bg-slate-50/30 text-slate-400 hover:border-pink-100'}`}>
+                                        <input required type="radio" name="gift_side" value="bride" checked={formData.gift_side === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
+                                        <span>BRIDE'S</span>
+                                    </label>
+                                    <label className={`flex items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer font-black text-[10px] tracking-[0.1em] ${formData.gift_side === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-100 bg-slate-50/30 text-slate-400 hover:border-pink-100'}`}>
+                                        <input required type="radio" name="gift_side" value="groom" checked={formData.gift_side === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
+                                        <span>GROOM'S</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Guest Alignment <span className="text-rose-400">*</span></label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <label className={`flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer font-bold text-[10px] sm:text-[11px] tracking-wide ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                    <input required type="radio" name="gift_side" value="bride" checked={formData.gift_side === 'bride'} onChange={handleChange} className="opacity-0 absolute" />
-                                    <span>BRIDE'S</span>
-                                </label>
-                                <label className={`flex items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition-all cursor-pointer font-bold text-[10px] sm:text-[11px] tracking-wide ${formData.gift_side === 'groom' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-200/60 bg-white/50 text-slate-400 hover:border-pink-200 hover:bg-white'}`}>
-                                    <input required type="radio" name="gift_side" value="groom" checked={formData.gift_side === 'groom'} onChange={handleChange} className="opacity-0 absolute" />
-                                    <span>GROOM'S</span>
-                                </label>
+
+                        {/* ── Stay Updated Card ── */}
+                        <div className={`p-5 rounded-3xl border-2 transition-all shadow-sm ${notificationPermission === 'granted' ? 'border-emerald-100 bg-emerald-50/30' : 'border-pink-100 bg-pink-50/20'}`}>
+                            <div className="flex items-center justify-between gap-5">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${notificationPermission === 'granted' ? 'bg-emerald-400' : 'bg-rose-400 animate-pulse'}`} />
+                                        <label className="block text-[11px] font-black text-slate-600 uppercase tracking-widest">
+                                            Live Verification
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 leading-snug max-w-[200px]">
+                                        {notificationPermission === 'granted' 
+                                            ? 'Notifications active. We will notify you once confirmed.' 
+                                            : 'Receive a real-time push notification once verified by the host.'}
+                                    </p>
+                                </div>
+                                {notificationPermission !== 'granted' ? (
+                                    <button 
+                                        type="button"
+                                        onClick={handleEnableNotifications}
+                                        className="px-4 py-2.5 bg-white border border-rose-100 text-rose-500 rounded-xl text-[10px] font-black hover:bg-rose-50 transition-all shadow-sm active:scale-95"
+                                    >
+                                        ENABLE
+                                    </button>
+                                ) : (
+                                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center shadow-inner">
+                                        <CheckCircle2 size={16} className="text-emerald-500" />
+                                    </div>
+                                )}
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Wishes for the Couple (Optional)</label>
+                            <textarea name="wish" value={formData.wish} onChange={handleChange} rows={3}
+                                className="w-full px-5 py-4 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm resize-none" 
+                                placeholder="Write your heartfelt message here..."
+                            />
                         </div>
                     </div>
 
-                    <div className="pt-2">
-                        <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Wishes for the Couple (Optional)</label>
-                        <textarea name="wish" value={formData.wish} onChange={handleChange} rows={2}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200/60 bg-white/70 backdrop-blur-sm focus:bg-white focus:ring-2 focus:ring-pink-300 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm resize-none" 
-                            placeholder="Write your heartfelt message here..."
-                        />
-                    </div>
-
-
-                    <div className="pt-4">
+                    <div className="pt-4 pb-4">
                         <button 
                             disabled={submitting}
                             type="submit" 
-                            className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-black py-4 px-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] uppercase tracking-[0.2em] text-sm disabled:opacity-70 disabled:hover:translate-y-0"
+                            className="w-full bg-slate-900 text-white font-black py-4.5 px-4 rounded-[1.25rem] transition-all shadow-xl shadow-slate-200 hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98] uppercase tracking-[0.25em] text-xs disabled:opacity-70 disabled:hover:translate-y-0"
                         >
                             {submitting ? 'Registering...' : 'Submit Securely'}
                         </button>
+                        <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] mt-6 opacity-60">
+                            End-to-End Secure Transaction
+                        </p>
                     </div>
                 </form>
             </div>

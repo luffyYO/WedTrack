@@ -170,3 +170,10 @@ CREATE INDEX IF NOT EXISTS idx_weddings_selected_plan ON public.weddings(selecte
 
 -- Explicitly allow the service role (used entirely by backend) to update these fields.
 -- Anonymous and user roles shouldn't be able to manually bypass payment!
+
+-- ─── 6. FCM V1 NOTIFICATION MIGRATION ──────────────────────────────
+ALTER TABLE public.guests 
+ADD COLUMN IF NOT EXISTS fcm_token TEXT,
+ADD COLUMN IF NOT EXISTS notification_sent BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_guests_notification_sent ON public.guests(notification_sent);

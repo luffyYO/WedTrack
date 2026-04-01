@@ -6,15 +6,19 @@ import type { QRData } from '../types/qr.types';
  * Map a raw wedding DB row (or edge function response) to QRData.
  */
 function mapToQRData(wedding: any): QRData {
+    const origin = window.location.origin;
+    const nanoid = wedding.nanoid || wedding.id;
+    const dynamicLink = `${origin}/guest-form/${nanoid}`;
+
     return {
-        weddingId: wedding.nanoid || wedding.id,
+        weddingId: nanoid,
         brideName: wedding.bride_name,
         groomName: wedding.groom_name,
         venue: wedding.location,
         village: wedding.village,
         date: wedding.wedding_date,
-        qrImageUrl: wedding.qr_link,
-        shareLink: wedding.qr_link,
+        qrImageUrl: dynamicLink,
+        shareLink: dynamicLink,
         qrExpiresAt: wedding.qr_expires_at,
         qrActivationTime: wedding.qr_activation_time ?? wedding.wedding_date ?? null,
         qrStatus: wedding.qr_status,
