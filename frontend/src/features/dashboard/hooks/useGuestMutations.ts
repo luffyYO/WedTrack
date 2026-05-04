@@ -8,14 +8,17 @@ export type GuestActionError = {
     message: string;
 };
 
+/** ID of the guest entry currently being deleted, or null if none in flight. */
+export type DeletingId = string | null;
+
 /**
  * Encapsulates all guest mutation logic:
  *  - confirmGuest  (verify payment + optimistic update)
- *  - deleteGuest   (remove entry + optimistic update)
+ *  - deleteGuest   (remove PENDING entry — waits for API success before removing from UI)
  *  - handleDownloadPDF (filtered PDF export)
  *
- * All user-facing confirmations and errors are surfaced via the
- * returned state, NOT via window.confirm / alert.
+ * All user-facing errors are surfaced via the returned state,
+ * NOT via window.confirm / alert.
  */
 export function useGuestMutations(
     selectedWeddingId: string,
@@ -26,11 +29,8 @@ export function useGuestMutations(
     const queryClient = useQueryClient();
     const [pdfLoading, setPdfLoading] = useState(false);
 
-    // ── Delete confirm dialog state ────────────────────────────────────────────
-    const [deleteConfirm, setDeleteConfirm] = useState<{
-        isOpen: boolean;
-        guestId: string | null;
-    }>({ isOpen: false, guestId: null });
+    // ── In-flight delete tracking (shows spinner on the correct row) ───────────
+    const [deletingId, setDeletingId] = useState<DeletingId>(null);
 
     // ── Error toast state ──────────────────────────────────────────────────────
     const [actionError, setActionError] = useState<GuestActionError | null>(null);
@@ -63,35 +63,29 @@ export function useGuestMutations(
     };
 
     // ── Delete (Cancel guest) ──────────────────────────────────────────────────
-    /** Called when user clicks the "Cancel" button — opens the confirm dialog */
-    const requestDeleteGuest = (guestId: string) => {
-        setDeleteConfirm({ isOpen: true, guestId });
-    };
+    /**
+     * Called when user clicks "Cancel" on a PENDING row.
+     * Shows a loading state on that row while the API request is in flight.
+     * Only removes the entry from the UI AFTER the API confirms success.
+     * On failure, leaves the entry in place and shows an error toast.
+     */
+    const deleteGuest = async (guestId: string) => {
+        if (deletingId) return; // prevent double-click while another is in flight
 
-    /** Called when user confirms deletion in the dialog */
-    const executeDeleteGuest = async () => {
-        const guestId = deleteConfirm.guestId;
-        setDeleteConfirm({ isOpen: false, guestId: null });
-        if (!guestId) return;
-
-        // Optimistic remove — instant UI feedback
-        queryClient.setQueryData(
-            ['guests', selectedWeddingId],
-            (old: any[] = []) => old.filter(g => g.id !== guestId)
-        );
-
+        setDeletingId(guestId);
         try {
             await apiClient.post('delete-guest', { guest_id: guestId });
+            // Remove from cache only after confirmed server-side deletion
+            queryClient.setQueryData(
+                ['guests', selectedWeddingId],
+                (old: any[] = []) => old.filter(g => g.id !== guestId)
+            );
         } catch (err) {
             if (import.meta.env.DEV) console.error('Failed to delete guest:', err);
-            queryClient.invalidateQueries({ queryKey: ['guests', selectedWeddingId] });
             setActionError({ type: 'delete', message: 'Failed to remove guest entry. Please try again.' });
+        } finally {
+            setDeletingId(null);
         }
-    };
-
-    /** Called when user cancels the delete dialog */
-    const cancelDeleteGuest = () => {
-        setDeleteConfirm({ isOpen: false, guestId: null });
     };
 
     // ── PDF Download ───────────────────────────────────────────────────────────
@@ -118,13 +112,11 @@ export function useGuestMutations(
     return {
         // Mutation actions
         confirmGuest,
-        requestDeleteGuest,
-        executeDeleteGuest,
-        cancelDeleteGuest,
+        deleteGuest,
         handleDownloadPDF,
         // State
         pdfLoading,
-        deleteConfirm,
+        deletingId,
         actionError,
         clearError,
     };

@@ -8,7 +8,6 @@ import Button from '@/components/ui/Button';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 import { useAuthStore, useAppStore } from '@/store';
 import { fetchUserWeddings, fetchGuests } from '@/lib/queries';
@@ -88,12 +87,10 @@ export default function DashboardPage() {
 
     const {
         confirmGuest,
-        requestDeleteGuest,
-        executeDeleteGuest,
-        cancelDeleteGuest,
+        deleteGuest,
         handleDownloadPDF,
         pdfLoading,
-        deleteConfirm,
+        deletingId,
         actionError,
         clearError,
     } = useGuestMutations(
@@ -136,17 +133,6 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* ── Delete Confirm Dialog ────────────────────────────────────── */}
-            <ConfirmDialog
-                isOpen={deleteConfirm.isOpen}
-                title="Remove Guest Entry"
-                message="Are you sure you want to cancel and remove this guest entry? This cannot be undone."
-                confirmLabel="Yes, Remove"
-                cancelLabel="Keep"
-                variant="danger"
-                onConfirm={executeDeleteGuest}
-                onCancel={cancelDeleteGuest}
-            />
             <div className="px-4 sm:px-6">
                 <PageHeader
                     title="Management Dashboard"
@@ -283,7 +269,8 @@ export default function DashboardPage() {
                                 <SearchResults
                                     results={filteredGuests}
                                     onConfirm={confirmGuest}
-                                    onDelete={requestDeleteGuest}
+                                    onDelete={deleteGuest}
+                                    deletingId={deletingId}
                                 />
                             </div>
                         )}

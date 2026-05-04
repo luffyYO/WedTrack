@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { SearchX, MapPin, User } from 'lucide-react';
+import { SearchX, MapPin, User, Loader2 } from 'lucide-react';
 import { formatDate, parseSafeDate } from '@/utils/formatters';
 
 interface Guest {
@@ -19,9 +19,11 @@ interface SearchResultsProps {
     results: Guest[];
     onConfirm?: (id: string) => void;
     onDelete?: (id: string) => void;
+    /** ID of the guest whose Cancel button is currently showing a loading spinner. */
+    deletingId?: string | null;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDelete }) => {
+const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDelete, deletingId }) => {
     // Single page rendering with dynamic sorting
     const sortedResults = useMemo(() => {
         return [...results].sort((a, b) => {
@@ -150,8 +152,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                         {onDelete && (
                                                             <button
                                                                 onClick={() => onDelete(guest.id)}
-                                                                className="border border-red-200 dark:border-red-800/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95"
+                                                                disabled={!!deletingId}
+                                                                className="border border-red-200 dark:border-red-800/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                                                             >
+                                                                {deletingId === guest.id ? (
+                                                                    <Loader2 size={10} className="animate-spin" />
+                                                                ) : null}
                                                                 Cancel
                                                             </button>
                                                         )}
