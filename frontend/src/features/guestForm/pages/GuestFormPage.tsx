@@ -24,6 +24,9 @@ export default function GuestFormPage() {
     );
     const [fcmToken, setFcmToken] = useState<string | null>(null);
 
+    // Derived from wedding data — premium plan enables WhatsApp + push notifications
+    const isPremiumPlan = wedding?.selected_plan === 'premium' || wedding?.selected_plan === '349';
+
     const [formData, setFormData] = useState({
         fullname: '',
         father_fullname: '',
@@ -124,14 +127,18 @@ export default function GuestFormPage() {
         setSubmitting(true);
         setError('');
         
-        // Use pre-captured token or try one last time
-        const finalToken = fcmToken || await requestForToken();
+        // Use pre-captured token or try one last time (only for premium plan)
+        const finalToken = isPremiumPlan
+            ? (fcmToken || await requestForToken())
+            : null;
         
         const payload = {
             wedding_nanoid: weddingNanoId,
             ...formData,
             amount: Number(formData.amount),
-            fcm_token: finalToken
+            // Only send phone_number and fcm_token for premium plan
+            phone_number: isPremiumPlan ? formData.phone_number : undefined,
+            fcm_token: isPremiumPlan ? finalToken : undefined,
         };
         
         try {
@@ -323,13 +330,17 @@ export default function GuestFormPage() {
                                     placeholder="City or Village"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">WhatsApp No <span className="text-rose-400">*</span></label>
-                                <input required type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} 
-                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
-                                    placeholder="+91 XXXXX XXXXX" 
-                                />
-                            </div>
+                            {isPremiumPlan && (
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">WhatsApp No <span className="text-rose-400">*</span></label>
+                                    <input required type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} 
+                                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/50 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-medium text-slate-700 shadow-sm" 
+                                        placeholder="+91 XXXXX XXXXX"
+                                        pattern="[0-9+\-\s]{7,15}"
+                                        title="Enter a valid mobile number"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -372,7 +383,8 @@ export default function GuestFormPage() {
                             </div>
                         </div>
 
-                        {/* ── Stay Updated Card ── */}
+                        {/* ── Stay Updated Card — Premium Plan Only ── */}
+                        {isPremiumPlan && (
                         <div className={`p-5 rounded-3xl border-2 transition-all shadow-sm ${notificationPermission === 'granted' ? 'border-emerald-100 bg-emerald-50/30' : 'border-pink-100 bg-pink-50/20'}`}>
                             <div className="flex items-center justify-between gap-5">
                                 <div className="space-y-1">
@@ -403,6 +415,7 @@ export default function GuestFormPage() {
                                 )}
                             </div>
                         </div>
+                        )}
 
                         <div>
                             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Wishes for the Couple (Optional)</label>

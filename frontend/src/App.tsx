@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import AppRouter from '@/routes/router';
 import { supabase } from '@/config/supabaseClient';
 import { useAuthStore } from '@/store';
+import { useThemeStore } from '@/store/themeStore';
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -11,12 +12,12 @@ import { useQueryClient } from '@tanstack/react-query';
 export default function App() {
     const setSession = useAuthStore((state) => state.setSession);
     const queryClient = useQueryClient();
+    const applyToDOM = useThemeStore((s) => s.applyToDOM);
 
+    // Sync persisted theme → DOM classes on every mount
     useEffect(() => {
-        document.documentElement.classList.remove('dark');
-        document.body.classList.add('bg-white', 'text-black');
-        document.body.classList.remove('bg-black', 'text-white');
-    }, []);
+        applyToDOM();
+    }, [applyToDOM]);
 
     useEffect(() => {
         const checkSession = async () => {

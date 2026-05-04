@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
       gallery_images,
       event_type,
       person_name,
-      payment_status
+      payment_status,
+      selected_plan
     `
 
     // Support both short nanoid AND full UUID — the QR page may navigate with either

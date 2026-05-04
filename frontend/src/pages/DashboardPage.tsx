@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import PageHeader from '@/components/layout/PageHeader';
@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import SearchBar from '@/components/SearchBar';
 import SearchFilters, { FilterType } from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 import { useAuthStore, useAppStore } from '@/store';
 import { fetchUserWeddings, fetchGuests } from '@/lib/queries';
@@ -85,7 +86,17 @@ export default function DashboardPage() {
         selectedPaymentMethod,
     });
 
-    const { confirmGuest, deleteGuest, handleDownloadPDF, pdfLoading } = useGuestMutations(
+    const {
+        confirmGuest,
+        requestDeleteGuest,
+        executeDeleteGuest,
+        cancelDeleteGuest,
+        handleDownloadPDF,
+        pdfLoading,
+        deleteConfirm,
+        actionError,
+        clearError,
+    } = useGuestMutations(
         selectedWeddingId,
         guests,
         filteredGuests,
@@ -111,6 +122,31 @@ export default function DashboardPage() {
     // ── Render ───────────────────────────────────────────────────────────────
     return (
         <div className="w-full pb-10">
+            {/* ── Action Error Banner ─────────────────────────────────────────── */}
+            {actionError && (
+                <div className="fixed top-4 right-4 z-[150] flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-950/80 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl shadow-lg text-[13px] font-medium max-w-sm animate-fade-up">
+                    <span className="flex-1">{actionError.message}</span>
+                    <button
+                        onClick={clearError}
+                        className="shrink-0 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                        aria-label="Dismiss error"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+
+            {/* ── Delete Confirm Dialog ────────────────────────────────────── */}
+            <ConfirmDialog
+                isOpen={deleteConfirm.isOpen}
+                title="Remove Guest Entry"
+                message="Are you sure you want to cancel and remove this guest entry? This cannot be undone."
+                confirmLabel="Yes, Remove"
+                cancelLabel="Keep"
+                variant="danger"
+                onConfirm={executeDeleteGuest}
+                onCancel={cancelDeleteGuest}
+            />
             <div className="px-4 sm:px-6">
                 <PageHeader
                     title="Management Dashboard"
@@ -247,7 +283,7 @@ export default function DashboardPage() {
                                 <SearchResults
                                     results={filteredGuests}
                                     onConfirm={confirmGuest}
-                                    onDelete={deleteGuest}
+                                    onDelete={requestDeleteGuest}
                                 />
                             </div>
                         )}

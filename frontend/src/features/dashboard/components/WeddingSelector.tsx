@@ -18,15 +18,15 @@ export default function WeddingSelector({
 
     return (
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center glass-panel p-5 rounded-[1.5rem] relative z-30 group mx-4 sm:mx-6">
-            <div className="flex items-center gap-2 text-slate-400">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-[#6a7585]">
                 <LayoutDashboard size={18} className="group-hover:text-pink-400 transition-colors" />
-                <span className="text-sm font-bold uppercase tracking-wider text-slate-500">Active Channel:</span>
+                <span className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-[#8b97a8]">Active Channel:</span>
             </div>
 
             <div className="relative w-full sm:min-w-[340px] z-[60]">
                 {/* Trigger */}
                 <div
-                    className="w-full bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white hover:border-pink-300 transition-all shadow-sm"
+                    className="w-full bg-white/60 dark:bg-[#1c2333] backdrop-blur-md dark:backdrop-blur-none border border-slate-200/60 dark:border-[rgba(99,120,150,0.4)] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white dark:hover:bg-[#212b3c] hover:border-pink-300 dark:hover:border-pink-700 transition-all shadow-sm"
                     onClick={(e) => {
                         const dropdown = e.currentTarget.nextElementSibling;
                         dropdown?.classList.toggle('hidden');
@@ -34,31 +34,31 @@ export default function WeddingSelector({
                 >
                     <div className="overflow-hidden">
                         {loading ? (
-                            <div className="animate-pulse bg-slate-200/60 h-5 w-40 rounded-md" />
+                            <div className="animate-pulse bg-slate-200/60 dark:bg-slate-700/60 h-5 w-40 rounded-md" />
                         ) : selectedW ? (
                             <div className="flex items-center gap-1.5 truncate">
                                 <WeddingNameDisplay
                                     brideName={selectedW.bride_name}
                                     groomName={selectedW.groom_name}
                                     size="sm"
-                                    className="text-slate-800"
+                                    className="text-slate-800 dark:text-[#e6edf3]"
                                 />
                             </div>
                         ) : (
-                            <span className="text-sm text-slate-400">Select an event record...</span>
+                            <span className="text-sm text-slate-400 dark:text-[#6a7585]">Select an event record...</span>
                         )}
                     </div>
-                    <svg className="w-4 h-4 text-slate-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-400 dark:text-[#6a7585] shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
 
                 {/* Dropdown */}
-                <div className="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-[60] py-2 animate-fade-up duration-200">
+                <div className="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-[#1c2333] backdrop-blur-xl dark:backdrop-blur-none border border-slate-200 dark:border-[rgba(99,120,150,0.4)] rounded-xl shadow-2xl dark:shadow-[0_16px_40px_rgba(0,0,0,0.6)] max-h-64 overflow-y-auto z-[60] py-2 animate-fade-up duration-200">
                     {weddings.map((w: any) => (
                         <div
                             key={w.id}
-                            className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 transition-colors border-b border-slate-100 last:border-0 ${selectedWeddingId === w.id ? 'bg-pink-50/80' : ''}`}
+                            className={`px-4 py-3 cursor-pointer hover:bg-pink-50/50 dark:hover:bg-pink-900/20 transition-colors border-b border-slate-100 dark:border-[rgba(99,120,150,0.2)] last:border-0 ${selectedWeddingId === w.id ? 'bg-pink-50/80 dark:bg-pink-900/30' : ''}`}
                             onClick={(e) => {
                                 onSelect(w);
                                 e.currentTarget.parentElement?.classList.add('hidden');
@@ -68,9 +68,9 @@ export default function WeddingSelector({
                                 brideName={w.bride_name}
                                 groomName={w.groom_name}
                                 size="sm"
-                                className="text-slate-800"
+                                className="text-slate-800 dark:text-[#e6edf3]"
                             />
-                            <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-bold">
+                            <div className="text-[10px] text-slate-400 dark:text-[#6a7585] mt-1 uppercase tracking-widest font-bold">
                                 Location: {[w.village, w.location].filter(Boolean).join(', ')}
                             </div>
                         </div>

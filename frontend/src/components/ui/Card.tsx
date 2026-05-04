@@ -39,9 +39,9 @@ interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 const CardHeader = ({ title, description, subtitle, action, className, ...props }: CardHeaderProps) => (
     <div className={cn('flex items-start justify-between mb-6', className)} {...props}>
         <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">{title}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-[#e6edf3] tracking-tight">{title}</h3>
             {(description || subtitle) && (
-                <p className="text-sm sm:text-base text-slate-500 mt-1.5 leading-relaxed">{description || subtitle}</p>
+                <p className="text-sm sm:text-base text-slate-500 dark:text-[#8b97a8] mt-1.5 leading-relaxed">{description || subtitle}</p>
             )}
         </div>
         {action && <div className="ml-4 shrink-0">{action}</div>}
@@ -56,7 +56,7 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
         <div
             ref={ref}
             className={cn(
-                'mt-6 pt-5 border-t border-slate-200/50 flex items-center justify-end gap-3',
+                'mt-6 pt-5 border-t border-slate-200/50 dark:border-[rgba(99,120,150,0.25)] flex items-center justify-end gap-3',
                 className
             )}
             {...props}

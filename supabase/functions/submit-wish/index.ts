@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
     if (!wedding_nanoid) return errorResponse('Missing wedding_nanoid', 400)
     if (!fullname) return errorResponse('fullname is required', 400)
     if (!father_fullname) return errorResponse('father_fullname is required', 400)
-    if (!phone_number) return errorResponse('phone_number is required', 400)
     if (!village) return errorResponse('village/town is required', 400)
     if (!gift_side) return errorResponse('gift_side is required', 400)
 
@@ -47,7 +46,7 @@ Deno.serve(async (req) => {
     // 1. Resolve nanoid → wedding UUID + validate timing
     const { data: weddingRows, error: wError } = await adminClient
       .from('weddings')
-      .select('id, qr_activation_time, qr_expires_at, payment_status')
+      .select('id, qr_activation_time, qr_expires_at, payment_status, selected_plan')
       .eq('nanoid', wedding_nanoid.trim())
       .eq('payment_status', 'paid')
       .limit(1)
@@ -58,6 +57,14 @@ Deno.serve(async (req) => {
     if (!weddingRows || weddingRows.length === 0) return errorResponse('Wedding not found', 404)
 
     const wedding = weddingRows[0]
+
+    // Determine plan — anything other than 'premium'/'349' is treated as basic
+    const isPremiumPlan = wedding.selected_plan === 'premium' || wedding.selected_plan === '349'
+
+    // Plan-conditional phone_number validation
+    if (isPremiumPlan && !phone_number) {
+      return errorResponse('phone_number is required for premium plan', 400)
+    }
 
     // 2. Timing validation
     const now = new Date()
@@ -75,7 +82,8 @@ Deno.serve(async (req) => {
         wedding_id: wedding.id,
         fullname: fullname.trim(),
         father_fullname: father_fullname?.trim() || null,
-        phone_number: phone_number?.trim() || null,
+        // Only store phone_number for premium plan
+        phone_number: isPremiumPlan ? (phone_number?.trim() || null) : null,
         amount: Number(amount) || 0,
         gift_side,
         village: village?.trim() || null,
@@ -84,7 +92,8 @@ Deno.serve(async (req) => {
         is_paid: false,
         is_read: false,
         wishes: wish?.trim() || null,
-        fcm_token: fcm_token || null
+        // Only store FCM token for premium plan (push notifications)
+        fcm_token: isPremiumPlan ? (fcm_token || null) : null
       })
       .select('id')
       .single()

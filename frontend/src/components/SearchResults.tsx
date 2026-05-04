@@ -126,38 +126,41 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
 
                                     {/* Status / Action */}
                                     <td className="px-5 py-3.5">
-                                        <div className="flex items-center justify-center gap-1.5 min-w-[110px]">
+                                        <div className="flex items-center justify-center gap-1.5 min-w-[130px]">
                                             {guest.is_paid ? (
-                                                <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                                                // Verified: badge only — no delete allowed
+                                                <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 shrink-0">
                                                     ✓ Verified
                                                 </span>
                                             ) : (
-                                                <div className="flex items-center gap-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
-                                                    {onConfirm && (
-                                                        <button
-                                                            onClick={() => onConfirm(guest.id)}
-                                                            className="bg-white text-black font-black px-3 py-1 rounded-lg text-[10px] hover:bg-emerald-400 hover:text-white transition-all shadow-sm active:scale-95"
-                                                        >
-                                                            Paid
-                                                        </button>
-                                                    )}
-                                                    {onDelete && (
-                                                        <button
-                                                            onClick={() => onDelete(guest.id)}
-                                                            className="border border-red-800/60 text-red-400 hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    )}
+                                                // Pending: badge + action buttons — always visible
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    <span className="bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-500/20">
+                                                        Pending
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {onConfirm && (
+                                                            <button
+                                                                onClick={() => onConfirm(guest.id)}
+                                                                className="bg-white text-black font-black px-3 py-1 rounded-lg text-[10px] hover:bg-emerald-400 hover:text-white transition-all shadow-sm active:scale-95"
+                                                            >
+                                                                Paid
+                                                            </button>
+                                                        )}
+                                                        {onDelete && (
+                                                            <button
+                                                                onClick={() => onDelete(guest.id)}
+                                                                className="border border-red-800/60 text-red-400 hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
-                                            {!guest.is_paid && (
-                                                <span className="bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-500/20 sm:block sm:group-hover:hidden">
-                                                    Pending
-                                                </span>
                                             )}
                                         </div>
                                     </td>
+
 
                                     {/* Location */}
                                     <td className="px-5 py-3.5">

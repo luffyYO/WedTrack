@@ -16,14 +16,14 @@ const variantClasses: Record<ButtonVariant, string> = {
     // Beautiful subtle gradient with floating drop shadow
     primary: 'bg-gradient-to-tr from-pink-500 to-rose-400 text-white shadow-[0_8px_20px_-6px_rgba(236,72,153,0.5)] border border-pink-400/20 hover:shadow-[0_12px_24px_-6px_rgba(236,72,153,0.6)] hover:-translate-y-0.5',
     
-    // Glassmorphism button
-    secondary: 'bg-white/70 backdrop-blur-md border border-white/60 text-slate-700 shadow-sm hover:bg-white/90 hover:shadow-md hover:-translate-y-0.5',
+    // Solid surface button — readable in both modes
+    secondary: 'bg-white dark:bg-[#1c2333] border border-slate-200 dark:border-[rgba(99,120,150,0.4)] text-slate-700 dark:text-[#e6edf3] shadow-sm hover:bg-slate-50 dark:hover:bg-[#212b3c] hover:shadow-md hover:-translate-y-0.5',
     
-    // Minimal airy ghost
-    ghost: 'text-slate-600 hover:bg-slate-100/50 hover:text-slate-900 active:bg-slate-200/50',
+    // Minimal ghost — visible in both modes
+    ghost: 'text-slate-600 dark:text-[#8b97a8] hover:bg-slate-100/60 dark:hover:bg-white/8 hover:text-slate-900 dark:hover:text-[#e6edf3] active:bg-slate-200/50 dark:active:bg-white/10',
     
-    // Elegant outline
-    outline: 'border border-slate-200 bg-white/30 backdrop-blur-sm text-slate-700 hover:bg-white hover:border-slate-300 hover:-translate-y-0.5 shadow-sm',
+    // Outline — solid border, readable
+    outline: 'border border-slate-200 dark:border-[rgba(99,120,150,0.5)] bg-white/30 dark:bg-white/5 text-slate-700 dark:text-[#e6edf3] hover:bg-white dark:hover:bg-[#1c2333] hover:border-slate-300 dark:hover:border-[rgba(99,120,150,0.7)] hover:-translate-y-0.5 shadow-sm',
     
     // Danger stays critical but softer
     danger: 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-[0_8px_20px_-6px_rgba(239,68,68,0.4)] hover:-translate-y-0.5 hover:shadow-lg',

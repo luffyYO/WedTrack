@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
+import { useThemeStore } from '@/store/themeStore';
 
 // Utility for Toggle
 function Toggle({ active, onClick }: { active: boolean; onClick: () => void }) {
@@ -37,9 +38,10 @@ export default function SettingsPage() {
     const [emailNotif, setEmailNotif] = useState(true);
     const [waNotif, setWaNotif] = useState(false);
 
+    // ── Global Theme State (persisted) ──────────────────────────────────────────
+    const { isDarkMode, isHighContrast, toggleDarkMode, toggleHighContrast } = useThemeStore();
+
     // Display State
-    const [darkMode, setDarkMode] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
     const [currency, setCurrency] = useState('INR');
 
     // Security/Event State
@@ -139,32 +141,32 @@ export default function SettingsPage() {
                         </div>
 
                         <div className="space-y-4 relative z-10">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-white/40 border border-slate-100/50 hover:bg-white/70 transition-colors gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-slate-100/50 hover:bg-white/70 dark:hover:bg-slate-700/60 transition-colors gap-4">
                                 <div className="flex items-start gap-4">
-                                    <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-indigo-900 text-indigo-200' : 'bg-slate-100 text-slate-600'} transition-colors`}>
-                                        {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+                                    <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-indigo-900 text-indigo-200' : 'bg-slate-100 text-slate-600'} transition-colors`}>
+                                        {isDarkMode ? <Moon size={18} /> : <Sun size={18} />}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-[14px] text-slate-800">Dark Mode</h4>
-                                        <p className="text-[12px] text-slate-500 mt-0.5 leading-relaxed">Turn on the lights, or embrace the shadows.</p>
+                                        <h4 className="font-bold text-[14px] text-slate-800 dark:text-slate-100">Dark Mode</h4>
+                                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Turn on the lights, or embrace the shadows.</p>
                                     </div>
                                 </div>
-                                <Toggle active={darkMode} onClick={() => setDarkMode(!darkMode)} />
+                                <Toggle active={isDarkMode} onClick={toggleDarkMode} />
                             </div>
                             
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-white/40 border border-slate-100/50 hover:bg-white/70 transition-colors gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-slate-100/50 hover:bg-white/70 dark:hover:bg-slate-700/60 transition-colors gap-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="p-2.5 bg-slate-100 rounded-xl text-slate-600">
+                                    <div className="p-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl text-slate-600 dark:text-slate-300">
                                         <div className="w-[18px] h-[18px] border-[2px] border-current rounded-[4px] relative bg-black/10">
                                             <div className="absolute bottom-[-1px] right-[-1px] w-[9px] h-[9px] bg-current rounded-tl-sm rounded-br-[3px]" />
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-[14px] text-slate-800">High Contrast UI</h4>
-                                        <p className="text-[12px] text-slate-500 mt-0.5 leading-relaxed">Boosts legibility in bright outdoor environments.</p>
+                                        <h4 className="font-bold text-[14px] text-slate-800 dark:text-slate-100">High Contrast UI</h4>
+                                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">Boosts legibility in bright outdoor environments.</p>
                                     </div>
                                 </div>
-                                <Toggle active={highContrast} onClick={() => setHighContrast(!highContrast)} />
+                                <Toggle active={isHighContrast} onClick={toggleHighContrast} />
                             </div>
 
                         </div>

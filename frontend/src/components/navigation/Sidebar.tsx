@@ -27,9 +27,12 @@ export default function Sidebar({
     return (
         <aside
             className={cn(
-                // Base: fixed, full height, above content, premium glassmorphism
+                // Base: fixed, full height, above content
                 'fixed left-0 top-0 h-screen z-[100]',
-                'bg-white/70 backdrop-blur-xl border-r border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
+                // Light: glass. Dark: solid surface with visible border.
+                'bg-white/80 dark:bg-[#161b22] backdrop-blur-xl dark:backdrop-blur-none',
+                'border-r border-slate-200/60 dark:border-[rgba(99,120,150,0.35)]',
+                'shadow-[4px_0_24px_rgba(0,0,0,0.04)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)]',
                 'flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
 
                 // Mobile: 260px wide, slide in/out
@@ -43,7 +46,7 @@ export default function Sidebar({
             aria-label="Main navigation"
         >
             {/* ── Logo Area ── */}
-            <div className="flex items-center justify-between px-5 h-[auto] py-6 border-b border-slate-200/50 shrink-0">
+            <div className="flex items-center justify-between px-5 h-[auto] py-6 border-b border-slate-200/50 dark:border-[rgba(99,120,150,0.25)] shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                     <img
                         src="/logo.jpeg"
@@ -51,7 +54,7 @@ export default function Sidebar({
                         className="w-10 h-10 rounded-[12px] object-cover shrink-0 shadow-sm"
                     />
                     {/* Hide label when desktop-collapsed */}
-                    <span className={cn('text-[18px] font-bold text-slate-800 tracking-tight truncate', collapsed && 'md:hidden')}>
+                    <span className={cn('text-[18px] font-bold text-slate-800 dark:text-[#e6edf3] tracking-tight truncate', collapsed && 'md:hidden')}>
                         WedTrack
                     </span>
                 </div>
@@ -59,7 +62,7 @@ export default function Sidebar({
                 {/* Mobile: close button */}
                 <button
                     onClick={onMobileClose}
-                    className="md:hidden p-2 rounded-full text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 transition-colors"
+                    className="md:hidden p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors"
                     aria-label="Close menu"
                 >
                     <X size={20} />
@@ -79,8 +82,8 @@ export default function Sidebar({
             </nav>
 
             {/* ── Footer ── */}
-            <div className="p-4 border-t border-slate-200/50 shrink-0">
-                <p className={cn('text-xs font-semibold text-slate-400 text-center tracking-wider', collapsed && 'md:hidden')}>
+            <div className="p-4 border-t border-slate-200/50 dark:border-[rgba(99,120,150,0.25)] shrink-0">
+                <p className={cn('text-xs font-semibold text-slate-400 dark:text-[#6a7585] text-center tracking-wider', collapsed && 'md:hidden')}>
                     v1.0.0
                 </p>
             </div>

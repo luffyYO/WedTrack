@@ -30,21 +30,21 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
 
     return (
         <header
-            className="sticky top-0 z-20 flex items-center justify-between px-5 sm:px-8 bg-white/70 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)] transition-colors"
+            className="sticky top-0 z-20 flex items-center justify-between px-5 sm:px-8 bg-white/80 dark:bg-[#161b22] backdrop-blur-xl dark:backdrop-blur-none border-b border-slate-200/60 dark:border-[rgba(99,120,150,0.35)] shadow-[0_4px_24px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] transition-colors"
             style={{ height: 'var(--topbar-height)' }}
         >
             {/* ── Left: Hamburger + Title ── */}
             <div className="flex items-center gap-4 min-w-0">
                 <button
                     onClick={onMenuToggle}
-                    className="md:hidden flex items-center justify-center p-2 rounded-full text-slate-500 hover:bg-white hover:text-slate-800 hover:shadow-sm transition-all shrink-0"
+                    className="md:hidden flex items-center justify-center p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white hover:shadow-sm transition-all shrink-0"
                     aria-label="Open navigation menu"
                 >
                     <Menu size={22} />
                 </button>
 
                 {pageTitle && (
-                    <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-500 bg-clip-text text-transparent truncate tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-[#e6edf3] truncate tracking-tight">
                         {pageTitle}
                     </h2>
                 )}
@@ -57,7 +57,7 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                     <button
                         id="notification-bell"
                         onClick={handleBellClick}
-                        className="relative w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:bg-white hover:text-pink-500 hover:shadow-sm transition-all"
+                        className="relative w-10 h-10 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-pink-500 dark:hover:text-pink-400 hover:shadow-sm transition-all"
                         aria-label={unreadCount > 0 ? `${unreadCount} unread wishes` : 'Notifications'}
                     >
                         <Bell size={20} />
@@ -74,13 +74,13 @@ export default function TopBar({ pageTitle, onMenuToggle }: TopBarProps) {
                 {user && (
                     <button
                         onClick={() => navigate('/profile')}
-                        className="flex items-center gap-2 px-1 py-1 pr-3 rounded-full bg-white/50 border border-white/60 hover:bg-white hover:shadow-md transition-all group shrink-0"
+                        className="flex items-center gap-2 px-1 py-1 pr-3 rounded-full bg-white/50 dark:bg-white/5 border border-white/60 dark:border-[rgba(99,120,150,0.35)] hover:bg-white dark:hover:bg-white/10 hover:shadow-md transition-all group shrink-0"
                         title={userFirstName}
                     >
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shadow-inner text-slate-600">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#1c2333] flex items-center justify-center shadow-inner text-slate-600 dark:text-[#8b97a8]">
                             <User size={18} strokeWidth={2.5} />
                         </div>
-                        <span className="text-sm font-semibold text-slate-700 hidden sm:block group-hover:text-pink-600 transition-colors">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-[#e6edf3] hidden sm:block group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
                             {userFirstName}
                         </span>
                     </button>
