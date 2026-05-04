@@ -6,45 +6,53 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // ── Step 1: Extract and validate Authorization header ──────────────────
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return errorResponse("Missing Authorization header", 401);
-    const token = authHeader.replace("Bearer ", "");
+    console.log("[delete-guest] Auth header present:", !!authHeader);
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    // Explicit token validation — required when Gateway JWT verification is bypassed
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-    if (authError || !user) {
-      console.error("[delete-guest] Auth failed:", authError?.message || 'No user found');
-      return errorResponse(authError?.message || "Unauthorized", 401);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return errorResponse("Missing or malformed Authorization header", 401);
     }
 
-    const { guest_id } = await req.json();
-    if (!guest_id) return errorResponse("Guest ID is required", 400);
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (!token) return errorResponse("Empty bearer token", 401);
 
-    // Use service role client for the delete — guests table may have RLS that blocks direct deletions
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!serviceKey) return errorResponse("Server misconfiguration", 500);
-
+    // ── Step 2: Use service role client for ALL operations ─────────────────
+    // Service role key is required so getUser() can validate the token
+    // server-side without being blocked by RLS.
     const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      serviceKey
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } }
     );
 
-    // Verify the guest belongs to one of this user's weddings before deleting
+    // ── Step 3: Validate the user's JWT ───────────────────────────────────
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
+    console.log("[delete-guest] Auth result:", { userId: user?.id, error: authError?.message });
+
+    if (authError || !user) {
+      return errorResponse(`Unauthorized: ${authError?.message ?? "Invalid or expired token"}`, 401);
+    }
+
+    // ── Step 4: Parse body ─────────────────────────────────────────────────
+    const { guest_id } = await req.json();
+    if (!guest_id) return errorResponse("guest_id is required", 400);
+
+    console.log("[delete-guest] Deleting guest_id:", guest_id, "for user:", user.id);
+
+    // ── Step 5: Fetch guest + wedding to verify ownership ─────────────────
     const { data: guest, error: guestError } = await adminClient
       .from("guests")
-      .select("id, wedding_id")
+      .select("id, wedding_id, is_paid")
       .eq("id", guest_id)
       .single();
 
     if (guestError || !guest) return errorResponse("Guest not found", 404);
 
-    // Confirm the wedding belongs to the requesting user
+    // ── Step 6: Block deletion of VERIFIED (paid) entries ─────────────────
+    if (guest.is_paid) return errorResponse("Cannot delete a verified guest entry", 403);
+
+    // ── Step 7: Confirm the wedding belongs to the requesting user ─────────
     const { data: wedding, error: weddingError } = await adminClient
       .from("weddings")
       .select("user_id")
@@ -52,8 +60,12 @@ Deno.serve(async (req) => {
       .single();
 
     if (weddingError || !wedding) return errorResponse("Wedding not found", 404);
-    if (wedding.user_id !== user.id) return errorResponse("Forbidden", 403);
+    if (wedding.user_id !== user.id) {
+      console.error("[delete-guest] Forbidden: wedding owner mismatch");
+      return errorResponse("Forbidden", 403);
+    }
 
+    // ── Step 8: Delete ─────────────────────────────────────────────────────
     const { error: deleteError } = await adminClient
       .from("guests")
       .delete()
@@ -61,9 +73,11 @@ Deno.serve(async (req) => {
 
     if (deleteError) throw deleteError;
 
+    console.log("[delete-guest] Deleted successfully:", guest_id);
     return successResponse({ deleted: true });
+
   } catch (error: any) {
-    console.error("[delete-guest] error:", error.message);
-    return errorResponse(error.message, 500);
+    console.error("[delete-guest] Unhandled error:", error?.message ?? error);
+    return errorResponse(error.message ?? "Internal server error", 500);
   }
 });

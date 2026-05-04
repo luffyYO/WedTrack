@@ -135,33 +135,28 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                     ✓ Verified
                                                 </span>
                                             ) : (
-                                                // Pending: badge + action buttons — always visible
-                                                <div className="flex flex-col items-center gap-1.5">
-                                                    <span className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-500/20">
-                                                        Pending
-                                                    </span>
-                                                    <div className="flex items-center gap-1.5">
-                                                        {onConfirm && (
-                                                            <button
-                                                                onClick={() => onConfirm(guest.id)}
-                                                                className="bg-gradient-to-tr from-pink-500 to-rose-400 dark:bg-white dark:bg-none text-white dark:text-black font-black px-3 py-1 rounded-lg text-[10px] hover:from-pink-600 hover:to-rose-500 dark:hover:bg-emerald-400 transition-all shadow-[0_2px_8px_rgba(236,72,153,0.35)] dark:shadow-sm active:scale-95"
-                                                            >
-                                                                Paid
-                                                            </button>
-                                                        )}
-                                                        {onDelete && (
-                                                            <button
-                                                                onClick={() => onDelete(guest.id)}
-                                                                disabled={!!deletingId}
-                                                                className="border border-red-200 dark:border-red-800/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                                            >
-                                                                {deletingId === guest.id ? (
-                                                                    <Loader2 size={10} className="animate-spin" />
-                                                                ) : null}
-                                                                Cancel
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                // Pending: action buttons only — badge removed (buttons imply state)
+                                                <div className="flex items-center gap-1.5">
+                                                    {onConfirm && (
+                                                        <button
+                                                            onClick={() => onConfirm(guest.id)}
+                                                            className="bg-gradient-to-tr from-pink-500 to-rose-400 dark:bg-white dark:bg-none text-white dark:text-black font-black px-3 py-1 rounded-lg text-[10px] hover:from-pink-600 hover:to-rose-500 dark:hover:bg-emerald-400 transition-all shadow-[0_2px_8px_rgba(236,72,153,0.35)] dark:shadow-sm active:scale-95"
+                                                        >
+                                                            Paid
+                                                        </button>
+                                                    )}
+                                                    {onDelete && (
+                                                        <button
+                                                            onClick={() => onDelete(guest.id)}
+                                                            disabled={!!deletingId}
+                                                            className="border border-red-200 dark:border-red-800/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                                        >
+                                                            {deletingId === guest.id ? (
+                                                                <Loader2 size={10} className="animate-spin" />
+                                                            ) : null}
+                                                            Cancel
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
