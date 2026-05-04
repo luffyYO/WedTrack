@@ -4,6 +4,8 @@ import { supabase } from '@/config/supabaseClient';
 import { useAuthStore } from '@/store';
 import { useThemeStore } from '@/store/themeStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { onMessage } from 'firebase/messaging';
+import { messaging, isFirebaseEnabled } from '@/config/firebaseConfig';
 
 /**
  * App root — thin wrapper that mounts the router.
@@ -18,6 +20,43 @@ export default function App() {
     useEffect(() => {
         applyToDOM();
     }, [applyToDOM]);
+
+    // Foreground Notification Handler (For Desktop / Active Tabs)
+    useEffect(() => {
+        if (!isFirebaseEnabled || !messaging) return;
+
+        const unsubscribe = onMessage(messaging, (payload) => {
+            console.log('[App] Foreground message received:', payload);
+            
+            if (Notification.permission === 'granted' && payload.notification) {
+                const title = payload.notification.title || 'New Notification';
+                const options = {
+                    body: payload.notification.body,
+                    icon: '/logo.jpeg',
+                    data: payload.data
+                };
+                
+                const notification = new Notification(title, options);
+                
+                notification.onclick = (event) => {
+                    event.preventDefault();
+                    const url = payload.data?.url;
+                    if (url) {
+                        window.focus(); // Focus current window if possible
+                        // Only open a new tab if it's a completely different URL
+                        if (!window.location.href.includes(url)) {
+                            window.location.href = url;
+                        }
+                    }
+                    notification.close();
+                };
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, []);
 
     useEffect(() => {
         const checkSession = async () => {

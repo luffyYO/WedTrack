@@ -106,16 +106,41 @@ export default function GuestFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Auto-refresh token for returning guests
+    useEffect(() => {
+        const guestId = localStorage.getItem('wedtrack_guest_id');
+        if (guestId && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            requestForToken().then(async (token) => {
+                if (token) {
+                    setFcmToken(token);
+                    // Update the DB silently for returning users
+                    await supabase.rpc('update_guest_fcm_token', { 
+                        p_guest_id: guestId, 
+                        p_fcm_token: token 
+                    });
+                    console.log('[FCM] Token silently refreshed for returning guest');
+                }
+            }).catch(console.error);
+        }
+    }, []);
+
     const handleEnableNotifications = async () => {
         try {
             const token = await requestForToken();
-            // Update permission state from the real browser value (requestForToken
-            // calls Notification.requestPermission() internally)
             if (typeof Notification !== 'undefined') {
                 setNotificationPermission(Notification.permission as NotificationPermission);
             }
             if (token) {
                 setFcmToken(token);
+                // If they already submitted the form earlier, link the new token immediately!
+                const existingGuestId = localStorage.getItem('wedtrack_guest_id');
+                if (existingGuestId) {
+                    await supabase.rpc('update_guest_fcm_token', { 
+                        p_guest_id: existingGuestId, 
+                        p_fcm_token: token 
+                    });
+                    console.log('[FCM] Token dynamically linked to existing guest');
+                }
             }
         } catch (err) {
             console.error('[FCM] Failed to enable notifications:', err);
@@ -127,10 +152,8 @@ export default function GuestFormPage() {
         setSubmitting(true);
         setError('');
         
-        // Use pre-captured token or try one last time (only for premium plan)
-        const finalToken = isPremiumPlan
-            ? (fcmToken || await requestForToken())
-            : null;
+        // Use pre-captured token or try one last time
+        const finalToken = fcmToken || await requestForToken();
         
         const payload = {
             wedding_nanoid: weddingNanoId,
@@ -142,8 +165,14 @@ export default function GuestFormPage() {
         };
         
         try {
-            // Use the new submit-wish Edge Function
-            await apiClient.post('submit-wish', payload);
+            const res = await apiClient.post('submit-wish', payload);
+            
+            // Store the guest ID so we can update their token later if they return
+            const newGuestId = res.data?.data?.id;
+            if (newGuestId) {
+                localStorage.setItem('wedtrack_guest_id', newGuestId);
+            }
+
             setSuccess(true);
             setHeartsActive(true);
         } catch (err: any) {

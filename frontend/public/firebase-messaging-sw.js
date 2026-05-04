@@ -23,7 +23,8 @@ try {
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
       body: payload.notification.body,
-      icon: "/logo.jpeg"
+      icon: "/logo.jpeg",
+      data: payload.data // Pass FCM data to the notification object
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);
@@ -31,3 +32,29 @@ try {
 } catch (error) {
   console.error("Firebase Service Worker initialization failed", error);
 }
+
+// Handle notification clicks
+self.addEventListener('notificationclick', function(event) {
+  console.log('[firebase-messaging-sw.js] On notification click: ', event.notification.tag);
+  event.notification.close();
+
+  // Extract the URL from the notification data, fallback to root
+  const urlToOpen = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open with the target URL
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        // If so, just focus it.
+        if (client.url.includes(urlToOpen) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If not, then open the target URL in a new window/tab.
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
