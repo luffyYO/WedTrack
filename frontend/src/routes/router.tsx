@@ -10,6 +10,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const NewGiftPage = lazy(() => import('@/features/newGift/pages/NewGiftPage'));
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'));
 const TasksPage = lazy(() => import('@/pages/TasksPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
                 children: [
                     { path: '/home', element: <Suspense fallback={<Loader />}><HomePage /></Suspense> },
                     { path: '/dashboard', element: <Suspense fallback={<Loader />}><DashboardPage /></Suspense> },
+                    { path: '/new-gift', element: <Suspense fallback={<Loader />}><NewGiftPage /></Suspense> },
                     { path: '/tasks', element: <Suspense fallback={<Loader />}><TasksPage /></Suspense> },
                     { path: '/wishes', element: <Suspense fallback={<Loader />}><WishesPage /></Suspense> },
                     { path: '/profile', element: <Suspense fallback={<Loader />}><ProfilePage /></Suspense> },
