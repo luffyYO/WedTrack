@@ -68,6 +68,6 @@ export function useRealtimeGuests(selectedWeddingId: string) {
 
         return () => { supabase.removeChannel(channel); };
         // queryClient is stable — this runs exactly ONCE on mount
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [queryClient]);
 }

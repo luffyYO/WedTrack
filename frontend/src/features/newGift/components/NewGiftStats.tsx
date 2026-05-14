@@ -1,4 +1,4 @@
-import { IndianRupee, Gift, Clock, AlertCircle } from 'lucide-react';
+import { IndianRupee } from 'lucide-react';
 
 interface NewGiftStatsProps {
     totalAmount: number;
@@ -10,9 +10,6 @@ interface NewGiftStatsProps {
 
 export default function NewGiftStats({
     totalAmount,
-    totalEntries,
-    recentAmount,
-    pendingCount,
     loading,
 }: NewGiftStatsProps) {
     return (

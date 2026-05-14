@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import PageHeader from '@/components/layout/PageHeader';
@@ -7,12 +7,14 @@ import SearchBar from '@/components/SearchBar';
 import NewGiftStats from '../components/NewGiftStats';
 import GiftSearchResults from '../components/GiftSearchResults';
 import NewGiftModal from '../components/NewGiftModal';
+import type {
+    NewGiftEntry
+} from '@/lib/giftQueries';
 import {
     fetchGiftEntries,
     createGiftEntry,
     updateGiftEntry,
-    deleteGiftEntry,
-    NewGiftEntry
+    deleteGiftEntry
 } from '@/lib/giftQueries';
 
 export default function NewGiftPage() {

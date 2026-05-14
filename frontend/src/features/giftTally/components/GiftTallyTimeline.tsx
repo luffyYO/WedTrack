@@ -1,4 +1,4 @@
-import { MatchedFamily } from '../utils/matchingLogic';
+import type { MatchedFamily } from '../utils/matchingLogic';
 import { IndianRupee, Heart, Gift, ArrowRightLeft } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
 
@@ -51,7 +51,7 @@ export default function GiftTallyTimeline({ family }: GiftTallyTimelineProps) {
                                     They returned <strong className="text-slate-800 dark:text-white flex items-center inline-flex gap-0.5"><IndianRupee size={12}/>{family.returnedAmount.toLocaleString('en-IN')}</strong> to you
                                 </p>
                                 <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-1">
-                                    {formatDate(family.returnedDate)}
+                                    {formatDate(family.returnedDate!)}
                                 </span>
                             </div>
                         </div>

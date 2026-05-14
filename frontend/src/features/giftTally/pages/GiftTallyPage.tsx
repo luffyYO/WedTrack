@@ -1,4 +1,3 @@
-import React from 'react';
 import PageHeader from '@/components/layout/PageHeader';
 import { useGiftTally } from '@/lib/tallyQueries';
 import GiftTallyStats from '../components/GiftTallyStats';

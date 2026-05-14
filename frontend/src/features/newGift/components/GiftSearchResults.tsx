@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { SearchX, MapPin, User, Loader2, Edit2, Trash2 } from 'lucide-react';
-import { formatDate, parseSafeDate } from '@/utils/formatters';
-import { NewGiftEntry } from '@/lib/giftQueries';
+import { formatDate } from '@/utils/formatters';
+import type { NewGiftEntry } from '@/lib/giftQueries';
 
 interface GiftSearchResultsProps {
     results: NewGiftEntry[];

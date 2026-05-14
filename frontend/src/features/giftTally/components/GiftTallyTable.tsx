@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, ChevronDown, ChevronUp, IndianRupee, MapPin, User, Clock } from 'lucide-react';
-import { MatchedFamily, TallyStatus } from '../utils/matchingLogic';
+import { Search, Filter, ChevronDown, ChevronUp, IndianRupee, MapPin, User } from 'lucide-react';
+import type { MatchedFamily, TallyStatus } from '../utils/matchingLogic';
 import GiftTallyTimeline from './GiftTallyTimeline';
-import { formatDate } from '@/utils/formatters';
+
 
 interface GiftTallyTableProps {
     tally: MatchedFamily[];

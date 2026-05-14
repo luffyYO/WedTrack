@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/config/supabaseClient';
-import { Guest, NewGiftEntry, MatchedFamily, generateTally } from '../features/giftTally/utils/matchingLogic';
+import type { Guest, NewGiftEntry, MatchedFamily} from '../features/giftTally/utils/matchingLogic';
+import { generateTally } from '../features/giftTally/utils/matchingLogic';
 
 // Fetch all guests across all weddings owned by the user
 async function fetchAllUserGuests(userId: string): Promise<Guest[]> {

@@ -1,5 +1,5 @@
 import { IndianRupee, Users, CheckCircle, Gift } from 'lucide-react';
-import { MatchedFamily } from '../utils/matchingLogic';
+import type { MatchedFamily } from '../utils/matchingLogic';
 
 interface GiftTallyStatsProps {
     tally: MatchedFamily[];

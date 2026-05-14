@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Gift } from 'lucide-react';
+
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import DatePicker from '@/components/ui/DatePicker';
-import { NewGiftEntry } from '@/lib/giftQueries';
+import type { NewGiftEntry } from '@/lib/giftQueries';
 
 interface NewGiftModalProps {
     isOpen: boolean;
@@ -69,8 +69,6 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
             isOpen={isOpen}
             onClose={onClose}
             title={initialData ? "Edit Gift Entry" : "Create New Gift Entry"}
-            icon={<Gift className="text-pink-500" size={24} />}
-            maxWidth="max-w-xl"
         >
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,7 +131,7 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
                     <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary" loading={isSubmitting}>
+                    <Button type="submit" variant="primary" isLoading={isSubmitting}>
                         {initialData ? "Save Changes" : "Submit Entry"}
                     </Button>
                 </div>
