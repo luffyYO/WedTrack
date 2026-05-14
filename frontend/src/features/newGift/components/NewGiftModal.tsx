@@ -21,7 +21,7 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
     const [amount, setAmount] = useState('');
     const [amountType, setAmountType] = useState('Cash');
     const [village, setVillage] = useState('');
-    const [giftDate, setGiftDate] = useState<Date>(new Date());
+    const [giftDate, setGiftDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -32,14 +32,14 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
                 setAmount(initialData.amount.toString());
                 setAmountType(initialData.amount_type);
                 setVillage(initialData.village || '');
-                setGiftDate(initialData.gift_date ? new Date(initialData.gift_date) : new Date());
+                setGiftDate(initialData.gift_date ? new Date(initialData.gift_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
             } else {
                 setPersonName('');
                 setFatherName('');
                 setAmount('');
                 setAmountType('Cash');
                 setVillage('');
-                setGiftDate(new Date());
+                setGiftDate(new Date().toISOString().split('T')[0]);
             }
         }
     }, [isOpen, initialData]);
@@ -54,7 +54,7 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
                 amount: Number(amount) || 0,
                 amount_type: amountType,
                 village: village,
-                gift_date: giftDate.toISOString(),
+                gift_date: new Date(giftDate).toISOString(),
             });
             onClose();
         } catch (error) {
@@ -122,9 +122,10 @@ const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, 
                         onChange={(e) => setVillage(e.target.value)}
                     />
                     <DatePicker
+                        id="gift-date"
                         label="Gift Date *"
-                        date={giftDate}
-                        onChange={(date) => { if (date) setGiftDate(date); }}
+                        value={giftDate}
+                        onChange={(val) => setGiftDate(val)}
                     />
                 </div>
 
