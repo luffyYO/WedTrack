@@ -1,4 +1,4 @@
-import { LayoutDashboard, CheckSquare, Settings, Home, X, MessageSquareHeart } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Settings, Home, X, MessageSquareHeart, Gift, ArrowRightLeft } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import NavItemComponent from './NavItem';
 import type { NavItem } from '@/types';
@@ -6,6 +6,8 @@ import type { NavItem } from '@/types';
 const NAV_ITEMS: NavItem[] = [
     { label: 'Home', href: '/home', icon: Home },
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'New Gift', href: '/new-gift', icon: Gift },
+    { label: 'Gift Tally', href: '/gift-tally', icon: ArrowRightLeft },
     { label: 'Tasks', href: '/tasks', icon: CheckSquare },
     { label: 'Wishes', href: '/wishes', icon: MessageSquareHeart },
     { label: 'Settings', href: '/settings', icon: Settings },

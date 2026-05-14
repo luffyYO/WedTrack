@@ -1,4 +1,5 @@
-import { X, LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 export interface MobileNavItem {

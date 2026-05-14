@@ -1,4 +1,5 @@
-import { useState, TouchEvent } from 'react';
+import type { TouchEvent } from 'react';
+import { useState } from 'react';
 import { cn } from '@/utils/cn';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
