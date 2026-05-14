@@ -49,16 +49,11 @@ const GiftSearchResults: React.FC<GiftSearchResultsProps> = ({ results, onEdit, 
                             <th className="px-5 py-4 text-right tracking-widest text-slate-500 dark:text-white">Amount &amp; Type</th>
                             <th className="px-5 py-4 text-center tracking-widest text-slate-500 dark:text-white">Status / Action</th>
                             <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Location</th>
-                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Date &amp; Time</th>
+                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Date</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-neutral-800/60">
                         {sortedResults.map((guest, idx) => {
-                            const entryDate = parseSafeDate(guest.gift_date || guest.created_at);
-                            const timeStr = entryDate && !isNaN(entryDate.getTime())
-                                ? entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-                                : '';
-
                             return (
                                 <tr
                                     key={guest.id}
@@ -151,14 +146,11 @@ const GiftSearchResults: React.FC<GiftSearchResultsProps> = ({ results, onEdit, 
                                         </div>
                                     </td>
 
-                                    {/* Date & Time */}
+                                    {/* Date */}
                                     <td className="px-5 py-3.5">
                                         <div className="flex flex-col gap-0.5">
                                             <span className="text-slate-700 dark:text-white font-bold text-[11px]">
                                                 {formatDate(guest.gift_date || guest.created_at)}
-                                            </span>
-                                            <span className="text-[9px] text-slate-400 dark:text-neutral-500 font-medium">
-                                                {timeStr}
                                             </span>
                                         </div>
                                     </td>
