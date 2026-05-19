@@ -14,9 +14,12 @@ ALTER TABLE public.guests
 
 -- 2. Backwards compatibility check
 -- Map existing first_name + last_name to the new `fullname` column
-UPDATE public.guests
-SET fullname = TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''))
-WHERE fullname IS NULL AND first_name IS NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='guests' AND column_name='first_name') THEN
+        EXECUTE 'UPDATE public.guests SET fullname = TRIM(COALESCE(first_name, '''') || '' '' || COALESCE(last_name, '''')) WHERE fullname IS NULL AND first_name IS NOT NULL';
+    END IF;
+END $$;
 
 -- 3. Map `is_paid` boolean to the new `payment_status` column
 UPDATE public.guests

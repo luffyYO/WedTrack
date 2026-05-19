@@ -48,3 +48,7 @@ verify_jwt = true
 import_map = "./functions/debug-db/deno.json"
 entrypoint = "./functions/debug-db/index.ts"
 
+[functions.process-paper-scan]
+verify_jwt = false
+
+

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles, Download } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
@@ -16,6 +16,8 @@ import {
     updateGiftEntry,
     deleteGiftEntry
 } from '@/lib/giftQueries';
+import NewGiftAIModal from '../components/NewGiftAIModal';
+import { exportGiftEntriesCSV } from '@/lib/exportService';
 
 export default function NewGiftPage() {
     const { user } = useAuthStore();
@@ -27,6 +29,8 @@ export default function NewGiftPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState<NewGiftEntry | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+    const [aiPrefill, setAIPrefill] = useState<Partial<NewGiftEntry> | null>(null);
 
     // Initial fetch
     useEffect(() => {
@@ -80,6 +84,7 @@ export default function NewGiftPage() {
 
     // Handlers
     const handleOpenModal = (entry?: NewGiftEntry) => {
+        setAIPrefill(null);
         if (entry) {
             setEditingEntry(entry);
         } else {
@@ -88,9 +93,15 @@ export default function NewGiftPage() {
         setIsModalOpen(true);
     };
 
+    /** Called by NewGiftAIModal when entries are successfully saved in bulk */
+    const handleAIExtractSaved = (newEntries: NewGiftEntry[]) => {
+        setEntries(prev => [...newEntries, ...prev]);
+    };
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingEntry(null);
+        setAIPrefill(null);
     };
 
     const handleSubmit = async (data: Partial<NewGiftEntry>) => {
@@ -135,15 +146,28 @@ export default function NewGiftPage() {
                         </>
                     }
                     action={
-                        <div className="mt-4 sm:mt-0 w-full sm:w-auto">
+                        <div className="mt-4 sm:mt-0 flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+                            <button
+                                onClick={() => setIsAIModalOpen(true)}
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-[12px] font-bold hover:bg-violet-100 dark:hover:bg-violet-950/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            >
+                                <Sparkles size={13} /> AI Extract
+                            </button>
+                            <button
+                                onClick={() => exportGiftEntriesCSV(filteredEntries, 'gift-entries.csv')}
+                                disabled={filteredEntries.length === 0}
+                                title="Export as CSV"
+                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[12px] font-semibold hover:border-slate-300 transition-all disabled:opacity-40"
+                            >
+                                <Download size={13} /> Export CSV
+                            </button>
                             <Button
                                 size="md"
-                                fullWidth
                                 variant="primary"
                                 icon={<Plus size={16} />}
                                 onClick={() => handleOpenModal()}
                             >
-                                Create New Gift Entry
+                                New Entry
                             </Button>
                         </div>
                     }
@@ -202,7 +226,14 @@ export default function NewGiftPage() {
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
                     onSubmit={handleSubmit}
-                    initialData={editingEntry}
+                    initialData={aiPrefill ? (aiPrefill as NewGiftEntry) : editingEntry}
+                />
+            )}
+
+            {isAIModalOpen && (
+                <NewGiftAIModal
+                    onClose={() => setIsAIModalOpen(false)}
+                    onSaved={handleAIExtractSaved}
                 />
             )}
         </div>
