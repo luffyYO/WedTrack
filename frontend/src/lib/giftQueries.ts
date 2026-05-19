@@ -43,6 +43,19 @@ export async function createGiftEntry(entry: Partial<NewGiftEntry>): Promise<New
 }
 
 /**
+ * Create multiple manual gift entries in bulk.
+ */
+export async function createGiftEntries(entries: Partial<NewGiftEntry>[]): Promise<NewGiftEntry[]> {
+  const { data, error } = await supabase
+    .from('new_gift_entries')
+    .insert(entries)
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+/**
  * Update an existing manual gift entry.
  */
 export async function updateGiftEntry(id: string, updates: Partial<NewGiftEntry>): Promise<NewGiftEntry> {

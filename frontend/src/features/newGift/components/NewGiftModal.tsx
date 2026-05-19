@@ -13,7 +13,7 @@ interface NewGiftModalProps {
     initialData?: NewGiftEntry | null;
 }
 
-const AMOUNT_TYPES = ['Cash', 'Gold', 'Silver', 'Gift'];
+const AMOUNT_TYPES = ['Cash', 'PhonePe', 'GPay', 'Paytm'];
 
 const NewGiftModal: React.FC<NewGiftModalProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
     const [personName, setPersonName] = useState('');
