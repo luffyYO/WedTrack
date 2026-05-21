@@ -51,6 +51,7 @@ const router = createBrowserRouter([
 
     // ── Public / Guest routes (Scanned from QR) ────────────────────────────────
     { path: '/guest-form/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },
+    { path: '/g/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },
 
     // ── Protected / App routes ─────────────────────────────────────────────────
     {
