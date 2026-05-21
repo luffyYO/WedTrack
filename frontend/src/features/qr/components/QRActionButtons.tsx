@@ -211,6 +211,20 @@ export default function QRActionButtons({
                     {isSaving ? 'Processing...' : 'Save Registry Image'}
                 </Button>
             </div>
+            
+            {/* Test Link Button */}
+            {!disabled && shareLink && (
+                <div className="flex justify-center mt-3">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(shareLink, '_blank')}
+                        className="text-slate-500 hover:text-slate-700 text-xs font-medium underline-offset-4 hover:underline"
+                    >
+                        Test QR Link in Browser
+                    </Button>
+                </div>
+            )}
         </>
     );
 }

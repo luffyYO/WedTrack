@@ -10,7 +10,7 @@ export default function GuestLinkBanner({ activeWedding }: GuestLinkBannerProps)
 
     if (!activeWedding?.nanoid) return null;
 
-    const inviteUrl = `${window.location.origin}/guest-form/${activeWedding.nanoid}`;
+    const inviteUrl = `${window.location.origin}/g/${activeWedding.nanoid}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(inviteUrl).then(() => {

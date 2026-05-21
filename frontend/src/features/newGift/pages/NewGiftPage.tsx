@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Sparkles, Download } from 'lucide-react';
 import { useAuthStore } from '@/store';
+import { useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import SearchBar from '@/components/SearchBar';
@@ -11,7 +12,7 @@ import type {
     NewGiftEntry
 } from '@/lib/giftQueries';
 import {
-    fetchGiftEntries,
+    useGiftEntries,
     createGiftEntry,
     updateGiftEntry,
     deleteGiftEntry
@@ -21,8 +22,8 @@ import { exportGiftEntriesCSV } from '@/lib/exportService';
 
 export default function NewGiftPage() {
     const { user } = useAuthStore();
-    const [entries, setEntries] = useState<NewGiftEntry[]>([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const { data: entries = [], isLoading: loading } = useGiftEntries(user?.id);
     
     // UI State
     const [searchQuery, setSearchQuery] = useState('');
@@ -32,22 +33,7 @@ export default function NewGiftPage() {
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
     const [aiPrefill, setAIPrefill] = useState<Partial<NewGiftEntry> | null>(null);
 
-    // Initial fetch
-    useEffect(() => {
-        const loadData = async () => {
-            if (!user?.id) return;
-            try {
-                setLoading(true);
-                const data = await fetchGiftEntries(user.id);
-                setEntries(data);
-            } catch (err) {
-                console.error('Failed to fetch gifts:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
-    }, [user?.id]);
+
 
     // Computed Stats
     const { totalAmount, totalEntries, recentAmount } = useMemo(() => {
@@ -95,7 +81,10 @@ export default function NewGiftPage() {
 
     /** Called by NewGiftAIModal when entries are successfully saved in bulk */
     const handleAIExtractSaved = (newEntries: NewGiftEntry[]) => {
-        setEntries(prev => [...newEntries, ...prev]);
+        if (!user?.id) return;
+        queryClient.setQueryData(['giftEntries', user.id], (old: NewGiftEntry[] | undefined) => {
+            return old ? [...newEntries, ...old] : newEntries;
+        });
     };
 
     const handleCloseModal = () => {
@@ -110,10 +99,14 @@ export default function NewGiftPage() {
         try {
             if (editingEntry) {
                 const updated = await updateGiftEntry(editingEntry.id, data);
-                setEntries(prev => prev.map(e => e.id === updated.id ? updated : e));
+                queryClient.setQueryData(['giftEntries', user.id], (old: NewGiftEntry[] | undefined) => 
+                    old ? old.map(e => e.id === updated.id ? updated : e) : []
+                );
             } else {
                 const newEntry = await createGiftEntry({ ...data, user_id: user.id });
-                setEntries(prev => [newEntry, ...prev]);
+                queryClient.setQueryData(['giftEntries', user.id], (old: NewGiftEntry[] | undefined) => 
+                    old ? [newEntry, ...old] : [newEntry]
+                );
             }
         } catch (err) {
             console.error('Error saving gift entry:', err);
@@ -127,7 +120,11 @@ export default function NewGiftPage() {
         try {
             setDeletingId(id);
             await deleteGiftEntry(id);
-            setEntries(prev => prev.filter(e => e.id !== id));
+            if (user?.id) {
+                queryClient.setQueryData(['giftEntries', user.id], (old: NewGiftEntry[] | undefined) => 
+                    old ? old.filter(e => e.id !== id) : []
+                );
+            }
         } catch (err) {
             console.error('Error deleting gift entry:', err);
         } finally {

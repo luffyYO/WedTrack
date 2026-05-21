@@ -1,4 +1,5 @@
 import { supabase } from '@/config/supabaseClient';
+import { useQuery } from '@tanstack/react-query';
 
 export interface NewGiftEntry {
   id: string;
@@ -26,6 +27,19 @@ export async function fetchGiftEntries(userId: string): Promise<NewGiftEntry[]> 
 
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+/**
+ * React Query hook for fetching gift entries.
+ */
+export function useGiftEntries(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['giftEntries', userId],
+    queryFn: () => fetchGiftEntries(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus to avoid unnecessary loading indicators
+  });
 }
 
 /**
