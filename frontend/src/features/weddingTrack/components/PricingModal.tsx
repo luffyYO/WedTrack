@@ -1,6 +1,8 @@
 import { Check, ShieldCheck, Zap, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
+import { PLAN_PRICING } from '@/config/pricing';
+
 interface PricingPlan {
     id: 'basic' | 'pro';
     title: string;
@@ -23,9 +25,9 @@ const PLANS: PricingPlan[] = [
     {
         id: 'basic',
         title: 'Basic',
-        originalPrice: 499,
-        discountBadge: '80% OFF',
-        finalPrice: 99,
+        originalPrice: PLAN_PRICING.basic.originalPrice,
+        discountBadge: PLAN_PRICING.basic.discountBadge,
+        finalPrice: PLAN_PRICING.basic.finalPrice,
         features: [
             'Unlimited guest list',
             '1 QR code',
@@ -37,9 +39,9 @@ const PLANS: PricingPlan[] = [
         title: 'Pro',
         tag: 'Most Popular',
         isPopular: true,
-        originalPrice: 699,
-        discountBadge: '50% OFF',
-        finalPrice: 349,
+        originalPrice: PLAN_PRICING.pro.originalPrice,
+        discountBadge: PLAN_PRICING.pro.discountBadge,
+        finalPrice: PLAN_PRICING.pro.finalPrice,
         features: [
             'Unlimited guest list',
             '1 QR code',
