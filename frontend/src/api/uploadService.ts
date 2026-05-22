@@ -48,3 +48,37 @@ export const uploadWeddingGallery = async (files: File[]): Promise<string[]> => 
 
     return uploadedUrls;
 };
+
+/**
+ * Uploads a single payment QR image to the 'weddings' bucket under 'payment_qrs/'.
+ */
+export const uploadPaymentQR = async (file: File): Promise<string | null> => {
+    if (!file) return null;
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+    const filePath = `payment_qrs/${fileName}`;
+
+    try {
+        const { error: uploadError } = await supabase.storage
+            .from('weddings')
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (uploadError) {
+            console.error(`Failed to upload ${file.name}:`, uploadError.message);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from('weddings')
+            .getPublicUrl(filePath);
+
+        return data?.publicUrl || null;
+    } catch (err) {
+        console.error(`Unexpected error during upload of ${file.name}:`, err);
+        return null;
+    }
+};

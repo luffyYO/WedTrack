@@ -19,6 +19,16 @@ export interface WeddingTrack extends WeddingTrackFormData {
     createdAt: string;
 }
 
+export interface PaymentMethod {
+    id?: string;
+    upi_id: string;
+    payment_qr_url?: string;
+    receiver_name?: string;
+    label?: string;
+    is_primary?: boolean;
+    qrFile?: File; // For local UI state only before upload
+}
+
 export interface CreateWeddingTrackPayload {
     bride_name: string;
     groom_name: string;
@@ -29,6 +39,7 @@ export interface CreateWeddingTrackPayload {
     gallery_images?: string[];
     selected_plan?: string;
     amount?: number;
+    payment_methods?: PaymentMethod[];
 }
 
 // Shape of the actual inner wedding record returned by create-wedding Edge Function
