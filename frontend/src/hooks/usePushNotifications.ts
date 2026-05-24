@@ -292,7 +292,8 @@ export function usePushNotifications(weddingId: string | null | undefined): UseP
       console.log('[usePushNotifications] Calling PushManager.subscribe()...');
       const subscription = await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        // TS 5.6 doesn't support Uint8Array<T> generics; extract .buffer for type compatibility.
+        applicationServerKey: new Uint8Array(applicationServerKey.buffer),
       });
 
       console.log('[usePushNotifications] Subscription successful!', subscription.endpoint);
