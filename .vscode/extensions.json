@@ -1,0 +1,6 @@
+{
+  "recommendations": [
+    // Required for Deno Edge Functions (supabase/functions/)
+    "denoland.vscode-deno"
+  ]
+}

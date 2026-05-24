@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, X } from 'lucide-react';
+import { Plus, Users, X, Bell } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 import PageHeader from '@/components/layout/PageHeader';
@@ -20,6 +20,9 @@ import GuestSummaryBar from '@/features/dashboard/components/GuestSummaryBar';
 import { useRealtimeGuests } from '@/features/dashboard/hooks/useRealtimeGuests';
 import { useGuestFilters } from '@/features/dashboard/hooks/useGuestFilters';
 import { useGuestMutations } from '@/features/dashboard/hooks/useGuestMutations';
+
+// Web Push — browser notifications for new guest entries ONLY
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 // This page is intentionally lean — it only composes feature components and hooks.
@@ -76,6 +79,25 @@ export default function DashboardPage() {
 
     // ── Feature Hooks ────────────────────────────────────────────────────────
     useRealtimeGuests(selectedWeddingId);
+
+    // ── Web Push: browser notifications for new guest entries ONLY ───────────
+    // This is completely separate from the bell/wish notification system.
+    const {
+        isSupported: pushSupported,
+        isSubscribed: pushSubscribed,
+        permissionState: pushPermission,
+        isLoading: pushLoading,
+        requestPermission: requestPushPermission,
+    } = usePushNotifications(selectedWeddingId || null);
+
+    // Dismiss banner state (session-only — no localStorage spam)
+    const [pushBannerDismissed, setPushBannerDismissed] = useState(false);
+    const showPushBanner =
+        pushSupported &&
+        !pushSubscribed &&
+        pushPermission !== 'denied' &&
+        !pushBannerDismissed &&
+        !!selectedWeddingId;
 
     const { filteredGuests, filteredVerifiedGiftsCount, filteredVerifiedAmount } = useGuestFilters({
         guests,
@@ -163,6 +185,47 @@ export default function DashboardPage() {
                     }
                 />
             </div>
+
+            {/* ── Web Push Opt-in Banner ─────────────────────────────────────── */}
+            {showPushBanner && (
+                <div
+                    role="banner"
+                    aria-label="Enable guest notifications"
+                    className="mx-4 sm:mx-6 mt-4 flex items-center gap-3 px-4 py-3 rounded-2xl border border-rose-200/70 bg-gradient-to-r from-rose-50/90 to-pink-50/90 dark:from-rose-950/40 dark:to-pink-950/40 dark:border-rose-800/40 shadow-sm text-[13px] animate-fade-up"
+                >
+                    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300">
+                        <Bell size={15} />
+                    </span>
+                    <p className="flex-1 text-slate-700 dark:text-slate-300 leading-snug">
+                        <span className="font-semibold text-rose-600 dark:text-rose-400">Get notified</span>{' '}
+                        when new guests join your wedding celebration.
+                    </p>
+                    <button
+                        id="push-enable-btn"
+                        disabled={pushLoading}
+                        onClick={requestPushPermission}
+                        className="shrink-0 px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-60 text-white text-[12px] font-semibold transition-colors"
+                    >
+                        {pushLoading ? 'Enabling…' : 'Enable'}
+                    </button>
+                    <button
+                        id="push-dismiss-btn"
+                        onClick={() => setPushBannerDismissed(true)}
+                        className="shrink-0 p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/40 text-slate-400 hover:text-slate-600 transition-colors"
+                        aria-label="Dismiss"
+                    >
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+
+            {/* ── Subscription active indicator (subtle) ─────────────────────── */}
+            {pushSupported && pushSubscribed && (
+                <div className="mx-4 sm:mx-6 mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 text-[12px] text-emerald-700 dark:text-emerald-400 font-medium">
+                    <Bell size={12} className="shrink-0" />
+                    Guest notifications enabled
+                </div>
+            )}
 
             <GuestLinkBanner activeWedding={activeWedding} />
 

@@ -1,0 +1,24 @@
+{
+  // This file intentionally excludes all source files from the TypeScript
+  // language server. Files under supabase/functions/ are Deno files and are
+  // handled exclusively by the Deno language server (vscode-deno extension),
+  // scoped via "deno.enablePaths" in .vscode/settings.json.
+  //
+  // Do NOT add "include" here — that would pull Deno files back into the TS LS
+  // and re-introduce "Cannot find name 'Deno'" / ESM-URL import errors.
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": [
+      "esnext"
+    ],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true
+  },
+  "files": [],
+  "exclude": [
+    "**/*"
+  ]
+}

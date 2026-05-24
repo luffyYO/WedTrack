@@ -1,14 +1,24 @@
 {
-  "deno.enable": true,
+  // ─── Deno LS: scoped to supabase/functions/ only ──────────────────────────
+  // deno.enable MUST be false here. The Deno extension activates per-path via
+  // deno.enablePaths when the global flag is false. If deno.enable is true the
+  // Deno LS takes over the entire workspace and the TypeScript LS fights it,
+  // producing "Cannot find name 'Deno'" and ESM-URL module errors everywhere.
+  "deno.enable": false,
   "deno.enablePaths": ["supabase/functions"],
   "deno.unstable": true,
+  "deno.config": "./supabase/functions/deno.json",
   "deno.importMap": "./supabase/functions/import_map.json",
   "deno.suggest.imports.hosts": {
-      "https://deno.land": true,
-      "https://esm.sh": true
+    "https://deno.land": true,
+    "https://esm.sh": true
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  },
+
+  // ─── TypeScript / JavaScript LS: active for frontend & backend ────────────
+  // Keep validation on for the rest of the workspace (frontend, backend, etc.)
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
+
+  // ─── CSS ──────────────────────────────────────────────────────────────────
   "css.lint.unknownAtRules": "ignore"
 }

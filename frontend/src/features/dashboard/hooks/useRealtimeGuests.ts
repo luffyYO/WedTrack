@@ -17,6 +17,7 @@ export function useRealtimeGuests(selectedWeddingId: string) {
     }, [selectedWeddingId]);
 
     useEffect(() => {
+        let isUnmounted = false;
         // WHY unfiltered: server-side filter requires REPLICA IDENTITY FULL on the
         // guests table. Without it Supabase closes the channel → infinite loop.
         // Client-side filtering is equally fast and avoids the DB requirement.
@@ -62,11 +63,16 @@ export function useRealtimeGuests(selectedWeddingId: string) {
                 } else if (status === 'TIMED_OUT') {
                     console.warn('[Realtime] ⏱ Timed out — data will still sync on next query refetch');
                 } else if (status === 'CLOSED') {
-                    console.warn('[Realtime] ⚠ Channel closed — check Supabase Realtime is enabled for the guests table');
+                    if (!isUnmounted) {
+                        console.warn('[Realtime] ⚠ Channel closed — check Supabase Realtime is enabled for the guests table');
+                    }
                 }
             });
 
-        return () => { supabase.removeChannel(channel); };
+        return () => {
+            isUnmounted = true;
+            supabase.removeChannel(channel);
+        };
         // queryClient is stable — this runs exactly ONCE on mount
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [queryClient]);

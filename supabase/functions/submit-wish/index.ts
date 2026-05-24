@@ -10,22 +10,32 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Correlation ID for cross-function tracing
+  const correlationId = crypto.randomUUID().substring(0, 8)
+  const log = (level: 'INFO' | 'WARN' | 'ERROR', msg: string, data?: Record<string, unknown>) => {
+    const line = `[submit-wish][${correlationId}][${level}] ${msg}` +
+      (data ? ` | ${JSON.stringify(data)}` : '')
+    if (level === 'ERROR') console.error(line)
+    else if (level === 'WARN') console.warn(line)
+    else console.log(line)
+  }
+
   try {
     const body = await req.json()
-    const { 
+    const {
       wedding_nanoid,
-      fullname, 
+      fullname,
       father_fullname,
       phone_number,
-      amount, 
-      payment_type, 
-      gift_side, 
+      amount,
+      payment_type,
+      gift_side,
       village,
       wish,
       fcm_token
     } = body
 
-    console.log(`[submit-wish] wedding_nanoid: ${wedding_nanoid}, guest: ${fullname}`)
+    log('INFO', `Request received`, { wedding_nanoid, guest: fullname })
 
     if (!wedding_nanoid) return errorResponse('Missing wedding_nanoid', 400)
     if (!fullname) return errorResponse('fullname is required', 400)
@@ -51,15 +61,19 @@ Deno.serve(async (req) => {
       .eq('payment_status', 'paid')
       .limit(1)
 
-    console.log('[submit-wish] wedding lookup error:', JSON.stringify(wError))
+    log('INFO', 'Wedding lookup result', {
+      nanoid: wedding_nanoid,
+      found: !!(weddingRows && weddingRows.length > 0),
+      db_error: wError ? wError.message : null,
+    })
 
     if (wError) return errorResponse(`DB error: ${wError.message}`, 500)
     if (!weddingRows || weddingRows.length === 0) return errorResponse('Wedding not found', 404)
 
     const wedding = weddingRows[0]
 
-    // Determine plan — anything other than 'premium'/'349' is treated as basic
-    const isPremiumPlan = wedding.selected_plan === 'premium' || wedding.selected_plan === '349'
+    // Determine plan — anything other than 'premium'/'349'/'pro' is treated as basic
+    const isPremiumPlan = wedding.selected_plan === 'premium' || wedding.selected_plan === '349' || wedding.selected_plan === 'pro'
 
     // Plan-conditional phone_number validation
     if (isPremiumPlan && !phone_number) {
@@ -68,10 +82,19 @@ Deno.serve(async (req) => {
 
     // 2. Timing validation
     const now = new Date()
+    log('INFO', 'QR timing check', {
+      now: now.toISOString(),
+      qr_activation_time: wedding.qr_activation_time,
+      qr_expires_at: wedding.qr_expires_at,
+      wedding_id: wedding.id,
+    })
+
     if (wedding.qr_activation_time && now < new Date(wedding.qr_activation_time)) {
+      log('WARN', 'QR not yet active', { qr_activation_time: wedding.qr_activation_time })
       return errorResponse('QR form is not active yet', 403)
     }
     if (wedding.qr_expires_at && now > new Date(wedding.qr_expires_at)) {
+      log('WARN', 'QR expired', { qr_expires_at: wedding.qr_expires_at })
       return errorResponse('QR form has Expired', 403)
     }
 
@@ -99,16 +122,57 @@ Deno.serve(async (req) => {
       .single()
 
     if (dbError) {
-      console.error('[submit-wish] insert error:', JSON.stringify(dbError))
+      log('ERROR', 'Guest insert failed', { error: dbError.message, wedding_id: wedding.id })
       throw dbError
     }
 
+    log('INFO', 'Guest inserted', { guest_id: guest?.id, wedding_id: wedding.id })
     logEvent('WishSubmitted', { wedding_id: wedding.id, guest_id: guest?.id })
+
+    // ── Trigger browser push notification (fire-and-forget) ───────────────────
+    // Scope: ONLY for new guest entry alerts via Web Push (VAPID).
+    // This is completely separate from the in-app bell / wish system.
+    // A failure here must NEVER break the guest submission.
+    const supabaseUrl    = Deno.env.get('SUPABASE_URL') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+    if (supabaseUrl && serviceRoleKey) {
+      const pushUrl = `${supabaseUrl}/functions/v1/send-push-notification`
+      log('INFO', 'Dispatching push notification', { push_url: pushUrl, event_id: wedding.id })
+      try {
+        // We await the fetch to ensure Deno doesn't kill the isolate before the request fires.
+        const pushRes = await fetch(pushUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-key': serviceRoleKey,
+          },
+          body: JSON.stringify({ event_id: wedding.id }),
+        })
+        const pushResText = await pushRes.text()
+        log('INFO', 'Push dispatch response', {
+          http_status: pushRes.status,
+          response_body: pushResText.substring(0, 300),
+          event_id: wedding.id,
+        })
+      } catch (pushErr: any) {
+        // Swallow — push delivery is best-effort, never blocks submission
+        log('WARN', 'Push dispatch network error', {
+          error: pushErr?.message,
+          event_id: wedding.id,
+        })
+      }
+    } else {
+      log('WARN', 'Missing env for push dispatch', {
+        supabase_url_present: !!supabaseUrl,
+        service_role_key_present: !!serviceRoleKey,
+      })
+    }
 
     return successResponse({ id: guest?.id })
 
   } catch (error: any) {
-    console.error('[submit-wish] SERVER ERROR:', error)
+    console.error(`[submit-wish][${correlationId}][ERROR] Unhandled exception:`, error?.message ?? error)
     return errorResponse(error.message || 'Internal server error', 500)
   }
 })

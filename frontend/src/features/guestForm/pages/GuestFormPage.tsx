@@ -25,7 +25,7 @@ export default function GuestFormPage() {
     const [fcmToken, setFcmToken] = useState<string | null>(null);
 
     // Derived from wedding data — premium plan enables WhatsApp + push notifications
-    const isPremiumPlan = wedding?.selected_plan === 'premium' || wedding?.selected_plan === '349';
+    const isPremiumPlan = wedding?.selected_plan === 'premium' || wedding?.selected_plan === '349' || wedding?.selected_plan === 'pro';
 
     const [formData, setFormData] = useState({
         fullname: '',

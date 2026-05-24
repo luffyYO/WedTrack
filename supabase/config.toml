@@ -48,3 +48,9 @@ verify_jwt = true
 import_map = "./functions/debug-db/deno.json"
 entrypoint = "./functions/debug-db/index.ts"
 
+[functions.save-push-subscription]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+

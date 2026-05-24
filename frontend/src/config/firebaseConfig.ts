@@ -60,19 +60,14 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 
   try {
-    // Register (or retrieve the existing active) service worker
-    const swUrl = new URL("/firebase-messaging-sw.js", window.location.origin);
-    swUrl.searchParams.set("apiKey", firebaseConfig.apiKey || "");
-    swUrl.searchParams.set("authDomain", firebaseConfig.authDomain || "");
-    swUrl.searchParams.set("projectId", firebaseConfig.projectId || "");
-    swUrl.searchParams.set("storageBucket", firebaseConfig.storageBucket || "");
-    swUrl.searchParams.set("messagingSenderId", firebaseConfig.messagingSenderId || "");
-    swUrl.searchParams.set("appId", firebaseConfig.appId || "");
-
-    const registration = await navigator.serviceWorker.register(
-      swUrl.toString(),
-      { scope: "/" }
-    );
+    // Register the UNIFIED service worker (sw.js) — not firebase-messaging-sw.js.
+    // Having two SWs compete for scope "/" caused push events to land in whichever
+    // SW was registered last, making native VAPID pushes silently disappear.
+    // We pass sw.js here so Firebase uses the same SW as our VAPID push subscription.
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+      updateViaCache: 'none',
+    });
     // Wait until the SW is active before generating a token
     await navigator.serviceWorker.ready;
 

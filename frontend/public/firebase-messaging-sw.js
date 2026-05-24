@@ -1,33 +1,19 @@
-importScripts("https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/11.0.1/firebase-messaging-compat.js");
+/**
+ * firebase-messaging-sw.js — NO-OP STUB
+ *
+ * This file exists to prevent a 404 when the Firebase SDK attempts to
+ * register it. All actual push handling has been moved to sw.js (the
+ * unified service worker) to avoid scope conflicts with the VAPID push
+ * subscription.
+ *
+ * firebaseConfig.ts now passes sw.js as the serviceWorkerRegistration to
+ * Firebase getToken(), so this file is never the active SW.
+ */
 
-// Extract config from url query parameters to avoid hardcoding secrets
-const urlParams = new URL(location.href).searchParams;
-
-const firebaseConfig = {
-  apiKey: urlParams.get('apiKey'),
-  authDomain: urlParams.get('authDomain'),
-  projectId: urlParams.get('projectId'),
-  storageBucket: urlParams.get('storageBucket'),
-  messagingSenderId: urlParams.get('messagingSenderId'),
-  appId: urlParams.get('appId')
-};
-
-
-try {
-  firebase.initializeApp(firebaseConfig);
-  const messaging = firebase.messaging();
-
-  messaging.onBackgroundMessage((payload) => {
-    console.log("[firebase-messaging-sw.js] Received background message ", payload);
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-      body: payload.notification.body,
-      icon: "/logo.jpeg"
-    };
-
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  });
-} catch (error) {
-  console.error("Firebase Service Worker initialization failed", error);
-}
+// Immediately activate and claim so that if this SW is somehow installed it
+// hands off control as fast as possible.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+  console.log('[firebase-messaging-sw.js] No-op stub activated — all push handling is in sw.js');
+});

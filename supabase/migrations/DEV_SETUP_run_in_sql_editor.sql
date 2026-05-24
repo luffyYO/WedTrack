@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.weddings (
   village          TEXT,
   location         TEXT,
   qr_activated_at  TIMESTAMPTZ,
+  qr_activation_time TIMESTAMPTZ,  -- when the QR form opens (set by create-wedding)
   qr_expires_at    TIMESTAMPTZ,
   created_at       TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
