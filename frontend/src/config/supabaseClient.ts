@@ -1,12 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// .trim() is critical: hosting providers (Vercel, Netlify) sometimes inject
+// a trailing \n into env var values, which becomes %0A in the WebSocket URL
+// and causes every Realtime connection to fail immediately.
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn(
-    'Supabase URL or Anon Key is missing. Check your environment variables.'
-  );
+  console.warn('[Supabase] URL or Anon Key is missing. Check environment variables.');
+} else {
+  // Sanity-check: a valid JWT ends with a base64url character, never a newline.
+  const lastChar = supabaseKey.charCodeAt(supabaseKey.length - 1);
+  if (lastChar === 10 || lastChar === 13) {
+    console.error('[Supabase] ANON KEY has a trailing newline! Realtime will fail. Fix hosting env vars.');
+  } else {
+    console.debug(`[Supabase] Key OK — length=${supabaseKey.length}, suffix=...${supabaseKey.slice(-6)}`);
+  }
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {

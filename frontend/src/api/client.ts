@@ -6,8 +6,9 @@ import axios, {
 import type { ApiError } from '@/types';
 import { supabase } from '@/config/supabaseClient';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// .trim() guards against hosting providers (Vercel/Netlify) injecting trailing \n into env vars
+const SUPABASE_URL     = (import.meta.env.VITE_SUPABASE_URL      || '').trim();
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 const API_BASE_URL = `${SUPABASE_URL}/functions/v1`;
 
 // ─── Cached Auth Token ─────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ const PUBLIC_ENDPOINTS = ['get-wedding-details', 'submit-wish', 'fetch-wishes', 
 
 client.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
     // Always set base headers
     config.headers.set('apikey', anonKey);

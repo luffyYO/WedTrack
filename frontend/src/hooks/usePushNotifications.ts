@@ -92,8 +92,8 @@ export function usePushNotifications(weddingId: string | null | undefined): UseP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL as string;
-      const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+      const supabaseUrl  = (import.meta.env.VITE_SUPABASE_URL      || '').trim();
+      const supabaseAnon = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
       const { data: { session } } = await supabase.auth.getSession();
 
       console.log(`[usePushNotifications] Syncing subscription in DB for event ${targetWeddingId}...`);
