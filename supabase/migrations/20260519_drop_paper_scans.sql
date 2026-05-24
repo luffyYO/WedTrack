@@ -31,6 +31,9 @@ DROP POLICY IF EXISTS "Authenticated users can upload paper-scans" ON storage.ob
 DROP POLICY IF EXISTS "Users can delete their own paper-scans"   ON storage.objects;
 
 -- 6. Delete the paper-scans storage bucket
---    (objects inside must be empty first — delete via Storage UI if bucket is non-empty)
-DELETE FROM storage.buckets WHERE id = 'paper-scans';
+--    Cannot delete via SQL: Supabase blocks direct storage.buckets mutations.
+--    Delete the bucket via: Supabase Dashboard > Storage > paper-scans > Delete
+--    OR via Storage API: DELETE https://<project>.supabase.co/storage/v1/bucket/paper-scans
+--    (bucket must be empty first)
+-- DELETE FROM storage.buckets WHERE id = 'paper-scans'; -- NOT allowed via SQL
 
