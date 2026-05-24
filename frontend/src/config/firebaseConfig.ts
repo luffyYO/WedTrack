@@ -1,5 +1,6 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { getMessaging, getToken, Messaging } from "firebase/messaging";
+import type { Messaging } from "firebase/messaging";
+import { getMessaging, getToken } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -10,20 +11,31 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const isFirebaseEnabled =
-  !!firebaseConfig.projectId && !!import.meta.env.VITE_FIREBASE_VAPID_KEY;
+// Explicit debugging for production builds
+const missingKeys: string[] = [];
+if (!firebaseConfig.apiKey) missingKeys.push('VITE_FIREBASE_API_KEY');
+if (!firebaseConfig.projectId) missingKeys.push('VITE_FIREBASE_PROJECT_ID');
+if (!import.meta.env.VITE_FIREBASE_VAPID_KEY) missingKeys.push('VITE_FIREBASE_VAPID_KEY');
+
+const isFirebaseEnabled = missingKeys.length === 0;
+
+if (!isFirebaseEnabled) {
+  console.error('[FCM] Firebase config is incomplete. Missing variables in build environment:', missingKeys.join(', '));
+  console.warn('[FCM] Ensure these variables are added to your hosting provider (Vercel/Render) dashboard before running the build.');
+}
 
 let messaging: Messaging | null = null;
 try {
   if (isFirebaseEnabled) {
+    console.log('[FCM] Firebase config loaded successfully. Initializing app...');
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     messaging = getMessaging(app);
   }
 } catch (error) {
-  console.warn("[FCM] Firebase init failed. Notifications disabled.", error);
+  console.error("[FCM] Firebase init failed. Notifications disabled.", error);
 }
 
-export { messaging };
+export { messaging, isFirebaseEnabled, missingKeys };
 
 /**
  * Requests notification permission, registers the service worker, and
@@ -32,7 +44,7 @@ export { messaging };
  */
 export const requestForToken = async (): Promise<string | null> => {
   if (!isFirebaseEnabled || !messaging) {
-    console.warn("[FCM] Firebase not configured. Push notifications disabled.");
+    console.warn(`[FCM] Push notifications disabled. Missing config: ${missingKeys.join(', ')}`);
     return null;
   }
 

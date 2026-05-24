@@ -89,6 +89,7 @@ Deno.serve(async (req) => {
         payment_status, 
         fcm_token, 
         phone_number,
+        gift_side,
         wedding:wedding_id (
           id, 
           user_id, 
@@ -130,14 +131,14 @@ Deno.serve(async (req) => {
 
     // ── Step 7: Send Notification (non-blocking — never fail verification) ─
     const plan = wedding.selected_plan || "basic";
-    const { fullname: guestName, amount, fcm_token } = guest;
+    const { fullname: guestName, amount, fcm_token, gift_side } = guest;
     const { bride_name: brideName, groom_name: groomName } = wedding;
 
     try {
       if (plan === "pro") {
         await sendWhatsAppNotification(guest, wedding);
       } else if (fcm_token) {
-        await sendFCMNotification(fcm_token, guestName, amount, brideName, groomName);
+        await sendFCMNotification(fcm_token, guestName, amount, brideName, groomName, gift_side, guest_id);
         // Update notification_sent only if this column exists
         await adminClient
           .from("guests")
@@ -161,12 +162,26 @@ Deno.serve(async (req) => {
 
 // ─── FCM v1 HTTP API ────────────────────────────────────────────────────────
 
+/**
+ * Formats the gift side label elegantly.
+ * "bride" → "Bride's Side" | "groom" → "Groom's Side" | fallback → "the wedding"
+ */
+function formatSideLabel(side: string | null | undefined): string {
+  if (!side) return "the wedding";
+  const s = side.toLowerCase().trim();
+  if (s === "bride") return "the Bride's side";
+  if (s === "groom") return "the Groom's side";
+  return "the wedding";
+}
+
 async function sendFCMNotification(
   fcmToken: string,
   guestName: string,
   amount: number,
   bride: string,
-  groom: string
+  groom: string,
+  giftSide?: string | null,
+  guestId?: string
 ) {
   const serviceAccountStr = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
   if (!serviceAccountStr) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT secret");
@@ -179,23 +194,56 @@ async function sendFCMNotification(
 
   const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
+  const sideLabel = formatSideLabel(giftSide);
+  const firstName = guestName?.split(" ")[0] || guestName || "Guest";
+  const amountFormatted = Number(amount).toLocaleString("en-IN");
+
+  // Notification title — concise for lock-screen preview
+  const notifTitle = `🎊 Gift Verified · ${bride} weds ${groom}`;
+
+  // Notification body — warm, short, personalized (fits ~100 chars on Android)
+  const notifBody =
+    `Hi ${firstName}! 💛 Your gift of ₹${amountFormatted} on behalf of ${sideLabel} has been received. Thank you! 🙏`;
+
+  // Full rich message shown inside the notification panel / webpush popup
+  const richBody =
+    `Dear ${firstName},\n\n` +
+    `Your generous gift of ₹${amountFormatted} representing ${sideLabel} has been verified. ✅\n\n` +
+    `The couple is truly grateful for your presence and blessings. 💐\n\n` +
+    `✨ Thank you for being part of ${bride} & ${groom}'s beautiful journey. ✨`;
+
+  const fallbackUrl = guestId ? `https://wedtrackss.in/guest-form/${guestId}` : "https://wedtrackss.in/";
+
   const payload = {
     message: {
       token: fcmToken,
+      data: {
+        url: fallbackUrl
+      },
       notification: {
-        title: "Payment Verified ✅",
-        body: `₹${amount} received. Thank you for attending ${bride} ❤️ ${groom}`,
+        title: notifTitle,
+        body: notifBody,
       },
       android: {
         priority: "high",
-        notification: { sound: "default" },
+        notification: {
+          sound: "default",
+          title: notifTitle,
+          body: richBody,
+          image: "/logo.jpeg",
+        },
       },
       webpush: {
         headers: { Urgency: "high" },
         notification: {
+          title: notifTitle,
+          body: richBody,
           icon: "/logo.jpeg",
           badge: "/logo.jpeg",
+          requireInteraction: true,
         },
+        // fcmOptions enables the click_action to open the app automatically on some platforms
+        fcm_options: { link: fallbackUrl },
       },
     },
   };
@@ -233,14 +281,23 @@ async function sendWhatsAppNotification(guest: any, wedding: any) {
     throw new Error("Missing Twilio credentials");
 
   const guestName = guest.fullname || "Guest";
+  const firstName = guestName.split(" ")[0] || guestName;
   const { bride_name: brideName, groom_name: groomName } = wedding;
-  const amount = guest.amount;
+  const amount = Number(guest.amount).toLocaleString("en-IN");
+  const sideLabel = formatSideLabel(guest.gift_side);
 
   const toPhone = guest.phone_number?.trim().startsWith("+")
     ? guest.phone_number.trim()
     : `+91${guest.phone_number?.trim()}`;
 
-  const messageBody = `Hello ${guestName},\nYour payment of ₹${amount} for ${brideName} & ${groomName}'s wedding has been verified ✅\nThank you for your blessings! 🙏\n– WedTrack`;
+  const messageBody =
+    `💍 *${brideName} weds ${groomName}*\n\n` +
+    `Dear ${firstName},\n` +
+    `Your gift of ₹${amount} on behalf of *${sideLabel}* has been verified. ✅\n\n` +
+    `Your blessings mean a lot to the couple 💐\n` +
+    `We truly appreciate your presence and support.\n\n` +
+    `✨ Thank you for being part of this beautiful journey ✨\n` +
+    `– WedTrack`;
 
   const formParams = new URLSearchParams();
   formParams.append("To", `whatsapp:${toPhone}`);

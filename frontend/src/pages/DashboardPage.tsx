@@ -6,11 +6,13 @@ import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/layout/PageHeader';
 import Button from '@/components/ui/Button';
 import SearchBar from '@/components/SearchBar';
-import SearchFilters, { FilterType } from '@/components/SearchFilters';
+import type { FilterType } from '@/components/SearchFilters';
+import SearchFilters from '@/components/SearchFilters';
 import SearchResults from '@/components/SearchResults';
 
 import { useAuthStore, useAppStore } from '@/store';
 import { fetchUserWeddings, fetchGuests } from '@/lib/queries';
+import { exportGuestsCSV } from '@/lib/exportService';
 
 // Feature: Dashboard
 import DashboardStats from '@/features/dashboard/components/DashboardStats';
@@ -308,6 +310,16 @@ export default function DashboardPage() {
                             selectedPaymentMethod={selectedPaymentMethod}
                             pdfLoading={pdfLoading}
                             onDownloadPDF={handleDownloadPDF}
+                            onAiScanClick={
+                                selectedWeddingId
+                                    ? () => navigate(`/dashboard/${selectedWeddingId}/ai-scan`)
+                                    : undefined
+                            }
+                            onExportCSV={
+                                filteredGuests.length > 0
+                                    ? () => exportGuestsCSV(filteredGuests, 'contributions.csv')
+                                    : undefined
+                            }
                         />
 
                         {guestsLoading ? (

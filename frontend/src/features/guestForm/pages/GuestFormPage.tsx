@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, Heart } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Heart, Banknote, QrCode } from 'lucide-react';
 import apiClient from '@/api/client';
 import { supabase } from '@/config/supabaseClient';
 import { WeddingNameDisplay } from '@/components/ui';
 import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
+import GuestPaymentOptions from '../components/GuestPaymentOptions';
 import { requestForToken } from '@/config/firebaseConfig';
 
 export default function GuestFormPage() {
@@ -46,7 +47,7 @@ export default function GuestFormPage() {
                 // Requires the public anon read policy on weddings table.
                 const { data: directData, error: directError } = await supabase
                     .from('weddings')
-                    .select('*')
+                    .select('*, wedding_payment_methods(*)')
                     .eq('nanoid', weddingNanoId)
                     .maybeSingle();
 
@@ -106,16 +107,41 @@ export default function GuestFormPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Auto-refresh token for returning guests
+    useEffect(() => {
+        const guestId = localStorage.getItem('wedtrack_guest_id');
+        if (guestId && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            requestForToken().then(async (token) => {
+                if (token) {
+                    setFcmToken(token);
+                    // Update the DB silently for returning users
+                    await supabase.rpc('update_guest_fcm_token', { 
+                        p_guest_id: guestId, 
+                        p_fcm_token: token 
+                    });
+                    console.log('[FCM] Token silently refreshed for returning guest');
+                }
+            }).catch(console.error);
+        }
+    }, []);
+
     const handleEnableNotifications = async () => {
         try {
             const token = await requestForToken();
-            // Update permission state from the real browser value (requestForToken
-            // calls Notification.requestPermission() internally)
             if (typeof Notification !== 'undefined') {
                 setNotificationPermission(Notification.permission as NotificationPermission);
             }
             if (token) {
                 setFcmToken(token);
+                // If they already submitted the form earlier, link the new token immediately!
+                const existingGuestId = localStorage.getItem('wedtrack_guest_id');
+                if (existingGuestId) {
+                    await supabase.rpc('update_guest_fcm_token', { 
+                        p_guest_id: existingGuestId, 
+                        p_fcm_token: token 
+                    });
+                    console.log('[FCM] Token dynamically linked to existing guest');
+                }
             }
         } catch (err) {
             console.error('[FCM] Failed to enable notifications:', err);
@@ -127,10 +153,8 @@ export default function GuestFormPage() {
         setSubmitting(true);
         setError('');
         
-        // Use pre-captured token or try one last time (only for premium plan)
-        const finalToken = isPremiumPlan
-            ? (fcmToken || await requestForToken())
-            : null;
+        // Use pre-captured token or try one last time
+        const finalToken = fcmToken || await requestForToken();
         
         const payload = {
             wedding_nanoid: weddingNanoId,
@@ -142,8 +166,14 @@ export default function GuestFormPage() {
         };
         
         try {
-            // Use the new submit-wish Edge Function
-            await apiClient.post('submit-wish', payload);
+            const res = await apiClient.post('submit-wish', payload);
+            
+            // Store the guest ID so we can update their token later if they return
+            const newGuestId = res.data?.data?.id;
+            if (newGuestId) {
+                localStorage.setItem('wedtrack_guest_id', newGuestId);
+            }
+
             setSuccess(true);
             setHeartsActive(true);
         } catch (err: any) {
@@ -256,7 +286,9 @@ export default function GuestFormPage() {
                 </div>
             </div>
         );
-    }    return (
+    }    
+
+    return (
         <div className="min-h-screen bg-gradient-to-br from-[#fdfbfb] to-[#feeef1] flex items-start justify-center overflow-y-auto sm:py-12 px-0 sm:px-4">
             <div className="w-full sm:max-w-[480px] bg-white/80 backdrop-blur-xl sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] sm:border border-white/60 overflow-hidden animate-fade-in relative min-h-screen sm:min-h-0">
                 
@@ -304,7 +336,7 @@ export default function GuestFormPage() {
                     )}
 
                     <div className="space-y-5">
-                        <div className="grid grid-cols-1 gap-5">
+                        <div className="grid grid-cols-1 gap-5 mt-2">
                             <div>
                                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Full Name <span className="text-rose-400">*</span></label>
                                 <input required type="text" name="fullname" value={formData.fullname} onChange={handleChange} 
@@ -351,24 +383,61 @@ export default function GuestFormPage() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Method</label>
-                                <div className="relative">
-                                    <select name="payment_type" value={formData.payment_type} onChange={handleChange} 
-                                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/80 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-bold text-slate-700 shadow-sm appearance-none cursor-pointer"
+                        {wedding?.wedding_payment_methods && wedding.wedding_payment_methods.length > 0 && (
+                            <div className="space-y-2">
+                                <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
+                                    Payment Method
+                                </label>
+                                <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100/60 dark:bg-neutral-900/60 rounded-2xl border border-slate-200/40 dark:border-neutral-800/40">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, payment_type: 'Cash' }))}
+                                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black transition-all ${
+                                            formData.payment_type === 'Cash'
+                                                ? 'bg-white dark:bg-neutral-800 text-slate-800 dark:text-white shadow-sm border border-slate-200/20 dark:border-neutral-700/30'
+                                                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-white'
+                                        }`}
                                     >
-                                        <option value="Cash">Cash</option>
-                                        <option value="GPay">GPay</option>
-                                        <option value="PhonePe">PhonePe</option>
-                                        <option value="PayTM">PayTM</option>
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
+                                        <Banknote size={14} className="shrink-0" />
+                                        <span>Cash / Gift Box</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, payment_type: 'UPI' }))}
+                                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black transition-all ${
+                                            formData.payment_type === 'UPI'
+                                                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-md'
+                                                : 'text-slate-500 dark:text-neutral-400 hover:text-slate-800 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        <QrCode size={14} className="shrink-0" />
+                                        <span>Pay via UPI App</span>
+                                    </button>
                                 </div>
                             </div>
-                            <div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            {(!wedding?.wedding_payment_methods || wedding.wedding_payment_methods.length === 0) && (
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Method Used</label>
+                                    <div className="relative">
+                                        <select name="payment_type" value={formData.payment_type} onChange={handleChange} 
+                                            className="w-full px-5 py-3.5 rounded-2xl border border-slate-200/50 bg-white/80 focus:bg-white focus:ring-4 focus:ring-pink-100 focus:border-pink-300 outline-none transition-all text-sm font-bold text-slate-700 shadow-sm appearance-none cursor-pointer"
+                                        >
+                                            <option value="Cash">Cash</option>
+                                            <option value="GPay">GPay</option>
+                                            <option value="PhonePe">PhonePe</option>
+                                            <option value="PayTM">PayTM</option>
+                                            <option value="UPI">UPI</option>
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className={wedding?.wedding_payment_methods && wedding.wedding_payment_methods.length > 0 ? "col-span-1 sm:col-span-2" : ""}>
                                 <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Guest Alignment <span className="text-rose-400">*</span></label>
                                 <div className="grid grid-cols-2 gap-3">
                                     <label className={`flex items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer font-black text-[10px] tracking-[0.1em] ${formData.gift_side === 'bride' ? 'border-pink-400 bg-pink-50 text-pink-600 shadow-sm' : 'border-slate-100 bg-slate-50/30 text-slate-400 hover:border-pink-100'}`}>
@@ -426,14 +495,27 @@ export default function GuestFormPage() {
                         </div>
                     </div>
 
+                    {formData.payment_type === 'UPI' && wedding?.wedding_payment_methods && wedding.wedding_payment_methods.length > 0 && (
+                        <div className="mt-2">
+                            <GuestPaymentOptions 
+                                paymentMethods={wedding.wedding_payment_methods} 
+                                amount={formData.amount}
+                                submitting={submitting}
+                                weddingName={`${wedding?.bride_name || ''}_&_${wedding?.groom_name || ''}`}
+                            />
+                        </div>
+                    )}
+
                     <div className="pt-4 pb-4">
-                        <button 
-                            disabled={submitting}
-                            type="submit" 
-                            className="w-full bg-slate-900 text-white font-black py-4.5 px-4 rounded-[1.25rem] transition-all shadow-xl shadow-slate-200 hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98] uppercase tracking-[0.25em] text-xs disabled:opacity-70 disabled:hover:translate-y-0"
-                        >
-                            {submitting ? 'Registering...' : 'Submit Securely'}
-                        </button>
+                        {(!wedding?.wedding_payment_methods || wedding.wedding_payment_methods.length === 0 || formData.payment_type !== 'UPI') && (
+                            <button 
+                                disabled={submitting}
+                                type="submit" 
+                                className="w-full bg-slate-900 text-white font-black py-4.5 px-4 rounded-[1.25rem] transition-all shadow-xl shadow-slate-200 hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98] uppercase tracking-[0.25em] text-xs disabled:opacity-70 disabled:hover:translate-y-0"
+                            >
+                                {submitting ? 'Registering...' : 'Submit Securely'}
+                            </button>
+                        )}
                         <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] mt-6 opacity-60">
                             End-to-End Secure Transaction
                         </p>

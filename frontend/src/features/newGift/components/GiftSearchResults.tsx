@@ -1,37 +1,20 @@
 import React, { useMemo } from 'react';
-import { SearchX, MapPin, User, Loader2 } from 'lucide-react';
-import { formatDate, parseSafeDate } from '@/utils/formatters';
+import { SearchX, MapPin, User, Loader2, Edit2, Trash2 } from 'lucide-react';
+import { formatDate } from '@/utils/formatters';
+import type { NewGiftEntry } from '@/lib/giftQueries';
 
-interface Guest {
-    id: string;
-    fullname: string;
-    father_fullname?: string;
-    phone_number: string;
-    village?: string;
-    amount: number;
-    payment_type: string;
-    is_paid: boolean;
-    gift_side?: string;
-    created_at: string;
-}
-
-interface SearchResultsProps {
-    results: Guest[];
-    onConfirm?: (id: string) => void;
+interface GiftSearchResultsProps {
+    results: NewGiftEntry[];
+    onEdit?: (entry: NewGiftEntry) => void;
     onDelete?: (id: string) => void;
-    /** ID of the guest whose Cancel button is currently showing a loading spinner. */
     deletingId?: string | null;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDelete, deletingId }) => {
+const GiftSearchResults: React.FC<GiftSearchResultsProps> = ({ results, onEdit, onDelete, deletingId }) => {
     // Single page rendering with dynamic sorting
     const sortedResults = useMemo(() => {
         return [...results].sort((a, b) => {
-            // Pending entries (!is_paid) before verified entries (is_paid)
-            if (a.is_paid !== b.is_paid) {
-                return a.is_paid ? 1 : -1;
-            }
-            // Sort by time: newest first within each group
+            // Sort by time: newest first
             const timeA = new Date(a.created_at).getTime();
             const timeB = new Date(b.created_at).getTime();
             return timeB - timeA;
@@ -61,21 +44,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                     <thead className="sticky top-0 z-10 text-[10px] uppercase font-black border-b bg-gradient-to-r from-pink-50/80 via-rose-50/40 to-slate-50 dark:from-transparent dark:via-transparent dark:bg-[#111111] text-slate-500 dark:text-white border-pink-100 dark:border-neutral-800 shadow-[0_1px_0_rgba(236,72,153,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.05)]">
                         <tr>
                             <th className="px-3 py-4 text-center tracking-widest text-slate-400 dark:text-neutral-500 w-10">#</th>
-                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Guest Name</th>
+                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Person Name</th>
                             <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Father's Name</th>
                             <th className="px-5 py-4 text-right tracking-widest text-slate-500 dark:text-white">Amount &amp; Type</th>
                             <th className="px-5 py-4 text-center tracking-widest text-slate-500 dark:text-white">Status / Action</th>
                             <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Location</th>
-                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Date &amp; Time</th>
+                            <th className="px-5 py-4 tracking-widest text-slate-500 dark:text-white">Date</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-neutral-800/60">
                         {sortedResults.map((guest, idx) => {
-                            const entryDate = parseSafeDate(guest.created_at);
-                            const timeStr = entryDate && !isNaN(entryDate.getTime())
-                                ? entryDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-                                : '';
-
                             return (
                                 <tr
                                     key={guest.id}
@@ -92,7 +70,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                         </span>
                                     </td>
 
-                                    {/* Guest Name */}
+                                    {/* Person Name */}
                                     <td className="px-5 py-3.5">
                                         <div className="flex items-center gap-3">
                                             <div className="bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400 p-2 rounded-lg group-hover:bg-pink-500 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all duration-200 shrink-0">
@@ -100,10 +78,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                                 <span className="font-bold text-slate-800 dark:text-white text-[13px] leading-tight truncate max-w-[140px]">
-                                                    {guest.fullname}
-                                                </span>
-                                                <span className="text-[10px] text-slate-400 dark:text-neutral-500 font-medium mt-0.5">
-                                                    {guest.phone_number}
+                                                    {guest.person_name}
                                                 </span>
                                             </div>
                                         </div>
@@ -111,7 +86,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
 
                                     {/* Father's Name */}
                                     <td className="px-5 py-3.5 text-slate-500 dark:text-neutral-400 text-[12px] font-medium">
-                                        {guest.father_fullname || '—'}
+                                        {guest.father_name || '—'}
                                     </td>
 
                                     {/* Amount & Type */}
@@ -121,55 +96,43 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                                 ₹{Number(guest.amount).toLocaleString('en-IN')}
                                             </span>
                                             <span className="text-[9px] font-bold text-slate-500 dark:text-neutral-500 uppercase tracking-wider bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
-                                                {guest.payment_type}
+                                                {guest.amount_type}
                                             </span>
                                         </div>
                                     </td>
 
                                     {/* Status / Action */}
                                     <td className="px-5 py-3.5">
-                                        <div className="flex items-center justify-center gap-2.5 min-w-[130px]">
-                                            {guest.is_paid ? (
-                                                // Verified: badge only — no delete allowed
-                                                <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20 shrink-0">
-                                                    ✓ Verified
-                                                </span>
-                                            ) : (
-                                                // Pending: action buttons + type badge
-                                                <div className="flex items-center gap-2">
-                                                    {(guest.payment_type || '').trim().toLowerCase() === 'cash' ? (
-                                                        <span className="bg-slate-50 dark:bg-slate-500/10 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-500/20 shrink-0">
-                                                            Pending Cash
-                                                        </span>
-                                                    ) : (
-                                                        <span className="bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-200 dark:border-amber-500/20 shrink-0 animate-pulse">
-                                                            Pending UPI
-                                                        </span>
-                                                    )}
-                                                    <div className="flex items-center gap-1.5">
-                                                        {onConfirm && (
-                                                            <button
-                                                                onClick={() => onConfirm(guest.id)}
-                                                                className="bg-gradient-to-tr from-pink-500 to-rose-400 dark:bg-white dark:bg-none text-white dark:text-black font-black px-3 py-1 rounded-lg text-[10px] hover:from-pink-600 hover:to-rose-500 dark:hover:bg-emerald-400 transition-all shadow-[0_2px_8px_rgba(236,72,153,0.35)] dark:shadow-sm active:scale-95"
-                                                            >
-                                                                Paid
-                                                            </button>
+                                        <div className="flex items-center justify-center gap-2 min-w-[150px]">
+                                            <span className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-500/20 shrink-0">
+                                                ✓ Verified
+                                            </span>
+                                            
+                                            <div className="flex items-center gap-1">
+                                                {onEdit && (
+                                                    <button
+                                                        onClick={() => onEdit(guest)}
+                                                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                                                        title="Edit entry"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                )}
+                                                {onDelete && (
+                                                    <button
+                                                        onClick={() => onDelete(guest.id)}
+                                                        disabled={!!deletingId}
+                                                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title="Delete entry"
+                                                    >
+                                                        {deletingId === guest.id ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={14} />
                                                         )}
-                                                        {onDelete && (
-                                                            <button
-                                                                onClick={() => onDelete(guest.id)}
-                                                                disabled={!!deletingId}
-                                                                className="border border-red-200 dark:border-red-800/60 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold px-3 py-1 rounded-lg text-[10px] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                                                            >
-                                                                {deletingId === guest.id ? (
-                                                                    <Loader2 size={10} className="animate-spin" />
-                                                                ) : null}
-                                                                Cancel
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
 
@@ -183,14 +146,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                                         </div>
                                     </td>
 
-                                    {/* Date & Time */}
+                                    {/* Date */}
                                     <td className="px-5 py-3.5">
                                         <div className="flex flex-col gap-0.5">
                                             <span className="text-slate-700 dark:text-white font-bold text-[11px]">
-                                                {formatDate(guest.created_at)}
-                                            </span>
-                                            <span className="text-[9px] text-slate-400 dark:text-neutral-500 font-medium">
-                                                {timeStr}
+                                                {formatDate(guest.gift_date || guest.created_at)}
                                             </span>
                                         </div>
                                     </td>
@@ -206,12 +166,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onConfirm, onDel
                 <span className="text-[10px] text-slate-400 dark:text-neutral-600 font-bold uppercase tracking-widest">
                     {sortedResults.length} {sortedResults.length === 1 ? 'entry' : 'entries'}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-neutral-700 font-medium">
-                    {sortedResults.filter(g => g.is_paid).length} verified · {sortedResults.filter(g => !g.is_paid).length} pending
-                </span>
             </div>
         </div>
     );
 };
 
-export default SearchResults;
+export default GiftSearchResults;

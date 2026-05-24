@@ -10,6 +10,9 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const NewGiftPage = lazy(() => import('@/features/newGift/pages/NewGiftPage'));
+const GiftTallyPage = lazy(() => import('@/features/giftTally/pages/GiftTallyPage'));
+const AIScanPage = lazy(() => import('@/features/aiScan/pages/AIScanPage'));
 const ProfilePage = lazy(() => import('@/features/profile/pages/ProfilePage'));
 const TasksPage = lazy(() => import('@/pages/TasksPage'));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
@@ -48,6 +51,7 @@ const router = createBrowserRouter([
 
     // ── Public / Guest routes (Scanned from QR) ────────────────────────────────
     { path: '/guest-form/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },
+    { path: '/g/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },
 
     // ── Protected / App routes ─────────────────────────────────────────────────
     {
@@ -58,6 +62,10 @@ const router = createBrowserRouter([
                 children: [
                     { path: '/home', element: <Suspense fallback={<Loader />}><HomePage /></Suspense> },
                     { path: '/dashboard', element: <Suspense fallback={<Loader />}><DashboardPage /></Suspense> },
+                    { path: '/new-gift', element: <Suspense fallback={<Loader />}><NewGiftPage /></Suspense> },
+                    { path: '/gift-tally', element: <Suspense fallback={<Loader />}><GiftTallyPage /></Suspense> },
+                    { path: '/dashboard/:weddingId/ai-scan', element: <Suspense fallback={<Loader />}><AIScanPage /></Suspense> },
+                    { path: '/ai-scan', element: <Suspense fallback={<Loader />}><AIScanPage /></Suspense> },
                     { path: '/tasks', element: <Suspense fallback={<Loader />}><TasksPage /></Suspense> },
                     { path: '/wishes', element: <Suspense fallback={<Loader />}><WishesPage /></Suspense> },
                     { path: '/profile', element: <Suspense fallback={<Loader />}><ProfilePage /></Suspense> },

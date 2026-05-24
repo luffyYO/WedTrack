@@ -8,7 +8,7 @@ import type { QRData } from '../types/qr.types';
 function mapToQRData(wedding: any): QRData {
     const origin = window.location.origin;
     const nanoid = wedding.nanoid || wedding.id;
-    const dynamicLink = `${origin}/guest-form/${nanoid}`;
+    const dynamicLink = `${origin}/g/${nanoid}`;
 
     return {
         weddingId: nanoid,
