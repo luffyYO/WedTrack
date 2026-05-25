@@ -292,8 +292,10 @@ export function usePushNotifications(weddingId: string | null | undefined): UseP
       console.log('[usePushNotifications] Calling PushManager.subscribe()...');
       const subscription = await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
-        // TS 5.6 doesn't support Uint8Array<T> generics; extract .buffer for type compatibility.
-        applicationServerKey: new Uint8Array(applicationServerKey.buffer),
+        // Pass the underlying ArrayBuffer directly — satisfies BufferSource without
+        // requiring the Uint8Array<ArrayBuffer> generic (not available in TS 5.6).
+        // The buffer is always a plain ArrayBuffer here since atob() never returns SharedArrayBuffer.
+        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
       });
 
       console.log('[usePushNotifications] Subscription successful!', subscription.endpoint);
