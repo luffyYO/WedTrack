@@ -26,6 +26,8 @@ const WeddingTrackCreatePage = lazy(() => import('@/features/weddingTrack/pages/
 const WeddingTrackVerifyPage = lazy(() => import('@/features/weddingTrack/pages/WeddingTrackVerifyPage'));
 const WeddingQRPage = lazy(() => import('@/features/qr/pages/WeddingQRPage'));
 const GuestFormPage = lazy(() => import('@/features/guestForm/pages/GuestFormPage'));
+const QRRedirectPage = lazy(() => import('@/features/qr/pages/QRRedirectPage'));
+const QRErrorPage = lazy(() => import('@/pages/QRErrorPage'));
 
 // Admin pages
 const AdminLogin = lazy(() => import('@/features/admin/pages/AdminLogin'));
@@ -48,6 +50,11 @@ const router = createBrowserRouter([
     { path: '/', element: <Suspense fallback={<Loader />}><LandingPage /></Suspense> },
     { path: '/privacy', element: <Suspense fallback={<Loader />}><PrivacyPolicy /></Suspense> },
     { path: '/terms', element: <Suspense fallback={<Loader />}><TermsOfService /></Suspense> },
+
+    // ── Universal QR redirect (scanned from any QR scanner / payment app) ──────
+    // No layout, no auth — renders immediately on scan
+    { path: '/q/:token', element: <Suspense fallback={null}><QRRedirectPage /></Suspense> },
+    { path: '/qr-error', element: <Suspense fallback={null}><QRErrorPage /></Suspense> },
 
     // ── Public / Guest routes (Scanned from QR) ────────────────────────────────
     { path: '/guest-form/:weddingId', element: <Suspense fallback={<Loader />}><GuestFormPage /></Suspense> },

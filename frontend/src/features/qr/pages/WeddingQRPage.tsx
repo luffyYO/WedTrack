@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, AlertCircle, RefreshCw, Shield, RotateCcw } from 'lucide-react';
 
 import Button from '@/components/ui/Button';
 import { formatDate } from '@/utils/formatters';
@@ -20,6 +20,7 @@ export default function WeddingQRPage() {
     const [isExpired, setIsExpired] = useState(false);
     const [isInactive, setIsInactive] = useState(false);
     const [isExtending, setIsExtending] = useState(false);
+    const [isGeneratingToken, setIsGeneratingToken] = useState(false);
 
     const calculateTimeLeft = (expiry: string, activation?: string) => {
         const now = new Date().getTime();
@@ -99,10 +100,25 @@ export default function WeddingQRPage() {
         }
     };
 
+    /** Generate (or rotate) the secure /q/{token} QR */
+    const handleGenerateToken = async (rotate = false) => {
+        if (!trackId) return;
+        setIsGeneratingToken(true);
+        try {
+            await qrService.getOrCreateToken(trackId, { rotate });
+            await fetchQR(); // Refresh — qrService.getByTrackId now picks up the new token
+        } catch (err) {
+            console.error('Failed to generate QR token:', err);
+        } finally {
+            setIsGeneratingToken(false);
+        }
+    };
+
     // ── Derived state ─────────────────────────────────────────────────────────
     const isSuccess = fetchState.status === 'success';
     const isLoading = fetchState.status === 'loading';
     const qrData = isSuccess ? fetchState.data : null;
+    const hasSecureToken = !!qrData?.qrToken;
 
     const weddingTitle = qrData
         ? `${qrData.brideName} & ${qrData.groomName}`
@@ -238,6 +254,38 @@ export default function WeddingQRPage() {
                                 disabled={isLoading}
                             />
                         </div>
+
+                        {/* ── Secure QR Token Controls ── */}
+                        {isSuccess && (
+                            <div className="flex flex-col gap-2">
+                                {!hasSecureToken ? (
+                                    // No token yet — prompt to generate
+                                    <Button
+                                        variant="primary"
+                                        size="md"
+                                        fullWidth
+                                        onClick={() => handleGenerateToken(false)}
+                                        isLoading={isGeneratingToken}
+                                        icon={<Shield size={15} />}
+                                    >
+                                        Generate Secure QR
+                                    </Button>
+                                ) : (
+                                    // Token exists — offer rotation
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        fullWidth
+                                        onClick={() => handleGenerateToken(true)}
+                                        isLoading={isGeneratingToken}
+                                        icon={<RotateCcw size={13} />}
+                                        className="glass-panel text-slate-500 hover:text-slate-700 border border-white/80 text-xs"
+                                    >
+                                        Rotate QR Token (invalidates old QR)
+                                    </Button>
+                                )}
+                            </div>
+                        )}
 
                         {/* ── Extend Button ── */}
                         {isSuccess && (

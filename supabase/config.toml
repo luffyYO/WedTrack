@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.process-paper-scan]
 verify_jwt = false
+
+[functions.resolve-qr]
+verify_jwt = false
+
+[functions.generate-qr-token]
+verify_jwt = false

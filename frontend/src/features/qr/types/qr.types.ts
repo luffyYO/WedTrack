@@ -17,7 +17,10 @@ export interface QRData {
     qrActivationTime?: string;
     /** Computed status from backend */
     qrStatus?: 'inactive' | 'active' | 'expired';
+    /** Secure opaque QR token (12-char alphanumeric). Null if not yet generated. */
+    qrToken?: string | null;
 }
+
 
 // ─── Fetch State (discriminated union) ───────────────────────────────────────
 
