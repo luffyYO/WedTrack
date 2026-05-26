@@ -16,6 +16,9 @@
 
   // ─── TypeScript / JavaScript LS: active for frontend & backend ────────────
   // Keep validation on for the rest of the workspace (frontend, backend, etc.)
+  // supabase/functions/ is excluded from the TS LS — those files are Deno and
+  // handled exclusively by the Deno LS (scoped via deno.enablePaths above).
+  // No tsconfig.json lives in supabase/functions/ so the TS LS won't touch it.
   "typescript.validate.enable": true,
   "javascript.validate.enable": true,
 

@@ -17,8 +17,5 @@
     "noEmit": true,
     "strict": true
   },
-  "include": [],
-  "exclude": [
-    "**/*"
-  ]
+  "files": []
 }
