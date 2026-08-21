@@ -23,7 +23,28 @@ export default function AdminLayout() {
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) navigate('/admin/login');
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
+
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Malformed token');
+      }
+      const payload = JSON.parse(atob(parts[1]));
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        console.warn('[AdminLayout] Admin session expired');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUsername');
+        navigate('/admin/login');
+      }
+    } catch {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUsername');
+      navigate('/admin/login');
+    }
   }, [navigate]);
 
   useEffect(() => {

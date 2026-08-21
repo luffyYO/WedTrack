@@ -17,5 +17,5 @@
     "noEmit": true,
     "strict": true
   },
-  "files": []
+  "files": ["./_placeholder.ts"]
 }

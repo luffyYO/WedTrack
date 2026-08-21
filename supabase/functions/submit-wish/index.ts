@@ -2,7 +2,7 @@ export const config = {
   auth: false,
 };
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.1'
-import { corsHeaders, successResponse, errorResponse, logEvent } from '../_shared/utils.ts'
+import { corsHeaders, successResponse, errorResponse, logEvent, isPremiumPlan } from '../_shared/utils.ts'
 import { checkRateLimit } from '../_shared/redis.ts'
 
 Deno.serve(async (req) => {
@@ -72,11 +72,10 @@ Deno.serve(async (req) => {
 
     const wedding = weddingRows[0]
 
-    // Determine plan — anything other than 'premium'/'349'/'pro' is treated as basic
-    const isPremiumPlan = wedding.selected_plan === 'premium' || wedding.selected_plan === '349' || wedding.selected_plan === 'pro'
+    const isPremium = isPremiumPlan(wedding.selected_plan)
 
     // Plan-conditional phone_number validation
-    if (isPremiumPlan && !phone_number) {
+    if (isPremium && !phone_number) {
       return errorResponse('phone_number is required for premium plan', 400)
     }
 
@@ -106,7 +105,7 @@ Deno.serve(async (req) => {
         fullname: fullname.trim(),
         father_fullname: father_fullname?.trim() || null,
         // Only store phone_number for premium plan
-        phone_number: isPremiumPlan ? (phone_number?.trim() || null) : null,
+        phone_number: isPremium ? (phone_number?.trim() || null) : null,
         amount: Number(amount) || 0,
         gift_side,
         village: village?.trim() || null,
@@ -116,7 +115,7 @@ Deno.serve(async (req) => {
         is_read: false,
         wishes: wish?.trim() || null,
         // Only store FCM token for premium plan (push notifications)
-        fcm_token: isPremiumPlan ? (fcm_token || null) : null
+        fcm_token: isPremium ? (fcm_token || null) : null
       })
       .select('id')
       .single()

@@ -11,23 +11,28 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 1. Authorization: Only allow requests with a valid user token that has 'admin' claims 
-    // OR simpler for now: just a valid user token if RLS is bypassed by service role anyway
-    // But we SHOULD check if the requester is actually an admin.
-    const authHeader = req.headers.get("Authorization")!;
+    // ── 1. Authenticate: validate the caller's JWT ──────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return errorResponse("Missing Authorization header", 401);
+
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
     );
-    
+
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) return errorResponse("Unauthorized", 401);
 
-    // TODO: Add a check for 'admin' role in user metadata or a profiles table if needed
-    // For now, we'll assume any logged-in user hitting this is authorized (could be dangerous, 
-    // but better than the old wide-open Node backend). 
-    // Ideally user.user_metadata.role === 'admin'
+    // ── 2. Authorize: verify the caller has the admin role ───────────────────
+    // app_metadata is ONLY writable by the service role key — users cannot
+    // set it themselves via supabase.auth.updateUser(). This makes it
+    // tamper-proof as an authorization flag.
+    const isAdmin = user.app_metadata?.role === "admin";
+    if (!isAdmin) {
+      console.warn(`[admin-users] Access denied for user ${user.id} — not an admin`);
+      return errorResponse("Forbidden: admin role required", 403);
+    }
 
     const method = req.method;
 
@@ -36,17 +41,21 @@ Deno.serve(async (req) => {
       const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       if (listError) throw listError;
 
-      // 2. Fetch wedding counts for all users in parallel
+      // Aggregate wedding counts per user. Only count paid weddings.
+      // Falls back gracefully to zero counts on query failure.
       const { data: counts, error: countError } = await supabaseAdmin
-        .from('weddings')
-        .select('user_id');
-      
-      if (countError) throw countError;
+        .from("weddings")
+        .select("user_id")
+        .eq("payment_status", "paid");
 
-      const weddingCounts = counts.reduce((acc: any, curr: any) => {
-        acc[curr.user_id] = (acc[curr.user_id] || 0) + 1;
-        return acc;
-      }, {});
+      const weddingCounts: Record<string, number> = {};
+      if (!countError && counts) {
+        for (const row of counts) {
+          weddingCounts[row.user_id] = (weddingCounts[row.user_id] || 0) + 1;
+        }
+      } else if (countError) {
+        console.warn("[admin-users] wedding count query failed:", countError.message);
+      }
 
       // Map to a clean public shape
       const publicUsers = users.map(u => ({
@@ -61,15 +70,19 @@ Deno.serve(async (req) => {
       return successResponse(publicUsers);
     }
 
-    // --- DELETE: Remove User ---
+    // ── DELETE: Remove User ──────────────────────────────────────────────────
     if (method === "DELETE") {
       const url = new URL(req.url);
       const userId = url.searchParams.get("id");
       if (!userId) return errorResponse("Missing user id", 400);
 
+      // Prevent an admin from accidentally deleting their own account
+      if (userId === user.id) return errorResponse("Cannot delete your own admin account", 400);
+
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
       if (deleteError) throw deleteError;
 
+      console.log(`[admin-users] Admin ${user.id} deleted user ${userId}`);
       return successResponse({ deleted: userId });
     }
 

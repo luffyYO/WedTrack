@@ -25,40 +25,41 @@ export function useRealtimeGuests(selectedWeddingId: string) {
     }, [selectedWeddingId]);
 
     useEffect(() => {
+        if (!selectedWeddingId) return;
+
         let isUnmounted = false;
 
-        // WHY unfiltered: server-side filter requires REPLICA IDENTITY FULL on the
-        // guests table. Without it Supabase closes the channel → infinite loop.
-        // Client-side filtering is equally fast and avoids the DB requirement.
+        // Channel is scoped to the active wedding ID with a server-side filter.
+        // REPLICA IDENTITY FULL is enabled on the guests table so Supabase can filter
+        // UPDATE and DELETE events accurately.
         const channel = supabase
-            .channel('dashboard-guests-stable')
+            .channel(`dashboard-guests-${selectedWeddingId}`)
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'guests' },
+                { 
+                    event: '*', 
+                    schema: 'public', 
+                    table: 'guests',
+                    filter: `wedding_id=eq.${selectedWeddingId}`
+                },
                 (payload) => {
-                    const activeId = selectedWeddingIdRef.current;
-                    if (!activeId) return;
-
                     const newRow = payload.new as any;
                     const oldRow = payload.old as any;
 
-                    const rowWeddingId = newRow?.wedding_id ?? oldRow?.wedding_id;
-                    if (rowWeddingId !== activeId) return;
-
                     if (payload.eventType === 'INSERT') {
                         queryClient.setQueryData(
-                            ['guests', activeId],
+                            ['guests', selectedWeddingId],
                             (old: any[] = []) => [newRow, ...old]
                         );
                     } else if (payload.eventType === 'UPDATE') {
                         queryClient.setQueryData(
-                            ['guests', activeId],
+                            ['guests', selectedWeddingId],
                             (old: any[] = []) =>
                                 old.map((g) => (g.id === newRow.id ? { ...g, ...newRow } : g))
                         );
                     } else if (payload.eventType === 'DELETE') {
                         queryClient.setQueryData(
-                            ['guests', activeId],
+                            ['guests', selectedWeddingId],
                             (old: any[] = []) => old.filter((g) => g.id !== oldRow.id)
                         );
                     }
@@ -98,6 +99,5 @@ export function useRealtimeGuests(selectedWeddingId: string) {
             isUnmounted = true;
             supabase.removeChannel(channel);
         };
-        // queryClient is stable — this runs exactly ONCE on mount
-    }, [queryClient]);
+    }, [selectedWeddingId, queryClient]);
 }

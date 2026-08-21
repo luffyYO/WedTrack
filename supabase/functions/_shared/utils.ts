@@ -38,3 +38,18 @@ export const getAuthUser = async (supabase: SupabaseClient, token?: string) => {
 export const logEvent = (name: string, data: any) => {
   console.log(`[Event: ${name}] ${JSON.stringify(data, null, 2)}`);
 };
+
+// ─── Plan Identifier Helpers ──────────────────────────────────────────────────
+// Canonical set of plan identifiers that grant premium/pro features.
+// 'premium' and '349' are legacy identifiers from a prior pricing system.
+// All new weddings use 'pro'. All three must remain supported so that
+// older weddings (created before the plan rename) work correctly.
+export const PREMIUM_PLANS = ['pro', 'premium', '349'] as const;
+
+/**
+ * Returns true if the given plan identifier grants premium features
+ * (WhatsApp notifications, phone number capture, push notifications).
+ * Works for both current ('pro') and legacy ('premium', '349') plan strings.
+ */
+export const isPremiumPlan = (plan: string | null | undefined): boolean =>
+  PREMIUM_PLANS.includes(plan as typeof PREMIUM_PLANS[number]);

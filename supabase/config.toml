@@ -62,3 +62,12 @@ verify_jwt = false
 
 [functions.generate-qr-token]
 verify_jwt = false
+
+[functions.admin-auth]
+verify_jwt = false
+
+[functions.admin-stats]
+verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = false

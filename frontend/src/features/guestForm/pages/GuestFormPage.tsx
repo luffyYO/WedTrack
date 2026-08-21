@@ -8,6 +8,7 @@ import FloatingHearts from '@/components/ui/FloatingHearts';
 import AutoScrollGallery from '../components/AutoScrollGallery';
 import GuestPaymentOptions from '../components/GuestPaymentOptions';
 import { requestForToken } from '@/config/firebaseConfig';
+import { isPremiumPlan as checkPremiumPlan } from '@/config/plans';
 
 export default function GuestFormPage() {
     const { weddingId: weddingNanoId } = useParams<{ weddingId: string }>();
@@ -26,7 +27,7 @@ export default function GuestFormPage() {
     const [fcmToken, setFcmToken] = useState<string | null>(null);
 
     // Derived from wedding data — premium plan enables WhatsApp + push notifications
-    const isPremiumPlan = wedding?.selected_plan === 'premium' || wedding?.selected_plan === '349' || wedding?.selected_plan === 'pro';
+    const isPremiumPlan = checkPremiumPlan(wedding?.selected_plan);
 
     const [formData, setFormData] = useState({
         fullname: '',
@@ -44,10 +45,25 @@ export default function GuestFormPage() {
             if (!weddingNanoId) return;
             try {
                 // Try direct Supabase query first (fast path — no Edge Function latency)
-                // Requires the public anon read policy on weddings table.
+                // Scoped explicitly to public event info (no user_id, payment status, cf_order_id)
                 const { data: directData, error: directError } = await supabase
                     .from('weddings')
-                    .select('*, wedding_payment_methods(*)')
+                    .select(`
+                        id,
+                        nanoid,
+                        bride_name,
+                        groom_name,
+                        wedding_date,
+                        location,
+                        village,
+                        qr_activation_time,
+                        qr_expires_at,
+                        gallery_images,
+                        event_type,
+                        person_name,
+                        selected_plan,
+                        wedding_payment_methods(*)
+                    `)
                     .eq('nanoid', weddingNanoId)
                     .maybeSingle();
 
@@ -119,7 +135,7 @@ export default function GuestFormPage() {
                         p_guest_id: guestId, 
                         p_fcm_token: token 
                     });
-                    console.log('[FCM] Token silently refreshed for returning guest');
+                    if (import.meta.env.DEV) console.log('[FCM] Token silently refreshed for returning guest');
                 }
             }).catch(console.error);
         }
@@ -140,7 +156,7 @@ export default function GuestFormPage() {
                         p_guest_id: existingGuestId, 
                         p_fcm_token: token 
                     });
-                    console.log('[FCM] Token dynamically linked to existing guest');
+                    if (import.meta.env.DEV) console.log('[FCM] Token dynamically linked to existing guest');
                 }
             }
         } catch (err) {

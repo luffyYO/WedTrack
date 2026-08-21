@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
-import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
+import { corsHeaders, errorResponse, successResponse, isPremiumPlan } from "../_shared/utils.ts";
 import * as jose from "https://deno.land/x/jose@v5.2.3/index.ts";
 
 /**
@@ -92,6 +92,7 @@ Deno.serve(async (req) => {
         gift_side,
         wedding:wedding_id (
           id, 
+          nanoid,
           user_id, 
           bride_name, 
           groom_name, 
@@ -135,10 +136,10 @@ Deno.serve(async (req) => {
     const { bride_name: brideName, groom_name: groomName } = wedding;
 
     try {
-      if (plan === "pro") {
+      if (isPremiumPlan(plan)) {
         await sendWhatsAppNotification(guest, wedding);
       } else if (fcm_token) {
-        await sendFCMNotification(fcm_token, guestName, amount, brideName, groomName, gift_side, guest_id);
+        await sendFCMNotification(fcm_token, guestName, amount, brideName, groomName, gift_side, wedding.nanoid);
         // Update notification_sent only if this column exists
         await adminClient
           .from("guests")
@@ -181,7 +182,7 @@ async function sendFCMNotification(
   bride: string,
   groom: string,
   giftSide?: string | null,
-  guestId?: string
+  weddingNanoid?: string
 ) {
   const serviceAccountStr = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
   if (!serviceAccountStr) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT secret");
@@ -212,7 +213,10 @@ async function sendFCMNotification(
     `The couple is truly grateful for your presence and blessings. 💐\n\n` +
     `✨ Thank you for being part of ${bride} & ${groom}'s beautiful journey. ✨`;
 
-  const fallbackUrl = guestId ? `https://wedtrackss.in/guest-form/${guestId}` : "https://wedtrackss.in/";
+  // Use the wedding nanoid to open the correct public guest form page.
+  const fallbackUrl = weddingNanoid
+    ? `https://wedtrackss.in/g/${weddingNanoid}`
+    : "https://wedtrackss.in/";
 
   const payload = {
     message: {
