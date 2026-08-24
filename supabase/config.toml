@@ -1,4 +1,4 @@
-project_id = "knmqezafmenqghiheloi"
+project_id = "vplasmjfvhzcjpfpebvy"
 
 [functions.create-wedding]
 verify_jwt = false
@@ -76,7 +76,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.admin-activity]
-verify_jwt = false
-
-[functions.admin-qrs]
 verify_jwt = false

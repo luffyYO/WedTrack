@@ -20,7 +20,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
-import { getCorsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
+import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,13 +55,7 @@ async function writeAuditLog(
 // ── Main Handler ──────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight unconditionally before any auth/processing
-  if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: getCorsHeaders(req),
-    });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -70,7 +64,7 @@ Deno.serve(async (req) => {
 
     // ── 1. Authenticate: validate caller JWT ─────────────────────────────────
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return errorResponse("Missing Authorization header", 401, {}, req);
+    if (!authHeader) return errorResponse("Missing Authorization header", 401);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -78,13 +72,13 @@ Deno.serve(async (req) => {
     });
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) return errorResponse("Unauthorized", 401, {}, req);
+    if (authError || !user) return errorResponse("Unauthorized", 401);
 
     // ── 2. Authorize: must be an active admin with app_metadata.role ─────────
     const hasAdminMetadata = user.app_metadata?.role === "admin";
     if (!hasAdminMetadata) {
       console.warn(`[admin-manage] Non-admin access attempt by ${user.id}`);
-      return errorResponse("Forbidden: admin role required", 403, {}, req);
+      return errorResponse("Forbidden: admin role required", 403);
     }
 
     // ── 3. Service role client for all DB operations ──────────────────────────
@@ -97,7 +91,7 @@ Deno.serve(async (req) => {
     if (callerRole !== "super_admin") {
       // Legacy admins with no admin_users row are treated as basic admin
       console.warn(`[admin-manage] Non-super_admin access attempt by ${user.id} (role: ${callerRole})`);
-      return errorResponse("Forbidden: super_admin role required for admin management", 403, {}, req);
+      return errorResponse("Forbidden: super_admin role required for admin management", 403);
     }
 
     const method = req.method;
@@ -144,7 +138,7 @@ Deno.serve(async (req) => {
         updated_at: row.updated_at,
       }));
 
-      return successResponse(result, 200, {}, req);
+      return successResponse(result);
     }
 
     // ── POST: Invite new admin ────────────────────────────────────────────────
@@ -153,7 +147,7 @@ Deno.serve(async (req) => {
       const { email, full_name, role } = body;
 
       if (!email || !full_name) {
-        return errorResponse("email and full_name are required", 400, {}, req);
+        return errorResponse("email and full_name are required", 400);
       }
 
       const assignedRole: "admin" | "super_admin" = role === "super_admin" ? "super_admin" : "admin";
@@ -161,7 +155,7 @@ Deno.serve(async (req) => {
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return errorResponse("Invalid email address", 400, {}, req);
+        return errorResponse("Invalid email address", 400);
       }
 
       // Check if user already exists in auth
@@ -183,13 +177,11 @@ Deno.serve(async (req) => {
         if (existingAdminRow) {
           return errorResponse(
             `User ${email} is already registered as an admin (role: ${existingAdminRow.role}, status: ${existingAdminRow.status}). Use PATCH to change their role or reactivate them.`,
-            409,
-            {},
-            req
+            409
           );
         }
 
-        // Existing Supabase user — set app_metadata and create admin row
+        // Existing Supabase user — just set their app_metadata and create admin row
         await adminClient.auth.admin.updateUserById(existingUser.id, {
           app_metadata: { role: "admin" },
           user_metadata: { full_name: full_name || existingUser.user_metadata?.full_name },
@@ -251,7 +243,7 @@ Deno.serve(async (req) => {
         message: `Admin invitation sent to ${email}. They will receive a password reset email to set their password.`,
         user_id: targetUserId,
         role: assignedRole,
-      }, 200, {}, req);
+      });
     }
 
     // ── PATCH: Change role or status ─────────────────────────────────────────
@@ -259,20 +251,20 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { target_user_id, role, status } = body;
 
-      if (!target_user_id) return errorResponse("target_user_id is required", 400, {}, req);
-      if (!role && !status) return errorResponse("At least one of role or status is required", 400, {}, req);
+      if (!target_user_id) return errorResponse("target_user_id is required", 400);
+      if (!role && !status) return errorResponse("At least one of role or status is required", 400);
 
       // Self-protection
       if (target_user_id === user.id) {
-        return errorResponse("Cannot modify your own admin account", 400, {}, req);
+        return errorResponse("Cannot modify your own admin account", 400);
       }
 
       // Validate values
       if (role && !["admin", "super_admin"].includes(role)) {
-        return errorResponse("Invalid role. Must be 'admin' or 'super_admin'", 400, {}, req);
+        return errorResponse("Invalid role. Must be 'admin' or 'super_admin'", 400);
       }
       if (status && !["active", "inactive"].includes(status)) {
-        return errorResponse("Invalid status. Must be 'active' or 'inactive'", 400, {}, req);
+        return errorResponse("Invalid status. Must be 'active' or 'inactive'", 400);
       }
 
       // Get current state
@@ -283,7 +275,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (fetchErr || !currentRecord) {
-        return errorResponse("Admin user not found in admin_users table", 404, {}, req);
+        return errorResponse("Admin user not found in admin_users table", 404);
       }
 
       // Build update
@@ -313,7 +305,7 @@ Deno.serve(async (req) => {
 
       console.log(`[admin-manage] Super admin ${user.id} ${action} target ${target_user_id}`);
 
-      return successResponse({ updated: true, ...updates }, 200, {}, req);
+      return successResponse({ updated: true, ...updates });
     }
 
     // ── DELETE: Remove admin record ───────────────────────────────────────────
@@ -321,11 +313,11 @@ Deno.serve(async (req) => {
       const url = new URL(req.url);
       const targetId = url.searchParams.get("id");
 
-      if (!targetId) return errorResponse("Missing id query parameter", 400, {}, req);
+      if (!targetId) return errorResponse("Missing id query parameter", 400);
 
       // Self-protection
       if (targetId === user.id) {
-        return errorResponse("Cannot remove your own admin account", 400, {}, req);
+        return errorResponse("Cannot remove your own admin account", 400);
       }
 
       // Get admin info for audit log before deletion
@@ -354,13 +346,13 @@ Deno.serve(async (req) => {
 
       console.log(`[admin-manage] Super admin ${user.id} removed admin ${targetId}`);
 
-      return successResponse({ removed: true, user_id: targetId }, 200, {}, req);
+      return successResponse({ removed: true, user_id: targetId });
     }
 
-    return errorResponse("Method not allowed", 405, {}, req);
+    return errorResponse("Method not allowed", 405);
 
   } catch (error: any) {
     console.error("[admin-manage] Unexpected error:", error?.message ?? error);
-    return errorResponse(error?.message || "Internal server error", 500, {}, req);
+    return errorResponse(error?.message || "Internal server error", 500);
   }
 });

@@ -8,16 +8,11 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
-import { getCorsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
+import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: getCorsHeaders(req),
-    });
-  }
-  if (req.method !== "GET") return errorResponse("Method not allowed", 405, {}, req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "GET") return errorResponse("Method not allowed", 405);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -26,7 +21,7 @@ Deno.serve(async (req) => {
 
     // ── 1. Authenticate ───────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return errorResponse("Missing Authorization header", 401, {}, req);
+    if (!authHeader) return errorResponse("Missing Authorization header", 401);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -34,11 +29,11 @@ Deno.serve(async (req) => {
     });
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) return errorResponse("Unauthorized", 401, {}, req);
+    if (authError || !user) return errorResponse("Unauthorized", 401);
 
     // ── 2. Authorize: require admin role ─────────────────────────────────────
     const isAdmin = user.app_metadata?.role === "admin";
-    if (!isAdmin) return errorResponse("Forbidden: admin role required", 403, {}, req);
+    if (!isAdmin) return errorResponse("Forbidden: admin role required", 403);
 
     // ── 3. Service role client for unrestricted DB reads ─────────────────────
     const adminClient = createClient(supabaseUrl, serviceKey, {
@@ -64,6 +59,7 @@ Deno.serve(async (req) => {
     } else if (filter === "expired") {
       query = query.lte("qr_expires_at", now);
     }
+    // 'all' → no additional filters
 
     const { data: weddings, error: queryError } = await query;
 
@@ -91,10 +87,10 @@ Deno.serve(async (req) => {
       };
     });
 
-    return successResponse(result, 200, {}, req);
+    return successResponse(result);
 
   } catch (error: any) {
     console.error("[admin-qrs] Unexpected error:", error?.message ?? error);
-    return errorResponse(error?.message || "Internal server error", 500, {}, req);
+    return errorResponse(error?.message || "Internal server error", 500);
   }
 });

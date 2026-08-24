@@ -172,7 +172,7 @@ function AddAdminModal({
 
     try {
       const res: any = await adminApi.post('admin-manage', { email: email.trim().toLowerCase(), full_name: fullName.trim(), role });
-      setSuccess(res.data?.data?.message || res.data?.message || `Invitation sent to ${email}`);
+      setSuccess(res.data?.message || `Invitation sent to ${email}`);
       setTimeout(() => { onSuccess(); onClose(); }, 2000);
     } catch (err: any) {
       setError(err?.message || 'Failed to invite admin. They may already be an admin.');
@@ -401,7 +401,7 @@ export default function AdminAdmins() {
     setLoading(true);
     try {
       const res: any = await adminApi.get('admin-manage');
-      setAdmins(res.data?.data || (Array.isArray(res.data) ? res.data : []));
+      setAdmins(res.data.data || []);
     } catch (err: any) {
       showToast('error', err?.message || 'Failed to load admins');
     } finally {
