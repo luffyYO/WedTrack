@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { AdminOutletContext } from '../layout/AdminLayout';
 import { Search, Loader2, User as UserIcon, Mail, BookHeart, Trash2 } from 'lucide-react';
-import apiClient from '@/api/client';
+import adminApi from '@/features/admin/api/adminApi';
 
 interface User {
   user_id: string;
@@ -22,7 +22,7 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get('admin-users');
+      const res: any = await adminApi.get('admin-users');
       setUsers(res.data.data || []);
     } catch (err) {
       console.error('Failed to load users', err);
@@ -39,7 +39,7 @@ export default function AdminUsers() {
     if (!window.confirm(`⚠️ DANGER: Delete user "${user.full_name}" (${user.email})? \n\nThis will permanently delete their account AND all ${user.wedding_count} weddings/guest lists. This cannot be undone.`)) return;
     
     try {
-      await apiClient.delete(`admin-users?id=${user.user_id}`);
+      await adminApi.delete(`admin-users?id=${user.user_id}`);
       setUsers(prev => prev.filter(u => u.user_id !== user.user_id));
     } catch (err) {
       alert('Failed to delete user');

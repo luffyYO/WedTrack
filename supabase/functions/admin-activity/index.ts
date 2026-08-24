@@ -10,11 +10,16 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
-import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
+import { getCorsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "GET") return errorResponse("Method not allowed", 405);
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers: getCorsHeaders(req),
+    });
+  }
+  if (req.method !== "GET") return errorResponse("Method not allowed", 405, {}, req);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -23,7 +28,7 @@ Deno.serve(async (req) => {
 
     // ── 1. Authenticate ───────────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return errorResponse("Missing Authorization header", 401);
+    if (!authHeader) return errorResponse("Missing Authorization header", 401, {}, req);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -31,11 +36,11 @@ Deno.serve(async (req) => {
     });
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) return errorResponse("Unauthorized", 401);
+    if (authError || !user) return errorResponse("Unauthorized", 401, {}, req);
 
     // ── 2. Authorize: require admin role ─────────────────────────────────────
     const isAdmin = user.app_metadata?.role === "admin";
-    if (!isAdmin) return errorResponse("Forbidden: admin role required", 403);
+    if (!isAdmin) return errorResponse("Forbidden: admin role required", 403, {}, req);
 
     // ── 3. Service role client ─────────────────────────────────────────────────
     const adminClient = createClient(supabaseUrl, serviceKey, {
@@ -83,10 +88,10 @@ Deno.serve(async (req) => {
         total: count ?? 0,
         pages: count ? Math.ceil(count / limit) : 0,
       },
-    });
+    }, 200, {}, req);
 
   } catch (error: any) {
     console.error("[admin-activity] Unexpected error:", error?.message ?? error);
-    return errorResponse(error?.message || "Internal server error", 500);
+    return errorResponse(error?.message || "Internal server error", 500, {}, req);
   }
 });

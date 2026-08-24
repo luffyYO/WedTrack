@@ -14,21 +14,10 @@
  *   validate      POST { action: "validate" } (Authorization: Bearer <token>)
  *                 → Checks if the token is valid and the user is still an
  *                   active admin. Returns { valid: true, user, role } or 401/403.
- *
- * Security model:
- *   - Admin = Supabase Auth user with app_metadata.role === "admin"
- *   - app_metadata is ONLY writable via the service role key (tamper-proof)
- *   - Active status is additionally checked in admin_users table
- *   - No custom JWT system — the returned token IS the Supabase access_token
- *   - Deactivated admins are blocked even if their app_metadata.role is still set
- *
- * To create an admin user:
- *   Use the admin-manage edge function with action "invite"
- *   (requires super_admin role)
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.1";
-import { corsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
+import { getCorsHeaders, errorResponse, successResponse } from "../_shared/utils.ts";
 
 // Helper: lookup admin_users row for a given Supabase user ID
 async function getAdminRecord(adminClient: any, userId: string) {
@@ -42,14 +31,19 @@ async function getAdminRecord(adminClient: any, userId: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return errorResponse("Method not allowed", 405);
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers: getCorsHeaders(req),
+    });
+  }
+  if (req.method !== "POST") return errorResponse("Method not allowed", 405, {}, req);
 
   try {
     const body = await req.json();
     const { action } = body;
 
-    if (!action) return errorResponse("Missing action field", 400);
+    if (!action) return errorResponse("Missing action field", 400, {}, req);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey    = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -63,7 +57,7 @@ Deno.serve(async (req) => {
     // ── ACTION: login ────────────────────────────────────────────────────────
     if (action === "login") {
       const { email, password } = body;
-      if (!email || !password) return errorResponse("email and password are required", 400);
+      if (!email || !password) return errorResponse("email and password are required", 400, {}, req);
 
       const supabase = createClient(supabaseUrl, anonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
@@ -72,22 +66,20 @@ Deno.serve(async (req) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) {
         console.warn(`[admin-auth] Login failed for ${email}: ${error?.message}`);
-        return errorResponse("Invalid credentials", 401);
+        return errorResponse("Invalid credentials", 401, {}, req);
       }
 
-      // 1. Verify app_metadata.role === "admin" (tamper-proof — service role only writable)
+      // 1. Verify app_metadata.role === "admin"
       const hasAdminMetadata = data.user.app_metadata?.role === "admin";
       if (!hasAdminMetadata) {
         console.warn(`[admin-auth] Non-admin login attempt by user ${data.user.id}`);
-        return errorResponse("Forbidden: admin role required", 403);
+        return errorResponse("Forbidden: admin role required", 403, {}, req);
       }
 
       // 2. Check admin_users table for active status + fetch role
       const adminRecord = await getAdminRecord(adminClient, data.user.id);
       if (!adminRecord) {
-        // app_metadata says admin but no admin_users row → possible legacy admin
-        // Allow login but treat as basic admin (backwards compat)
-        console.warn(`[admin-auth] Admin ${data.user.id} has no admin_users record — treating as legacy admin`);
+        console.warn(`[admin-auth] Admin ${data.user.id} has no admin_users record — treating as basic admin`);
         return successResponse({
           token: data.session.access_token,
           refresh_token: data.session.refresh_token,
@@ -98,12 +90,12 @@ Deno.serve(async (req) => {
             full_name: data.user.user_metadata?.full_name || data.user.email,
           },
           role: "admin",
-        });
+        }, 200, {}, req);
       }
 
       if (adminRecord.status !== "active") {
         console.warn(`[admin-auth] Deactivated admin login attempt by ${data.user.id}`);
-        return errorResponse("Forbidden: your admin account has been deactivated", 403);
+        return errorResponse("Forbidden: your admin account has been deactivated", 403, {}, req);
       }
 
       console.log(`[admin-auth] Admin login successful: ${data.user.id} (${adminRecord.role})`);
@@ -127,13 +119,13 @@ Deno.serve(async (req) => {
           full_name: data.user.user_metadata?.full_name || data.user.email,
         },
         role: adminRecord.role,
-      });
+      }, 200, {}, req);
     }
 
     // ── ACTION: refresh ──────────────────────────────────────────────────────
     if (action === "refresh") {
       const { refresh_token } = body;
-      if (!refresh_token) return errorResponse("refresh_token is required", 400);
+      if (!refresh_token) return errorResponse("refresh_token is required", 400, {}, req);
 
       const supabase = createClient(supabaseUrl, anonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
@@ -141,17 +133,17 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase.auth.refreshSession({ refresh_token });
       if (error || !data.session) {
-        return errorResponse("Session refresh failed — please log in again", 401);
+        return errorResponse("Session refresh failed — please log in again", 401, {}, req);
       }
 
-      // Re-verify admin role on refresh (role may have been revoked)
+      // Re-verify admin role on refresh
       const isAdmin = data.user?.app_metadata?.role === "admin";
-      if (!isAdmin) return errorResponse("Forbidden: admin role required", 403);
+      if (!isAdmin) return errorResponse("Forbidden: admin role required", 403, {}, req);
 
-      // Re-check active status on every refresh
+      // Re-check active status
       const adminRecord = await getAdminRecord(adminClient, data.user!.id);
       if (adminRecord && adminRecord.status !== "active") {
-        return errorResponse("Forbidden: your admin account has been deactivated", 403);
+        return errorResponse("Forbidden: your admin account has been deactivated", 403, {}, req);
       }
 
       return successResponse({
@@ -159,13 +151,13 @@ Deno.serve(async (req) => {
         refresh_token: data.session.refresh_token,
         expires_at: data.session.expires_at,
         role: adminRecord?.role ?? "admin",
-      });
+      }, 200, {}, req);
     }
 
     // ── ACTION: validate ─────────────────────────────────────────────────────
     if (action === "validate") {
       const authHeader = req.headers.get("Authorization");
-      if (!authHeader) return errorResponse("Missing Authorization header", 401);
+      if (!authHeader) return errorResponse("Missing Authorization header", 401, {}, req);
 
       const supabase = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
@@ -174,15 +166,15 @@ Deno.serve(async (req) => {
 
       const token = authHeader.replace("Bearer ", "");
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) return errorResponse("Invalid or expired token", 401);
+      if (error || !user) return errorResponse("Invalid or expired token", 401, {}, req);
 
       const isAdmin = user.app_metadata?.role === "admin";
-      if (!isAdmin) return errorResponse("Forbidden: admin role required", 403);
+      if (!isAdmin) return errorResponse("Forbidden: admin role required", 403, {}, req);
 
       // Check active status
       const adminRecord = await getAdminRecord(adminClient, user.id);
       if (adminRecord && adminRecord.status !== "active") {
-        return errorResponse("Forbidden: your admin account has been deactivated", 403);
+        return errorResponse("Forbidden: your admin account has been deactivated", 403, {}, req);
       }
 
       return successResponse({
@@ -193,13 +185,13 @@ Deno.serve(async (req) => {
           full_name: user.user_metadata?.full_name || user.email,
         },
         role: adminRecord?.role ?? "admin",
-      });
+      }, 200, {}, req);
     }
 
-    return errorResponse(`Unknown action: ${action}`, 400);
+    return errorResponse(`Unknown action: ${action}`, 400, {}, req);
 
   } catch (error: any) {
     console.error("[admin-auth] Unexpected error:", error?.message ?? error);
-    return errorResponse(error?.message || "Internal server error", 500);
+    return errorResponse(error?.message || "Internal server error", 500, {}, req);
   }
 });

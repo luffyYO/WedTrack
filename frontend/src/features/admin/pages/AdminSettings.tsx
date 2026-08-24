@@ -191,7 +191,7 @@ export default function AdminSettings() {
             For advanced security settings including Multi-Factor Authentication (MFA/TOTP), login history, and session management, use the Supabase Auth dashboard.
           </p>
           <a
-            href="https://supabase.com/dashboard/project/vplasmjfvhzcjpfpebvy/auth/users"
+            href="https://supabase.com/dashboard/project/knmqezafmenqghiheloi/auth/users"
             target="_blank"
             rel="noopener noreferrer"
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isDarkMode ? 'bg-white/5 text-white hover:bg-white/10 border border-white/10' : 'bg-[#f4f4f0] text-[#303330] hover:bg-[#e8e2d8] border border-[#e8e2d8]'}`}

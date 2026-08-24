@@ -1,25 +1,48 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.1'
 
-// Standardized Response Helper
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Standardized CORS Helper
+export const getCorsHeaders = (req?: Request) => {
+  const origin = req?.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://wedtrackss.in',
+    'https://www.wedtrackss.in',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+  ];
+  const allowOrigin = allowedOrigins.includes(origin) ? origin : (origin || '*');
+
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with, accept',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
 };
 
-export const successResponse = (data: any, status = 200, headers = {}) => {
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-requested-with, accept',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Max-Age': '86400',
+};
+
+export const successResponse = (data: any, status = 200, headers: HeadersInit = {}, req?: Request) => {
+  const cors = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(JSON.stringify({ success: true, data }), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json', ...headers },
+    headers: { ...cors, 'Content-Type': 'application/json', ...headers },
   });
 };
 
 export const createSuccessResponse = successResponse;
 
-export const errorResponse = (message: string, status = 400) => {
+export const errorResponse = (message: string, status = 400, headers: HeadersInit = {}, req?: Request) => {
   console.error(`[Error] ${message}`);
+  const cors = req ? getCorsHeaders(req) : corsHeaders;
   return new Response(JSON.stringify({ success: false, message }), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...cors, 'Content-Type': 'application/json', ...headers },
   });
 };
 

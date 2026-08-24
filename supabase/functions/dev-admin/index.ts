@@ -1,7 +1,7 @@
 /**
  * dev-admin — DEV ONLY edge function for admin SQL operations.
  * Protected by x-internal-key = SUPABASE_SERVICE_ROLE_KEY.
- * REMOVE this function before production deployment.
+ * Blocked in production via ENVIRONMENT env var.
  */
 
 export const config = {
@@ -9,6 +9,12 @@ export const config = {
 };
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.1'
+
+// ── Production Guard ──────────────────────────────────────────────────────────
+// This function is for development/debugging only. If ENVIRONMENT is set to
+// "production" in Supabase Edge Function secrets, all requests are rejected.
+const ENVIRONMENT = Deno.env.get("ENVIRONMENT") ?? "";
+const IS_PRODUCTION = ENVIRONMENT.toLowerCase() === "production";
 
 // ── VAPID Crypto Helpers ──────────────────────────────────────────────────────
 function base64UrlToBuffer(b64url: string): ArrayBuffer {
@@ -141,6 +147,14 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Block in production
+  if (IS_PRODUCTION) {
+    return new Response(
+      JSON.stringify({ error: 'dev-admin is disabled in production' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   const internalKey = req.headers.get('x-internal-key') ?? '';

@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { AdminOutletContext } from '../layout/AdminLayout';
 import { Search, Loader2, Trash2, MapPin, Calendar } from 'lucide-react';
-import apiClient from '@/api/client';
-import { supabase } from '@/config/supabaseClient';
+import adminApi from '@/features/admin/api/adminApi';
 
 interface Wedding {
   id: string;
@@ -25,22 +24,8 @@ export default function AdminWeddings() {
     const fetchW = async () => {
       setLoading(true);
       try {
-        // Direct Supabase query — replaces list-weddings Edge Function call
-        // Admin panel uses service-role context via Edge Function for full access;
-        // here we use the admin's own auth which covers all weddings via RLS bypass
-        // if the admin has a superuser policy, otherwise fall back to Edge Function.
-        const { data, error } = await supabase
-          .from('weddings')
-          .select('id, bride_name, groom_name, location, wedding_date, qr_status')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          // Fallback to Edge Function if direct query fails (e.g. RLS blocks admin)
-          const res = await apiClient.get('list-weddings');
-          setWeddings(res.data.data || []);
-        } else {
-          setWeddings(data ?? []);
-        }
+        const res: any = await adminApi.get('list-weddings');
+        setWeddings(res.data.data || []);
       } catch (err) {
         if (import.meta.env.DEV) console.error('Failed to load weddings', err);
       } finally {
@@ -66,7 +51,7 @@ export default function AdminWeddings() {
     if (!window.confirm(`Are you sure you want to delete the wedding for ${couple}? This will also delete all guests and wishes.`)) return;
     
     try {
-      await apiClient.post('delete-wedding', { wedding_id: id });
+      await adminApi.post('delete-wedding', { wedding_id: id });
       setWeddings(prev => prev.filter(w => w.id !== id));
     } catch (err) {
       alert('Failed to delete wedding');

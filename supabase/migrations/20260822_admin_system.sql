@@ -9,17 +9,42 @@
 -- ─── 1. admin_users TABLE ─────────────────────────────────────────────────────
 -- Links a Supabase Auth user to an admin role + status.
 -- Only populated via the service role key — not user-writable.
-CREATE TABLE IF NOT EXISTS public.admin_users (
-  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id      UUID        NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
-  role         TEXT        NOT NULL DEFAULT 'admin'
-                           CHECK (role IN ('admin', 'super_admin')),
-  status       TEXT        NOT NULL DEFAULT 'active'
-                           CHECK (status IN ('active', 'inactive')),
-  invited_by   UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'admin_users'
+  ) THEN
+    CREATE TABLE public.admin_users (
+      id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id      UUID        NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+      role         TEXT        NOT NULL DEFAULT 'admin'
+                               CHECK (role IN ('admin', 'super_admin')),
+      status       TEXT        NOT NULL DEFAULT 'active'
+                               CHECK (status IN ('active', 'inactive')),
+      invited_by   UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  ELSIF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'admin_users' AND column_name = 'user_id'
+  ) THEN
+    -- Stale table with different schema exists — recreate cleanly
+    DROP TABLE public.admin_users CASCADE;
+    CREATE TABLE public.admin_users (
+      id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id      UUID        NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+      role         TEXT        NOT NULL DEFAULT 'admin'
+                               CHECK (role IN ('admin', 'super_admin')),
+      status       TEXT        NOT NULL DEFAULT 'active'
+                               CHECK (status IN ('active', 'inactive')),
+      invited_by   UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_admin_users_user_id ON public.admin_users(user_id);
 CREATE INDEX IF NOT EXISTS idx_admin_users_status  ON public.admin_users(status);
