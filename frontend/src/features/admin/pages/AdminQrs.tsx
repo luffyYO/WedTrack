@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { AdminOutletContext } from '../layout/AdminLayout';
 import { Loader2, ExternalLink } from 'lucide-react';
 import adminApi from '@/features/admin/api/adminApi';
 
@@ -11,7 +12,7 @@ interface QR {
 }
 
 export default function AdminQrs() {
-  const { isDarkMode } : { isDarkMode: boolean } = useOutletContext();
+  const { isDarkMode } = useOutletContext<AdminOutletContext>();
   const [qrs, setQrs] = useState<QR[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');

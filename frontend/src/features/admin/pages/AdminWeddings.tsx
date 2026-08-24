@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { AdminOutletContext } from '../layout/AdminLayout';
 import { Search, Loader2, Trash2, MapPin, Calendar } from 'lucide-react';
 import apiClient from '@/api/client';
 import { supabase } from '@/config/supabaseClient';
@@ -14,7 +15,7 @@ interface Wedding {
 }
 
 export default function AdminWeddings() {
-  const { isDarkMode } : { isDarkMode: boolean } = useOutletContext();
+  const { isDarkMode } = useOutletContext<AdminOutletContext>();
   const [weddings, setWeddings] = useState<Wedding[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

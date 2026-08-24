@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { AdminOutletContext } from '../layout/AdminLayout';
 import { 
   Users, BookHeart, QrCode, ScanEye, 
   MessageSquareHeart, CopyX, TrendingUp
@@ -23,7 +24,7 @@ interface DashboardStats {
 const PIE_COLORS = ['#75594f', '#d9b5a0'];
 
 export default function AdminDashboard() {
-  const { isDarkMode } : { isDarkMode: boolean } = useOutletContext();
+  const { isDarkMode } = useOutletContext<AdminOutletContext>();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

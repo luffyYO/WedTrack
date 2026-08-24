@@ -22,6 +22,10 @@ const adminApi = {
     const path = url.startsWith('/') ? url.substring(1) : url;
     return apiClient.put<T>(path, data, config);
   },
+  patch: <T = any>(url: string, data?: any, config?: any) => {
+    const path = url.startsWith('/') ? url.substring(1) : url;
+    return apiClient.patch<T>(path, data, config);
+  },
   delete: <T = any>(url: string, config?: any) => {
     const path = url.startsWith('/') ? url.substring(1) : url;
     return apiClient.delete<T>(path, config);

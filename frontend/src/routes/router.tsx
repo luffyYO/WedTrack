@@ -38,6 +38,7 @@ const AdminWeddings = lazy(() => import('@/features/admin/pages/AdminWeddings'))
 const AdminQrs = lazy(() => import('@/features/admin/pages/AdminQrs'));
 const AdminLogs = lazy(() => import('@/features/admin/pages/AdminLogs'));
 const AdminSettings = lazy(() => import('@/features/admin/pages/AdminSettings'));
+const AdminAdmins = lazy(() => import('@/features/admin/pages/AdminAdmins'));
 
 const router = createBrowserRouter([
     // ── Public / Auth routes ───────────────────────────────────────────────────
@@ -96,6 +97,7 @@ const router = createBrowserRouter([
             { path: 'users', element: <Suspense fallback={<Loader />}><AdminUsers /></Suspense> },
             { path: 'weddings', element: <Suspense fallback={<Loader />}><AdminWeddings /></Suspense> },
             { path: 'qrs', element: <Suspense fallback={<Loader />}><AdminQrs /></Suspense> },
+            { path: 'admins', element: <Suspense fallback={<Loader />}><AdminAdmins /></Suspense> },
             { path: 'logs', element: <Suspense fallback={<Loader />}><AdminLogs /></Suspense> },
             { path: 'settings', element: <Suspense fallback={<Loader />}><AdminSettings /></Suspense> },
         ]

@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.admin-users]
 verify_jwt = false
+
+[functions.admin-manage]
+verify_jwt = false
+
+[functions.admin-activity]
+verify_jwt = false

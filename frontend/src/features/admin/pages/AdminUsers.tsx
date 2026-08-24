@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { AdminOutletContext } from '../layout/AdminLayout';
 import { Search, Loader2, User as UserIcon, Mail, BookHeart, Trash2 } from 'lucide-react';
 import apiClient from '@/api/client';
 
@@ -13,7 +14,7 @@ interface User {
 }
 
 export default function AdminUsers() {
-  const { isDarkMode } : { isDarkMode: boolean } = useOutletContext();
+  const { isDarkMode } = useOutletContext<AdminOutletContext>();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

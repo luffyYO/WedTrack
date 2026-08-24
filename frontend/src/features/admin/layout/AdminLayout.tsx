@@ -1,25 +1,34 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, BookHeart, QrCode, ScrollText, 
+import {
+  LayoutDashboard, Users, BookHeart, QrCode, ScrollText,
   Settings, LogOut, Menu, X, Sun, Moon, Bell,
-  ChevronRight
+  ChevronRight, ShieldCheck, Shield
 } from 'lucide-react';
 
-const navItems = [
-  { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/admin/users', icon: Users, label: 'Users' },
-  { path: '/admin/weddings', icon: BookHeart, label: 'Weddings' },
-  { path: '/admin/qrs', icon: QrCode, label: 'QR Analytics' },
-  { path: '/admin/logs', icon: ScrollText, label: 'Activity Logs' },
-  { path: '/admin/settings', icon: Settings, label: 'Settings' }
-];
+export type AdminRole = 'admin' | 'super_admin';
+
+export interface AdminOutletContext {
+  isDarkMode: boolean;
+  adminRole: AdminRole;
+}
+
+const buildNavItems = (role: AdminRole) => [
+  { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'super_admin'] },
+  { path: '/admin/users',     icon: Users,           label: 'Users',     roles: ['admin', 'super_admin'] },
+  { path: '/admin/weddings',  icon: BookHeart,       label: 'Weddings',  roles: ['admin', 'super_admin'] },
+  { path: '/admin/qrs',       icon: QrCode,          label: 'QR Analytics', roles: ['admin', 'super_admin'] },
+  { path: '/admin/admins',    icon: Shield,          label: 'Admins',    roles: ['super_admin'] },
+  { path: '/admin/logs',      icon: ScrollText,      label: 'Activity',  roles: ['admin', 'super_admin'] },
+  { path: '/admin/settings',  icon: Settings,        label: 'Settings',  roles: ['admin', 'super_admin'] },
+].filter(item => item.roles.includes(role));
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [adminRole, setAdminRole] = useState<AdminRole>('admin');
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -30,20 +39,25 @@ export default function AdminLayout() {
 
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Malformed token');
-      }
+      if (parts.length !== 3) throw new Error('Malformed token');
+
       const payload = JSON.parse(atob(parts[1]));
       if (payload.exp && payload.exp * 1000 < Date.now()) {
         console.warn('[AdminLayout] Admin session expired');
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUsername');
+        clearAdminSession();
         navigate('/admin/login');
+        return;
       }
     } catch {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUsername');
+      clearAdminSession();
       navigate('/admin/login');
+      return;
+    }
+
+    // Load persisted role
+    const savedRole = localStorage.getItem('adminRole') as AdminRole | null;
+    if (savedRole === 'super_admin' || savedRole === 'admin') {
+      setAdminRole(savedRole);
     }
   }, [navigate]);
 
@@ -51,37 +65,50 @@ export default function AdminLayout() {
     if (window.innerWidth < 1024) setSidebarOpen(false);
   }, [location.pathname]);
 
+  const clearAdminSession = () => {
+    ['adminToken', 'adminRefreshToken', 'adminExpiresAt', 'adminRole',
+     'adminUsername', 'adminEmail'].forEach(k => localStorage.removeItem(k));
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminUsername');
+    clearAdminSession();
     navigate('/admin/login');
   };
 
   const username = localStorage.getItem('adminUsername') || 'Admin';
   const initials = username.slice(0, 2).toUpperCase();
+  const navItems = buildNavItems(adminRole);
+
+  const roleBadge = adminRole === 'super_admin' ? (
+    <span className="flex items-center gap-1 text-[#c9927c] text-[10px] font-bold uppercase tracking-widest">
+      <ShieldCheck size={10} /> Super Admin
+    </span>
+  ) : (
+    <span className="text-[#a07060] text-[10px] font-bold uppercase tracking-widest">Admin</span>
+  );
 
   return (
     <div className={`min-h-screen flex transition-colors duration-300 ${isDarkMode ? 'bg-[#0f0e0d] text-slate-100' : 'bg-[#f8f6f2] text-[#303330]'}`}>
-      
+
       {/* Mobile Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* ═══ SIDEBAR ═══════════════════════════════════════════════════════════ */}
-      <aside 
+      {/* ═══ SIDEBAR ══════════════════════════════════════════════════════════ */}
+      <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 w-[260px] flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${isDarkMode ? 'bg-[#1a1917]' : 'bg-[#2a1f1b]'}`}
       >
         {/* Brand */}
         <div className="h-20 flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <img 
-              src="/logo.jpeg" 
-              alt="WedTrack" 
-              className="w-10 h-10 rounded-xl shadow-lg animate-spin-3d" 
+            <img
+              src="/logo.jpeg"
+              alt="WedTrack"
+              className="w-10 h-10 rounded-xl shadow-lg animate-spin-3d"
               style={{ animationDuration: '8s' }}
             />
             <div>
@@ -132,11 +159,11 @@ export default function AdminLayout() {
             </div>
             <div className="min-w-0">
               <p className="text-white text-sm font-semibold truncate">{username}</p>
-              <p className="text-[#a07060] text-[10px] font-bold uppercase tracking-widest">Superuser</p>
+              {roleBadge}
             </div>
           </div>
           {/* Logout */}
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-[#e07060]/80 hover:bg-[#e07060]/10 hover:text-[#e07060] transition-colors"
           >
@@ -146,12 +173,12 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* ═══ MAIN CONTENT ════════════════════════════════════════════════════ */}
+      {/* ═══ MAIN CONTENT ═══════════════════════════════════════════════════ */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Top Header */}
         <header className={`h-16 flex items-center justify-between px-6 sm:px-8 z-30 sticky top-0 border-b ${isDarkMode ? 'bg-[#0f0e0d]/90 border-white/5' : 'bg-[#f8f6f2]/90 border-[#e8e2d8]'} backdrop-blur-md`}>
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setSidebarOpen(!isSidebarOpen)}
               className={`p-2 rounded-lg transition-colors lg:hidden ${isDarkMode ? 'bg-white/5 text-white/60 hover:bg-white/10' : 'bg-[#2a1f1b]/10 text-[#2a1f1b] hover:bg-[#2a1f1b]/15'}`}
             >
@@ -167,7 +194,7 @@ export default function AdminLayout() {
               <Bell size={17} />
               <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#c9927c] border border-white" />
             </button>
-            <button 
+            <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               className={`p-2 rounded-lg transition-all ${isDarkMode ? 'bg-white/5 text-amber-400 hover:bg-white/10' : 'bg-white text-indigo-500 border border-[#e8e2d8] shadow-sm hover:border-[#d4cfc5]'}`}
             >
@@ -178,7 +205,7 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-8">
-          <Outlet context={{ isDarkMode }} />
+          <Outlet context={{ isDarkMode, adminRole } satisfies AdminOutletContext} />
         </main>
       </div>
     </div>
