@@ -198,9 +198,16 @@ export default function LandingPage() {
                         <div className="absolute top-20 right-20 text-pink-300 animate-float-heart opacity-60" style={{animationDelay: '1s'}}>💖</div>
                         
                         <div className="max-w-4xl mx-auto text-center relative z-10">
-                            <div className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-[0.2em] uppercase border border-pink-200/50 bg-white/80 shadow-sm mb-8 animate-fade-up text-pink-500 backdrop-blur-md">
-                                <Sparkles size={16} />
-                                <span>The Premium Wedding Management Platform</span>
+                            <div className="inline-flex items-center justify-center gap-3 mb-8 animate-fade-up">
+                                {/* Left rule */}
+                                <span className="block w-6 h-px bg-pink-300/70 flex-shrink-0" aria-hidden="true" />
+                                {/* Badge label */}
+                                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-sm border border-pink-200/70 bg-pink-50/60 text-pink-600 text-[10px] font-medium tracking-[0.22em] uppercase select-none">
+                                    <span className="text-pink-400 text-[11px] leading-none" aria-hidden="true">✦</span>
+                                    The Premium Wedding Management Platform
+                                </span>
+                                {/* Right rule */}
+                                <span className="block w-6 h-px bg-pink-300/70 flex-shrink-0" aria-hidden="true" />
                             </div>
                             
                             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.1] mb-8 animate-fade-up text-slate-800" style={{animationDelay: '100ms'}}>
